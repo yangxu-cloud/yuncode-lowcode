@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>踢出通知测试页面</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .container {
+      background: white;
+      padding: 40px;
+      border-radius: 20px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      max-width: 600px;
+      width: 100%;
+    }
+
+    h1 {
+      color: #333;
+      margin-bottom: 10px;
+      text-align: center;
+    }
+
+    .subtitle {
+      text-align: center;
+      color: #666;
+      margin-bottom: 30px;
+      font-size: 14px;
+    }
+
+    .status {
+      background: #f5f5f5;
+      padding: 20px;
+      border-radius: 10px;
+      margin-bottom: 20px;
+    }
+
+    .status-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 10px 0;
+      border-bottom: 1px solid #ddd;
+    }
+
+    .status-item:last-child {
+      border-bottom: none;
+    }
+
+    .status-label {
+      font-weight: 600;
+      color: #555;
+    }
+
+    .status-value {
+      color: #333;
+    }
+
+    .status-value.connected {
+      color: #67c23a;
+      font-weight: bold;
+    }
+
+    .status-value.disconnected {
+      color: #f56c6c;
+      font-weight: bold;
+    }
+
+    .log {
+      background: #2d2d2d;
+      color: #00ff00;
+      padding: 15px;
+      border-radius: 8px;
+      font-family: 'Courier New', monospace;
+      font-size: 12px;
+      max-height: 300px;
+      overflow-y: auto;
+      margin-bottom: 20px;
+    }
+
+    .log-entry {
+      margin: 5px 0;
+      padding: 3px 0;
+    }
+
+    .log-entry.error {
+      color: #ff6b6b;
+    }
+
+    .log-entry.success {
+      color: #51cf66;
+    }
+
+    .log-entry.warning {
+      color: #ffd43b;
+    }
+
+    .btn {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      padding: 12px 30px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 16px;
+      font-weight: 600;
+      transition: all 0.3s;
+      width: 100%;
+      margin-bottom: 10px;
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+    }
+
+    .btn:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    /* 踢出弹窗样式 */
+    #kickout-dialog {
+      display: none;
+    }
+
+    #kickout-dialog.show {
+      display: flex;
+      animation: fadeIn 0.3s ease-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .dialog-content {
+      background: white;
+      padding: 40px;
+      border-radius: 16px;
+      max-width: 450px;
+      width: 90%;
+      text-align: center;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      animation: slideIn 0.3s ease-out;
+    }
+
+    @keyframes slideIn {
+      from { transform: scale(0.9); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: rotate(0deg); }
+      25% { transform: rotate(-10deg); }
+      75% { transform: rotate(10deg); }
+    }
+
+    .warning-icon {
+      font-size: 60px;
+      margin-bottom: 20px;
+      animation: shake 0.5s ease-in-out infinite;
+    }
+
+    .dialog-title {
+      color: #f56c6c;
+      font-size: 26px;
+      margin-bottom: 15px;
+    }
+
+    .dialog-reason {
+      color: #666;
+      font-size: 15px;
+      margin-bottom: 25px;
+    }
+
+    .countdown-box {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      padding: 25px;
+      border-radius: 12px;
+      margin-bottom: 25px;
+    }
+
+    .countdown-number {
+      color: white;
+      font-size: 56px;
+      font-weight: bold;
+      line-height: 1;
+      display: block;
+    }
+
+    .countdown-text {
+      color: rgba(255,255,255,0.9);
+      font-size: 16px;
+      margin-top: 5px;
+      display: block;
+    }
+
+    .btn-logout {
+      background: #f56c6c;
+      color: white;
+      border: none;
+      padding: 14px 40px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 16px;
+      font-weight: 600;
+      transition: all 0.3s;
+      box-shadow: 0 4px 12px rgba(245, 108, 108, 0.3);
+      width: 100%;
+    }
+
+    .btn-logout:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(245, 108, 108, 0.4);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🔔 SSE 踢出通知测试</h1>
+    <p class="subtitle">测试踢出通知和倒计时功能</p>
+
+    <div class="status">
+      <div class="status-item">
+        <span class="status-label">SSE 连接状态:</span>
+        <span class="status-value disconnected" id="connection-status">未连接</span>
+      </div>
+      <div class="status-item">
+        <span class="status-label">用户 ID:</span>
+        <span class="status-value" id="user-id">-</span>
+      </div>
+      <div class="status-item">
+        <span class="status-label">Token:</span>
+        <span class="status-value" id="token-status">未加载</span>
+      </div>
+    </div>
+
+    <button class="btn" onclick="connectSSE()" id="connect-btn">🔌 建立 SSE 连接</button>
+    <button class="btn" onclick="clearLog()" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+      🗑️ 清空日志
+    </button>
+
+    <div class="log" id="log">
+      <div class="log-entry">等待操作...</div>
+    </div>
+  </div>
+
+  <!-- 踢出弹窗 -->
+  <div id="kickout-dialog">
+    <div class="dialog-content">
+      <div class="warning-icon">⚠️</div>
+      <h2 class="dialog-title" id="dialog-message">您已被管理员强制下线</h2>
+      <p class="dialog-reason" id="dialog-reason">原因：被管理员踢出</p>
+      <div class="countdown-box">
+        <span class="countdown-number" id="countdown-number">5</span>
+        <span class="countdown-text">秒后将退出</span>
+      </div>
+      <button class="btn-logout" onclick="logoutNow()">立即退出</button>
+    </div>
+  </div>
+
+  <script>
+    let eventSource = null
+
+    // 添加日志
+    function addLog(message, type = 'info') {
+      const log = document.getElementById('log')
+      const timestamp = new Date().toLocaleTimeString()
+      const entry = document.createElement('div')
+      entry.className = `log-entry ${type}`
+      entry.textContent = `[${timestamp}] ${message}`
+      log.appendChild(entry)
+      log.scrollTop = log.scrollHeight
+    }
+
+    // 清空日志
+    function clearLog() {
+      document.getElementById('log').innerHTML = '<div class="log-entry">日志已清空</div>'
+    }
+
+    // 更新连接状态
+    function updateStatus(status, userId = '-', tokenStatus = '-') {
+      const statusEl = document.getElementById('connection-status')
+      statusEl.textContent = status
+      statusEl.className = `status-value ${status === '已连接' ? 'connected' : 'disconnected'}`
+      document.getElementById('user-id').textContent = userId
+      if (tokenStatus !== '-') {
+        document.getElementById('token-status').textContent = tokenStatus
+      }
+    }
+
+    // 建立 SSE 连接
+    function connectSSE() {
+      const token = localStorage.getItem('satoken')
+
+      if (!token) {
+        addLog('❌ 未找到 token，请先登录', 'error')
+        alert('请先登录系统！')
+        return
+      }
+
+      addLog('🔌 开始建立 SSE 连接...', 'info')
+      document.getElementById('connect-btn').disabled = true
+      document.getElementById('token-status').textContent = token.substring(0, 20) + '...'
+
+      eventSource = new EventSource('/api/user/notifications')
+
+      eventSource.addEventListener('connected', (event) => {
+        addLog('✅ SSE 连接已建立', 'success')
+        updateStatus('已连接', '-', '已加载')
+      })
+
+      eventSource.addEventListener('kick_out', (event) => {
+        const data = JSON.parse(event.data)
+        addLog(`⚠️ 收到踢出通知: ${data.message}`, 'warning')
+        addLog(`   原因: ${data.reason}, 倒计时: ${data.countdown}秒`, 'warning')
+        showKickOutDialog(data)
+      })
+
+      eventSource.addEventListener('kick_out_update', (event) => {
+        const data = JSON.parse(event.data)
+        addLog(`⏱️ 倒计时更新: ${data.countdown} 秒`, data.countdown <= 3 ? 'error' : 'info')
+        updateCountdown(data.countdown)
+      })
+
+      eventSource.addEventListener('kick_out_final', (event) => {
+        addLog('👋 倒计时结束，即将退出', 'error')
+        hideKickOutDialog()
+        setTimeout(() => logout(), 1000)
+      })
+
+      eventSource.addEventListener('message', (event) => {
+        addLog(`📨 收到消息: ${event.data}`, 'success')
+      })
+
+      eventSource.onerror = (error) => {
+        addLog('❌ SSE 连接错误', 'error')
+        updateStatus('连接错误')
+
+        if (eventSource.readyState === EventSource.CLOSED) {
+          addLog('🔄 3秒后尝试重连...', 'warning')
+          setTimeout(() => {
+            if (localStorage.getItem('satoken')) {
+              connectSSE()
+            }
+          }, 3000)
+        }
+      }
+    }
+
+    // 显示踢出弹窗
+    function showKickOutDialog(data) {
+      document.getElementById('dialog-message').textContent = data.message
+      document.getElementById('dialog-reason').textContent = `原因：${data.reason}`
+      document.getElementById('countdown-number').textContent = data.countdown
+      document.getElementById('kickout-dialog').classList.add('show')
+    }
+
+    // 更新倒计时
+    function updateCountdown(countdown) {
+      document.getElementById('countdown-number').textContent = countdown
+
+      if (countdown <= 3) {
+        document.getElementById('countdown-number').style.color = '#ff0000'
+        document.getElementById('countdown-number').style.transform = 'scale(1.2)'
+      }
+    }
+
+    // 隐藏踢出弹窗
+    function hideKickOutDialog() {
+      document.getElementById('kickout-dialog').classList.remove('show')
+    }
+
+    // 立即退出
+    function logoutNow() {
+      addLog('👤 用户选择立即退出', 'warning')
+      logout()
+    }
+
+    // 退出登录
+    function logout() {
+      addLog('🚪 开始退出登录...', 'info')
+
+      if (eventSource) {
+        eventSource.close()
+        eventSource = null
+      }
+
+      localStorage.removeItem('satoken')
+      localStorage.removeItem('userInfo')
+      sessionStorage.clear()
+
+      addLog('✅ 已清除认证信息', 'success')
+      addLog('🔀 3秒后跳转到登录页...', 'info')
+
+      setTimeout(() => {
+        window.location.href = '/login'
+      }, 3000)
+    }
+
+    // 页面加载时检查 token
+    window.onload = function() {
+      const token = localStorage.getItem('satoken')
+      if (token) {
+        addLog('✅ 检测到 token，可以建立连接', 'success')
+        updateStatus('未连接', '-', '已加载')
+      } else {
+        addLog('⚠️ 未检测到 token，请先登录', 'warning')
+        updateStatus('未连接', '-', '未加载')
+      }
+    }
+
+    // 页面卸载时关闭连接
+    window.onbeforeunload = function() {
+      if (eventSource) {
+        eventSource.close()
+      }
+    }
+  </script>
+</body>
+</html>

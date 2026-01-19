@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>踢出通知集成示例</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 50px auto;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    .card {
+      background: white;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      margin-bottom: 20px;
+    }
+    h1 { color: #333; margin-bottom: 10px; }
+    .code-block {
+      background: #2d2d2d;
+      color: #f8f8f2;
+      padding: 15px;
+      border-radius: 5px;
+      overflow-x: auto;
+      font-family: 'Courier New', monospace;
+      font-size: 14px;
+      margin: 15px 0;
+    }
+    .step {
+      margin: 20px 0;
+      padding: 15px;
+      background: #e3f2fd;
+      border-left: 4px solid #2196f3;
+      border-radius: 4px;
+    }
+    .step-number {
+      display: inline-block;
+      background: #2196f3;
+      color: white;
+      width: 30px;
+      height: 30px;
+      line-height: 30px;
+      text-align: center;
+      border-radius: 50%;
+      margin-right: 10px;
+      font-weight: bold;
+    }
+    button {
+      background: #4caf50;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 14px;
+      margin: 5px;
+    }
+    button:hover { background: #45a049; }
+    .warning {
+      background: #fff3cd;
+      border-left: 4px solid #ffc107;
+      padding: 15px;
+      margin: 15px 0;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>🚀 踢出通知功能 - 最简单的集成方法</h1>
+    <p>只需 3 步，即可在您的应用中集成踢出通知功能！</p>
+  </div>
+
+  <!-- 步骤 1 -->
+  <div class="card">
+    <h2><span class="step-number">1</span>引入脚本文件</h2>
+    <div class="step">
+      <p>将 <code>kickout-notification.js</code> 文件放到您的项目中，然后在 HTML 中引入：</p>
+      <div class="code-block">&lt;script src="/js/kickout-notification.js"&gt;&lt;/script&gt;</div>
+      <p>建议放在 <code>&lt;/body&gt;</code> 标签之前。</p>
+    </div>
+  </div>
+
+  <!-- 步骤 2 -->
+  <div class="card">
+    <h2><span class="step-number">2</span>登录成功后初始化</h2>
+    <div class="step">
+      <p>在用户登录成功后，调用初始化方法：</p>
+      <div class="code-block">// 登录成功回调
+function onLoginSuccess(token) {
+  // 保存 token
+  localStorage.setItem('satoken', token)
+
+  // 🎯 初始化踢出通知（关键代码）
+  window.KickOutManager.init()
+
+  // 跳转到首页
+  window.location.href = '/home'
+}</div>
+    </div>
+  </div>
+
+  <!-- 步骤 3 -->
+  <div class="card">
+    <h2><span class="step-number">3</span>退出登录时清理</h2>
+    <div class="step">
+      <p>用户主动退出时，清理管理器：</p>
+      <div class="code-block">// 退出登录
+function onLogout() {
+  // 清理踢出通知管理器
+  window.KickOutManager.destroy()
+
+  // 清除 token
+  localStorage.removeItem('satoken')
+
+  // 跳转到登录页
+  window.location.href = '/login'
+}</div>
+    </div>
+  </div>
+
+  <!-- 完整示例 -->
+  <div class="card">
+    <h2>✨ 完整示例</h2>
+    <div class="code-block">&lt;!DOCTYPE html&gt;
+&lt;html lang="zh-CN"&gt;
+&lt;head&gt;
+  &lt;meta charset="UTF-8"&gt;
+  &lt;title&gt;我的应用&lt;/title&gt;
+&lt;/head&gt;
+&lt;body&gt;
+  &lt;div id="app"&gt;
+    &lt;h1&gt;欢迎&lt;/h1&gt;
+    &lt;button onclick="logout()"&gt;退出登录&lt;/button&gt;
+  &lt;/div&gt;
+
+  &lt;!-- 引入踢出通知脚本 --&gt;
+  &lt;script src="/js/kickout-notification.js"&gt;&lt;/script&gt;
+
+  &lt;script&gt;
+    // 检查是否已登录
+    const token = localStorage.getItem('satoken')
+
+    if (token) {
+      // 已登录，初始化踢出通知
+      window.KickOutManager.init()
+    } else {
+      // 未登录，跳转到登录页
+      window.location.href = '/login'
+    }
+
+    // 退出登录
+    function logout() {
+      window.KickOutManager.destroy()
+      localStorage.removeItem('satoken')
+      window.location.href = '/login'
+    }
+  &lt;/script&gt;
+&lt;/body&gt;
+&lt;/html&gt;</div>
+    <button onclick="copyCode()">复制代码</button>
+  </div>
+
+  <!-- 测试功能 -->
+  <div class="card">
+    <h2>🧪 测试功能</h2>
+    <div class="warning">
+      <strong>注意：</strong>点击测试按钮前，请确保：
+      <ol>
+        <li>已引入 <code>kickout-notification.js</code></li>
+        <li>localStorage 中有 <code>satoken</code></li>
+        <li>SSE 连接已建立</li>
+      </ol>
+    </div>
+    <button onclick="testInit()">初始化踢出通知</button>
+    <button onclick="testConnection()">检查连接状态</button>
+    <button onclick="testDialog()">测试弹窗显示</button>
+    <button onclick="testLogout()">测试退出登录</button>
+    <div id="test-result" style="margin-top: 15px; padding: 10px; background: #f0f0f0; border-radius: 5px; display: none;"></div>
+  </div>
+
+  <!-- FAQ -->
+  <div class="card">
+    <h2>❓ 常见问题</h2>
+    <div class="step">
+      <p><strong>Q: 弹窗没有显示？</strong></p>
+      <p>A: 打开浏览器控制台（F12），查看是否有错误信息。确认 localStorage 中有 satoken。</p>
+    </div>
+    <div class="step">
+      <p><strong>Q: 如何自定义弹窗样式？</strong></p>
+      <p>A: 直接修改 <code>kickout-notification.js</code> 中的样式代码。</p>
+    </div>
+    <div class="step">
+      <p><strong>Q: 支持 Vue/React/Angular 吗？</strong></p>
+      <p>A: 完全支持！请查看 <code>KICKOUT-INTEGRATION-GUIDE.md</code> 中的详细示例。</p>
+    </div>
+  </div>
+
+  <script>
+    function showResult(message) {
+      const resultEl = document.getElementById('test-result')
+      resultEl.style.display = 'block'
+      resultEl.innerHTML = `<strong>测试结果：</strong><br>${message}`
+    }
+
+    function testInit() {
+      const token = localStorage.getItem('satoken')
+      if (!token) {
+        // 模拟 token
+        localStorage.setItem('satoken', 'test-token-' + Date.now())
+      }
+
+      if (typeof window.KickOutManager === 'undefined') {
+        showResult('❌ KickOutManager 未定义，请先引入 kickout-notification.js')
+        return
+      }
+
+      window.KickOutManager.init()
+      showResult('✅ 踢出通知管理器已初始化<br>✅ Token: ' + localStorage.getItem('satoken').substring(0, 20) + '...')
+    }
+
+    function testConnection() {
+      if (typeof window.KickOutManager === 'undefined') {
+        showResult('❌ KickOutManager 未定义')
+        return
+      }
+
+      const isActive = window.KickOutManager.isConnectionActive()
+      showResult(`连接状态: ${isActive ? '✅ 已连接' : '❌ 未连接'}`)
+    }
+
+    function testDialog() {
+      if (typeof window.KickOutManager === 'undefined') {
+        showResult('❌ KickOutManager 未定义')
+        return
+      }
+
+      window.KickOutManager.showDialog({
+        message: '这是一个测试弹窗',
+        reason: '测试踢出功能',
+        countdown: 5
+      })
+      showResult('✅ 测试弹窗已显示')
+    }
+
+    function testLogout() {
+      if (typeof window.KickOutManager === 'undefined') {
+        showResult('❌ KickOutManager 未定义')
+        return
+      }
+
+      window.KickOutManager.logout()
+      showResult('✅ 已执行退出登录')
+    }
+
+    function copyCode() {
+      const code = document.querySelector('.code-block').textContent
+      navigator.clipboard.writeText(code).then(() => {
+        alert('✅ 代码已复制到剪贴板')
+      }).catch(() => {
+        alert('❌ 复制失败，请手动复制')
+      })
+    }
+
+    // 页面加载时检查
+    window.addEventListener('load', () => {
+      const token = localStorage.getItem('satoken')
+      if (token && typeof window.KickOutManager !== 'undefined') {
+        window.KickOutManager.init()
+      }
+    })
+  </script>
+</body>
+</html>

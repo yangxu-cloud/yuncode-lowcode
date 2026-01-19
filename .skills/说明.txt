@@ -1,0 +1,39 @@
+/your-project-root
+├── /agents              # 不同的 Agent 角色配置
+└── /skills              # 技能库中心
+    ├── /data-analysis   # 技能 A：数据分析
+    │   ├── SKILL.md     # <--- 技能的“说明书”，Agent 阅读此处了解如何使用
+    │   ├── logic.py     # 技能的底层 Python 代码实现
+    │   └── schema.json  # 符合 JSON Schema 标准的工具参数定义
+    └── /web-search      # 技能 B：网页搜索
+        ├── SKILL.md
+        └── adapter.ts   # 技能的底层 API 适配代码
+
+SKILL.md 应该包含什么内容？
+这份文件是写给 LLM（大模型） 看的，而不是给人看的。其内容应高度结构化：
+markdown
+# 技能名称：Complex_Data_Visualizer
+## 描述
+当用户提供 CSV 或 JSON 格式的数据并要求生成趋势图、柱状图或热力图时，使用此技能。
+
+## 触发条件
+- 用户提到“画个图”
+- 用户请求“分析这段数据的趋势”
+
+## 执行逻辑 (SOP)
+1. 检查数据格式是否合法。
+2. 调用 Python 代码解释器进行数据清洗。
+3. 使用 Plotly 库生成交互式 HTML 图表。
+
+## 约束
+- 图片背景必须为透明。
+- 不要尝试读取超过 50MB 的文件。
+
+/your-vue-project
+├── .skills/               <-- 建立专用的技能说明目录
+│   ├── ui-generator/
+│   │   └── SKILL.md       # 描述如何生成 Vue 组件
+│   └── data-handler/
+│       └── SKILL.md       # 描述如何处理复杂的 JSON 转换
+├── src/
+└── package.json

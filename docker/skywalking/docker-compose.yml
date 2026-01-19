@@ -1,0 +1,105 @@
+version: '3.8'
+
+services:
+  # Elasticsearch - 存储链路追踪数据
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.17.0
+    container_name: skywalking-es
+    environment:
+      - discovery.type=single-node
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      - bootstrap.memory_lock=true
+      - cluster.name=yuncode-skywalking
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    volumes:
+      - ./data/es:/usr/share/elasticsearch/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:9200/_cluster/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    networks:
+      - skywalking
+    restart: unless-stopped
+
+  # SkyWalking OAP Server - 数据分析平台
+  oap:
+    image: apache/skywalking-oap-server:8.16.0-es7
+    container_name: skywalking-oap
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    links:
+      - elasticsearch
+    ports:
+      - "11800:11800" # gRPC 端口，Agent 上报数据
+      - "12800:12800" # HTTP 端口，UI 访问
+    environment:
+      - SW_STORAGE=elasticsearch7
+      - SW_ES_URL=jdbc:elasticsearch7://elasticsearch:9200
+      - SW_ES_LOG_WORKERS=5
+      - SW_HEALTH_CHECKER=default
+      - SW_TELEMETRY=prometheus
+      - SW_ENABLE_DATA_PRESERVE=true
+      - JAVA_OPTS=-Xms2g -Xmx2g
+    volumes:
+      - ./config/oap/application.yml:/skywalking/config/application.yml:ro
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:12800/healthcheck || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    networks:
+      - skywalking
+    restart: unless-stopped
+
+  # SkyWalking UI - 可视化界面
+  ui:
+    image: apache/skywalking-ui:8.16.0
+    container_name: skywalking-ui
+    depends_on:
+      oap:
+        condition: service_healthy
+    links:
+      - oap
+    ports:
+      - "8088:8080" # Web UI 端口
+    environment:
+      - SW_OAP_ADDRESS=http://oap:12800
+      - SW_ZIPKIN_ADDRESS=oap:9411
+    networks:
+      - skywalking
+    restart: unless-stopped
+
+  # Prometheus - 指标采集（可选）
+  prometheus:
+    image: prom/prometheus:v2.45.0
+    container_name: skywalking-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./config/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./data/prometheus:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=200h'
+      - '--web.enable-lifecycle'
+    networks:
+      - skywalking
+    restart: unless-stopped
+
+networks:
+  skywalking:
+    driver: bridge
+    name: skywalking-network
+
+volumes:
+  es-data:
+    driver: local
+  prometheus-data:
+    driver: local

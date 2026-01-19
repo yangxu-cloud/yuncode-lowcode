@@ -1,0 +1,99 @@
+server:
+  port: 8080
+  servlet:
+    context-path: /api
+
+spring:
+  application:
+    name: yuncode-lowcode-admin
+
+  # 数据源配置
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/yuncode_lowcode?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=true&serverTimezone=GMT%2B8
+    username: root
+    password: root
+    druid:
+      initial-size: 5
+      min-idle: 5
+      max-active: 20
+      max-wait: 60000
+      time-between-eviction-runs-millis: 60000
+      min-evictable-idle-time-millis: 300000
+      validation-query: SELECT 1
+      test-while-idle: true
+      test-on-borrow: false
+      test-on-return: false
+
+  # Redis 配置
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      password:
+      database: 0
+      timeout: 10000ms
+      lettuce:
+        pool:
+          max-active: 8
+          max-wait: -1ms
+          max-idle: 8
+          min-idle: 0
+
+# MyBatis Plus 配置
+mybatis-plus:
+  mapper-locations: classpath*:/mapper/**/*.xml
+  type-aliases-package: com.yuncode.*.entity
+  configuration:
+    map-underscore-to-camel-case: true
+    cache-enabled: false
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+  global-config:
+    db-config:
+      id-type: ASSIGN_ID
+      logic-delete-field: deleted
+      logic-delete-value: 1
+      logic-not-delete-value: 0
+
+# Knife4j 配置
+knife4j:
+  enable: true
+  setting:
+    language: zh_cn
+  production: false
+
+# Sa-Token 配置
+sa-token:
+  # Token 名称（同时也是 Cookie 名称）
+  token-name: satoken
+  # Token 有效期（单位：秒）默认 30 天，-1 代表永不过期
+  timeout: 2592000
+  # Token 临时有效期（指定时间内无操作就视为 token 过期）单位：秒
+  active-timeout: -1
+  # 是否允许同一账号并发登录（为 true 时允许一起登录，为 false 时新登录挤掉旧登录）
+  # 设为 false 实现同账号互斥登录：新登录会挤掉旧登录
+  is-concurrent: false
+  # 在多人登录同一账号时，是否共用一个 token（为 true 时所有登录共用一个 token，为 false 时每次登录新建一个 token）
+  # is-concurrent: false 时，此配置无效
+  is-share: false
+  # token 风格（默认可取值：uuid、simple-uuid、random-32、random-64、random-128、tik）
+  # 注意：使用 JWT 模式时，token-style 必须设为 simple-uuid
+  token-style: simple-uuid
+  # 是否输出操作日志
+  is-log: true
+  # 是否从 cookie 读取 token
+  is-read-cookie: false
+  # 是否从 header 读取 token
+  is-read-header: true
+  # 注意：不设置 token-prefix，因为我们在 SaTokenHeaderFilter 中手动处理 Bearer 前缀
+  # 如果设置 token-prefix: Bearer，Sa-Token 会要求 satoken header 中也必须包含 Bearer 前缀
+  # JWT 密钥（注意：键名是 jwt-secret-key，不是 jwt.secret-key）
+  jwt-secret-key: "yuncode-lowcode-sa-token-jwt-secret-key-2024-hutool-bcrypt-compatible-with-spring-boot-3-x8k9m2v4n6"
+
+# 日志配置
+logging:
+  level:
+    com.yuncode: debug
+    org.springframework: info
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{50} - %msg%n"

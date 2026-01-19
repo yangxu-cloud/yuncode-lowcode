@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+         http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.yuncode</groupId>
+        <artifactId>yuncode-lowcode-boot</artifactId>
+        <version>1.0.0</version>
+    </parent>
+
+    <artifactId>yuncode-admin</artifactId>
+    <name>Yuncode Admin Application</name>
+    <description>Admin Backend Application Aggregator</description>
+
+    <dependencies>
+        <!-- Common Module -->
+        <dependency>
+            <groupId>com.yuncode</groupId>
+            <artifactId>yuncode-common</artifactId>
+            <version>1.0.0</version>
+        </dependency>
+
+        <!-- System Module -->
+        <dependency>
+            <groupId>com.yuncode</groupId>
+            <artifactId>yuncode-system</artifactId>
+            <version>1.0.0</version>
+        </dependency>
+
+        <!-- Tenant Module -->
+        <dependency>
+            <groupId>com.yuncode</groupId>
+            <artifactId>yuncode-tenant</artifactId>
+            <version>1.0.0</version>
+        </dependency>
+
+        <!-- Auth Module -->
+        <dependency>
+            <groupId>com.yuncode</groupId>
+            <artifactId>yuncode-auth</artifactId>
+            <version>1.0.0</version>
+        </dependency>
+
+        <!-- MyBatis Plus -->
+        <dependency>
+            <groupId>com.baomidou</groupId>
+            <artifactId>mybatis-plus-boot-starter</artifactId>
+        </dependency>
+
+        <!-- Knife4j API 文档 -->
+        <dependency>
+            <groupId>com.github.xiaoymin</groupId>
+            <artifactId>knife4j-openapi3-jakarta-spring-boot-starter</artifactId>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <configuration>
+                    <mainClass>com.yuncode.admin.YuncodeAdminApplication</mainClass>
+                    <excludes>
+                        <exclude>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                        </exclude>
+                    </excludes>
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>repackage</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+</project>
