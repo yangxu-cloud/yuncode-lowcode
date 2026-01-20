@@ -165,75 +165,86 @@ public class OnlineUserServiceImpl implements OnlineUserService {
         String kickedUsername = kickedUser != null ? kickedUser.getUsername() : "unknown";
         Long kickedUserId = kickedUser != null ? kickedUser.getUserId() : null;
 
-        boolean kickedOut = false;
+        // 异步执行踢出操作，不阻塞管理员界面
+        performKickOutAsync(token, kickedUsername, kickedUserId);
 
-        // 使用 StpUtil 踢出用户
-        try {
-            // 获取 token 对应的 loginId
-            Object loginId = StpUtil.getLoginIdByToken(token);
-            if (loginId != null) {
-                log.info("找到 token 对应的用户 ID: {}", loginId);
+        log.info("踢出指令已发送，token: {}, username={}",
+                token.substring(0, Math.min(20, token.length())) + "...", kickedUsername);
+    }
 
-                // 1. 先发送踢出通知（给用户5秒倒计时）
-                if (kickedUserId != null) {
-                    try {
-                        log.info("准备发送踢出通知: userId={}, 当前SSE连接数={}", kickedUserId, notificationService.getActiveConnections());
-                        boolean isOnline = notificationService.isUserOnline(kickedUserId);
-                        log.info("用户 SSE 在线状态: userId={}, isOnline={}", kickedUserId, isOnline);
-
-                        notificationService.sendKickOutNotification(kickedUserId, "被管理员踢出", 5);
-                        log.info("已发送踢出通知: userId={}, 倒计时=5秒", kickedUserId);
-                    } catch (Exception e) {
-                        log.error("发送踢出通知失败: userId={}, error={}", kickedUserId, e.getMessage(), e);
-                        // 通知失败不影响踢出操作
-                    }
-                } else {
-                    log.warn("无法获取 userId，跳过发送踢出通知");
-                }
-
-                // 等待5秒，让用户看到通知
-                try {
-                    Thread.sleep(5000);
-                } catch (InterruptedException e) {
-                    log.warn("等待倒计时被中断");
-                    Thread.currentThread().interrupt();
-                }
-
-                // 2. 踢出登录（使 token 失效）
-                StpUtil.kickout(loginId);
-                log.info("已踢出用户: loginId={}", loginId);
-
-                // 3. 关闭用户的 SSE 连接
-                if (kickedUserId != null) {
-                    notificationService.closeUserConnection(kickedUserId);
-                    log.info("已关闭用户 SSE 连接: userId={}", kickedUserId);
-                }
-
-                kickedOut = true;
-            } else {
-                log.warn("无法从 token 获取 loginId，尝试使用 StpUtil.kickoutByTokenValue");
-                StpUtil.kickoutByTokenValue(token);
-                kickedOut = true;
-                log.info("使用 StpUtil.kickoutByTokenValue 踢出成功");
-            }
-
-            // 4. 记录被踢出用户的登出时间
+    /**
+     * 异步执行踢出操作
+     * 包括发送通知、等待倒计时、踢出用户、关闭连接等
+     */
+    private void performKickOutAsync(String token, String kickedUsername, Long kickedUserId) {
+        // 使用异步线程执行踢出逻辑，避免阻塞管理员界面
+        new Thread(() -> {
             try {
-                loginLogService.updateLogoutTime(kickedUsername, LocalDateTime.now());
-                log.info("已记录用户登出时间: username={}", kickedUsername);
+                // 获取 token 对应的 loginId
+                Object loginId = StpUtil.getLoginIdByToken(token);
+                if (loginId != null) {
+                    log.info("[异步踢出] 找到 token 对应的用户 ID: {}", loginId);
+
+                    // 1. 先发送踢出通知（给用户5秒倒计时）
+                    if (kickedUserId != null) {
+                        try {
+                            log.info("[异步踢出] 准备发送踢出通知: userId={}, 当前SSE连接数={}", kickedUserId, notificationService.getActiveConnections());
+                            boolean isOnline = notificationService.isUserOnline(kickedUserId);
+                            log.info("[异步踢出] 用户 SSE 在线状态: userId={}, isOnline={}", kickedUserId, isOnline);
+
+                            notificationService.sendKickOutNotification(kickedUserId, "被管理员踢出", 5);
+                            log.info("[异步踢出] 已发送踢出通知: userId={}, 倒计时=5秒", kickedUserId);
+                        } catch (Exception e) {
+                            log.error("[异步踢出] 发送踢出通知失败: userId={}, error={}", kickedUserId, e.getMessage(), e);
+                            // 通知失败不影响踢出操作
+                        }
+                    } else {
+                        log.warn("[异步踢出] 无法获取 userId，跳过发送踢出通知");
+                    }
+
+                    // 等待5秒，让用户看到通知
+                    try {
+                        Thread.sleep(5000);
+                        log.info("[异步踢出] 倒计时结束，准备执行踢出");
+                    } catch (InterruptedException e) {
+                        log.warn("[异步踢出] 等待倒计时被中断");
+                        Thread.currentThread().interrupt();
+                    }
+
+                    // 2. 踢出登录（使 token 失效）
+                    StpUtil.kickout(loginId);
+                    log.info("[异步踢出] 已踢出用户: loginId={}", loginId);
+
+                    // 3. 关闭用户的 SSE 连接
+                    if (kickedUserId != null) {
+                        notificationService.closeUserConnection(kickedUserId);
+                        log.info("[异步踢出] 已关闭用户 SSE 连接: userId={}", kickedUserId);
+                    }
+
+                } else {
+                    log.warn("[异步踢出] 无法从 token 获取 loginId，尝试使用 StpUtil.kickoutByTokenValue");
+                    StpUtil.kickoutByTokenValue(token);
+                    log.info("[异步踢出] 使用 StpUtil.kickoutByTokenValue 踢出成功");
+                }
+
+                // 4. 记录被踢出用户的登出时间
+                try {
+                    loginLogService.updateLogoutTime(kickedUsername, LocalDateTime.now());
+                    log.info("[异步踢出] 已记录用户登出时间: username={}", kickedUsername);
+                } catch (Exception e) {
+                    log.error("[异步踢出] 记录登出时间失败: username={}, error={}", kickedUsername, e.getMessage());
+                }
+
+                // 5. 删除在线用户记录
+                removeOnlineUser(token);
+
+                log.info("[异步踢出] 踢出流程完成，token: {}, username={}",
+                        token.substring(0, Math.min(20, token.length())) + "...", kickedUsername);
+
             } catch (Exception e) {
-                log.error("记录登出时间失败: username={}, error={}", kickedUsername, e.getMessage());
+                log.error("[异步踢出] 踢出用户失败: {}", e.getMessage(), e);
             }
-
-        } catch (Exception e) {
-            log.error("踢出用户失败: {}", e.getMessage(), e);
-        }
-
-        // 5. 删除在线用户记录
-        removeOnlineUser(token);
-
-        log.info("用户踢出完成，token: {}, kickedOut={}, username={}",
-                token.substring(0, Math.min(20, token.length())) + "...", kickedOut, kickedUsername);
+        }, "KickOut-Thread-" + kickedUsername).start();
     }
 
     @Override

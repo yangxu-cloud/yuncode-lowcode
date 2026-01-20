@@ -57,7 +57,14 @@
       "Bash(mvnw.cmd clean:*)",
       "Bash(git init:*)",
       "Bash(git add:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(git config:*)",
+      "Bash(gh repo create:*)",
+      "Bash(git remote add:*)",
+      "Bash(git branch:*)",
+      "Bash(git push:*)",
+      "Bash(if not exist \"docs\\\\功能文档\" mkdir \"docs\\\\功能文档\")",
+      "Bash(move:*)"
     ]
   }
 }

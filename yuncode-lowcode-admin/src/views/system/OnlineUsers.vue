@@ -184,11 +184,18 @@ const handleKickOut = async (user: OnlineUser) => {
       }
     );
 
+    loading.value = true; // 开始 loading
     await kickOutUser(user.sessionId);
-    ElMessage.success(t('system.kickOutSuccess'));
-    loadData();
-    loadStats();
+    ElMessage.success(`${t('system.kickOutSuccess')}，5秒后自动刷新列表`);
+
+    // 5秒后刷新列表（等待后端异步踢出完成）
+    setTimeout(() => {
+      loadData();
+      loadStats();
+      loading.value = false;
+    }, 5000);
   } catch (error: any) {
+    loading.value = false;
     if (error !== "cancel") {
       console.error("踢出用户失败:", error);
       ElMessage.error(error.message || t('system.kickOutFailed'));
@@ -209,13 +216,20 @@ const handleBatchKickOut = async () => {
       }
     );
 
+    loading.value = true;
     const sessionIds = selectedUsers.value.map(u => u.sessionId);
     await batchKickOutUsers(sessionIds);
-    ElMessage.success(t('system.kickOutSuccess'));
+    ElMessage.success(`${t('system.kickOutSuccess')}，5秒后自动刷新列表`);
     selectedUsers.value = [];
-    loadData();
-    loadStats();
+
+    // 5秒后刷新列表（等待后端异步踢出完成）
+    setTimeout(() => {
+      loadData();
+      loadStats();
+      loading.value = false;
+    }, 5000);
   } catch (error: any) {
+    loading.value = false;
     if (error !== "cancel") {
       console.error("批量踢出失败:", error);
       ElMessage.error(error.message || t('system.kickOutFailed'));

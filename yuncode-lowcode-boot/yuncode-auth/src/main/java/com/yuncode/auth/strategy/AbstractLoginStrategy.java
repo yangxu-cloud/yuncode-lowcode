@@ -3,8 +3,10 @@ package com.yuncode.auth.strategy;
 import cn.dev33.satoken.stp.StpUtil;
 import cn.hutool.crypto.digest.BCrypt;
 import com.yuncode.auth.dto.LoginDTO;
+import com.yuncode.auth.properties.SaTokenProperties;
 import com.yuncode.auth.vo.LoginVO;
 import com.yuncode.common.exception.BusinessException;
+import com.yuncode.common.exception.ErrorCode;
 import com.yuncode.system.entity.SysUser;
 import com.yuncode.system.entity.OnlineUser;
 import com.yuncode.system.enums.LoginStatus;
@@ -16,12 +18,16 @@ import com.yuncode.tenant.entity.SysTenant;
 import com.yuncode.tenant.mapper.SysTenantMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * 登录策略抽象基类
  */
 @Slf4j
 public abstract class AbstractLoginStrategy implements LoginStrategy {
+
+    @Autowired
+    protected SaTokenProperties saTokenProperties;
 
     protected final SysTenantMapper sysTenantMapper;
     protected final SysUserMapper sysUserMapper;
@@ -60,14 +66,14 @@ public abstract class AbstractLoginStrategy implements LoginStrategy {
             if (user == null) {
                 status = LoginStatus.FAIL.getCode();
                 msg = "用户名或密码错误";
-                throw new BusinessException(msg);
+                throw new BusinessException(ErrorCode.USER_PASSWORD_ERROR);
             }
 
             // 3. 校验用户状态
             if (user.getStatus() == 1) {
                 status = LoginStatus.FAIL.getCode();
                 msg = "账号已被禁用";
-                throw new BusinessException(msg);
+                throw new BusinessException(ErrorCode.ACCOUNT_DISABLED);
             }
 
             // 4. 校验密码
@@ -76,7 +82,7 @@ public abstract class AbstractLoginStrategy implements LoginStrategy {
             if (!BCrypt.checkpw(loginDTO.getPassword(), user.getPassword())) {
                 status = LoginStatus.FAIL.getCode();
                 msg = "用户名或密码错误";
-                throw new BusinessException(msg);
+                throw new BusinessException(ErrorCode.USER_PASSWORD_ERROR);
             }
 
             // 5. 使用 Sa-Token 进行登录
@@ -114,15 +120,11 @@ public abstract class AbstractLoginStrategy implements LoginStrategy {
         } catch (BusinessException e) {
             status = LoginStatus.FAIL.getCode();
             msg = e.getMessage();
-            log.warn("用户登录失败: username={}, loginType={}, status={}, message={}",
-                    username, getLoginType(), status, e.getMessage());
             throw e;
         } catch (Exception e) {
             status = LoginStatus.FAIL.getCode();
             msg = "系统异常：" + e.getMessage();
-            log.error("登录系统异常: username={}, loginType={}, status={}",
-                    username, getLoginType(), status, e);
-            throw new BusinessException(msg);
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "登录失败，请稍后重试");
         } finally {
             // 记录登录日志（无论成功或失败）
             Long costTime = System.currentTimeMillis() - startTime;
@@ -133,13 +135,13 @@ public abstract class AbstractLoginStrategy implements LoginStrategy {
 
         // 如果登录失败，不返回 Token
         if (!LoginStatus.SUCCESS.getCode().equals(status)) {
-            throw new BusinessException(msg);
+            throw new BusinessException(ErrorCode.LOGIN_FAILED, msg);
         }
 
         // 构建返回结果
         LoginVO loginVO = new LoginVO();
         loginVO.setToken(StpUtil.getTokenValue());
-        loginVO.setTokenName("satoken");
+        loginVO.setTokenName(saTokenProperties.getTokenName());  // 从配置读取
         loginVO.setUserId(StpUtil.getLoginIdAsLong());
         loginVO.setUsername(username);
         loginVO.setNickname(StpUtil.getSession().get("nickname", ""));

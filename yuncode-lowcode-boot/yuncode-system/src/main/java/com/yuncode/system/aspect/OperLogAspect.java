@@ -3,8 +3,8 @@ package com.yuncode.system.aspect;
 import cn.dev33.satoken.stp.StpUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.yuncode.system.annotation.OperLog;
-import com.yuncode.system.entity.SysOperLog;
-import com.yuncode.system.service.OperLogService;
+import com.yuncode.system.entity.SysOperationLog;
+import com.yuncode.system.service.SysOperationLogService;
 import com.yuncode.common.utils.web.TraceIdContext;
 import jakarta.servlet.http.HttpServletRequest;
 import org.aspectj.lang.ProceedingJoinPoint;
@@ -33,7 +33,7 @@ public class OperLogAspect {
     private static final Logger logger = LoggerFactory.getLogger(OperLogAspect.class);
 
     @Autowired
-    private OperLogService operLogService;
+    private SysOperationLogService operationLogService;
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -65,36 +65,46 @@ public class OperLogAspect {
         OperLog operLogAnnotation = method.getAnnotation(OperLog.class);
 
         // 创建操作日志对象
-        SysOperLog operLog = new SysOperLog();
-        operLog.setModule(operLogAnnotation.module());
-        operLog.setBusinessType(operLogAnnotation.businessType());
-        operLog.setMethod(signature.getDeclaringType().getName() + "." + method.getName());
+        SysOperationLog operationLog = new SysOperationLog();
+        operationLog.setModule(operLogAnnotation.module());
+        operationLog.setOperation(getBusinessTypeName(operLogAnnotation.businessType()) + ":" + operLogAnnotation.description());
+        operationLog.setMethod(signature.getDeclaringType().getName() + "." + method.getName());
 
         if (request != null) {
-            operLog.setRequestMethod(request.getMethod());
-            operLog.setOperUrl(request.getRequestURI());
-            operLog.setOperIp(getIpAddr(request));
+            operationLog.setIp(getIpAddr(request));
         }
 
+        // 设置用户信息
         try {
             if (StpUtil.isLogin()) {
-                operLog.setOperName(StpUtil.getLoginIdAsString());
+                operationLog.setUserId(StpUtil.getLoginIdAsLong());
+                operationLog.setUsername(StpUtil.getLoginIdAsString());
+
+                // 获取租户信息
+                Object tenantIdObj = StpUtil.getSession().get("tenantId");
+                if (tenantIdObj != null) {
+                    operationLog.setTenantId(Long.valueOf(tenantIdObj.toString()));
+                }
+                Object tenantNameObj = StpUtil.getSession().get("tenantName");
+                if (tenantNameObj != null) {
+                    operationLog.setTenantName(tenantNameObj.toString());
+                }
             }
         } catch (Exception e) {
             // 未登录状态
         }
 
         // 设置链路追踪信息
-        operLog.setTraceId(TraceIdContext.getTraceId());
-        operLog.setSpanId(TraceIdContext.getSpanId());
-        operLog.setParentSpanId(TraceIdContext.getParentSpanId());
+        operationLog.setTraceId(TraceIdContext.getTraceId());
+        operationLog.setSpanId(TraceIdContext.getSpanId());
+        operationLog.setParentSpanId(TraceIdContext.getParentSpanId());
 
         // 记录请求参数
         Object[] args = joinPoint.getArgs();
         try {
             if (args != null && args.length > 0) {
                 String params = objectMapper.writeValueAsString(args);
-                operLog.setOperParam(params.length() > 2000 ? params.substring(0, 2000) : params);
+                operationLog.setParams(params.length() > 2000 ? params.substring(0, 2000) : params);
             }
         } catch (Exception e) {
             logger.error("操作日志参数序列化失败", e);
@@ -106,37 +116,28 @@ public class OperLogAspect {
             result = joinPoint.proceed();
 
             // 操作成功
-            operLog.setStatus(0);
-
-            // 记录返回结果
-            try {
-                if (result != null) {
-                    String jsonResult = objectMapper.writeValueAsString(result);
-                    operLog.setJsonResult(jsonResult.length() > 2000 ? jsonResult.substring(0, 2000) : jsonResult);
-                }
-            } catch (Exception e) {
-                logger.error("操作日志返回结果序列化失败", e);
-            }
+            operationLog.setStatus("success");
 
         } catch (Exception e) {
             // 操作失败
-            operLog.setStatus(1);
-            operLog.setErrorMsg(e.getMessage());
+            operationLog.setStatus("error");
+            operationLog.setErrorMsg(e.getMessage());
             logger.error("方法执行异常: {}", method.getName(), e);
             throw e;
         } finally {
-            // 设置操作时间
-            operLog.setOperTime(LocalDateTime.now());
+            // 设置执行时间
+            long executeTime = System.currentTimeMillis() - startTime;
+            operationLog.setExecuteTime(executeTime);
+            operationLog.setCreatedAt(LocalDateTime.now());
 
             // 异步保存日志
             try {
-                operLogService.saveOperLog(operLog);
+                operationLogService.recordOperationLog(operationLog);
             } catch (Exception e) {
                 logger.error("保存操作日志失败", e);
             }
 
-            long endTime = System.currentTimeMillis();
-            logger.debug("操作日志记录完成，耗时: {}ms", endTime - startTime);
+            logger.debug("操作日志记录完成，耗时: {}ms", executeTime);
         }
 
         return result;
@@ -173,5 +174,20 @@ public class OperLogAspect {
         }
 
         return "0:0:0:0:0:0:0:1".equals(ip) ? "127.0.0.1" : ip;
+    }
+
+    /**
+     * 获取业务类型名称
+     */
+    private String getBusinessTypeName(int businessType) {
+        return switch (businessType) {
+            case 1 -> "新增";
+            case 2 -> "修改";
+            case 3 -> "删除";
+            case 4 -> "授权";
+            case 5 -> "导出";
+            case 6 -> "导入";
+            default -> "其它";
+        };
     }
 }

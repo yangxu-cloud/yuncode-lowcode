@@ -3,8 +3,11 @@ package com.yuncode.auth.service;
 import cn.dev33.satoken.stp.StpUtil;
 import cn.hutool.crypto.digest.BCrypt;
 import com.yuncode.auth.dto.LoginDTO;
+import com.yuncode.auth.properties.SaTokenProperties;
 import com.yuncode.auth.vo.LoginVO;
 import com.yuncode.common.exception.BusinessException;
+import com.yuncode.common.exception.ErrorCode;
+import com.yuncode.system.annotation.LoginLog;
 import com.yuncode.system.entity.OnlineUser;
 import com.yuncode.system.entity.SysUser;
 import com.yuncode.system.enums.LoginStatus;
@@ -16,6 +19,7 @@ import com.yuncode.tenant.entity.SysTenant;
 import com.yuncode.tenant.mapper.SysTenantMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -27,6 +31,9 @@ import java.time.LocalDateTime;
 @Slf4j
 @Service
 public class UserLoginService {
+
+    @Autowired
+    private SaTokenProperties saTokenProperties;
 
     private final SysTenantMapper sysTenantMapper;
     private final SysUserMapper sysUserMapper;
@@ -50,42 +57,32 @@ public class UserLoginService {
     /**
      * 普通用户登录
      */
+    @LoginLog(loginType = "user")
     public LoginVO login(LoginDTO loginDTO, HttpServletRequest request) {
-        Long startTime = System.currentTimeMillis();
         Long tenantId = null;
         String username = loginDTO.getUsername();
-        Integer status = LoginStatus.SUCCESS.getCode();
-        String msg = "登录成功";
         SysTenant tenant = null;
 
         try {
             // 1. 校验租户编码是否存在
             if (loginDTO.getTenantCode() == null || loginDTO.getTenantCode().trim().isEmpty()) {
-                status = LoginStatus.FAIL.getCode();
-                msg = "租户编码不能为空";
-                throw new BusinessException(msg);
+                throw new BusinessException(ErrorCode.TENANT_CODE_EMPTY);
             }
 
             // 2. 查询租户
             tenant = sysTenantMapper.selectByTenantCode(loginDTO.getTenantCode());
             if (tenant == null) {
-                status = LoginStatus.FAIL.getCode();
-                msg = "租户不存在";
-                throw new BusinessException(msg);
+                throw new BusinessException(ErrorCode.TENANT_NOT_FOUND);
             }
 
             // 3. 校验租户状态
             if (tenant.getStatus() == 1) {
-                status = LoginStatus.FAIL.getCode();
-                msg = "租户已被禁用";
-                throw new BusinessException(msg);
+                throw new BusinessException(ErrorCode.TENANT_DISABLED);
             }
 
             // 4. 校验租户是否过期
             if (tenant.getExpireTime() != null && tenant.getExpireTime().isBefore(LocalDateTime.now())) {
-                status = LoginStatus.FAIL.getCode();
-                msg = "租户已过期";
-                throw new BusinessException(msg);
+                throw new BusinessException(ErrorCode.TENANT_EXPIRED);
             }
 
             tenantId = tenant.getId();
@@ -93,28 +90,20 @@ public class UserLoginService {
             // 5. 查询用户
             SysUser user = sysUserMapper.selectByUsernameAndTenantId(username, tenantId);
             if (user == null) {
-                status = LoginStatus.FAIL.getCode();
-                msg = "用户名或密码错误";
-                throw new BusinessException(msg);
+                throw new BusinessException(ErrorCode.USER_PASSWORD_ERROR);
             }
 
             // 6. 校验用户状态
             if (user.getStatus() == 1) {
-                status = LoginStatus.FAIL.getCode();
-                msg = "账号已被禁用";
-                throw new BusinessException(msg);
+                throw new BusinessException(ErrorCode.ACCOUNT_DISABLED);
             }
 
             // 7. 校验密码
-            log.debug("密码校验 - 输入密码: {}, 数据库哈希: {}", loginDTO.getPassword(), user.getPassword());
-
             if (!BCrypt.checkpw(loginDTO.getPassword(), user.getPassword())) {
-                status = LoginStatus.FAIL.getCode();
-                msg = "用户名或密码错误";
-                throw new BusinessException(msg);
+                throw new BusinessException(ErrorCode.USER_PASSWORD_ERROR);
             }
 
-            // 8. 使用 Sa-Token 进行登录，将用户类型和租户信息存储在 Token Extra 中
+            // 8. 使用 Sa-Token 进行登录
             StpUtil.login(user.getId());
 
             // 将用户类型、租户ID等信息存入 Token Extra
@@ -122,9 +111,6 @@ public class UserLoginService {
             StpUtil.getTokenSession().set("tenantId", tenantId);
             StpUtil.getTokenSession().set("username", user.getUsername());
             StpUtil.getTokenSession().set("nickname", user.getNickname() != null ? user.getNickname() : "");
-
-            log.info("用户登录成功: userId={}, username={}, tenantId={}",
-                    user.getId(), username, tenantId);
 
             // 将用户信息存入 Session
             StpUtil.getSession().set("userId", user.getId());
@@ -152,44 +138,27 @@ public class UserLoginService {
             String token = StpUtil.getTokenValue();
             onlineUserService.addOnlineUser(token, onlineUser);
 
+            // 构建返回结果
+            LoginVO loginVO = new LoginVO();
+            loginVO.setToken(token);
+            loginVO.setTokenName(saTokenProperties.getTokenName());
+            loginVO.setUserId(StpUtil.getLoginIdAsLong());
+            loginVO.setUsername(username);
+            loginVO.setNickname(StpUtil.getSession().get("nickname", ""));
+            loginVO.setAvatar(StpUtil.getSession().get("avatar", ""));
+            loginVO.setTenantId(tenantId);
+
+            if (tenant != null) {
+                loginVO.setTenantName(tenant.getTenantName());
+            }
+
+            return loginVO;
+
         } catch (BusinessException e) {
-            status = LoginStatus.FAIL.getCode();
-            msg = e.getMessage();
-            log.warn("用户登录失败: username={}, status={}, message={}", username, status, e.getMessage());
             throw e;
         } catch (Exception e) {
-            status = LoginStatus.FAIL.getCode();
-            msg = "系统异常：" + e.getMessage();
-            log.error("用户登录系统异常: username={}, status={}", username, status, e);
-            throw new BusinessException(msg);
-        } finally {
-            // 记录登录日志（无论成功或失败）
-            Long costTime = System.currentTimeMillis() - startTime;
-            log.info("记录用户登录日志: username={}, status={}, msg={}, costTime={}ms",
-                    username, status, msg, costTime);
-            sysLoginLogService.recordLoginLog(tenantId, username, status, msg, request, costTime);
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "登录失败，请稍后重试");
         }
-
-        // 如果登录失败，不返回 Token
-        if (!LoginStatus.SUCCESS.getCode().equals(status)) {
-            throw new BusinessException(msg);
-        }
-
-        // 构建返回结果
-        LoginVO loginVO = new LoginVO();
-        loginVO.setToken(StpUtil.getTokenValue());
-        loginVO.setTokenName("satoken");
-        loginVO.setUserId(StpUtil.getLoginIdAsLong());
-        loginVO.setUsername(username);
-        loginVO.setNickname(StpUtil.getSession().get("nickname", ""));
-        loginVO.setAvatar(StpUtil.getSession().get("avatar", ""));
-        loginVO.setTenantId(tenantId);
-
-        if (tenant != null) {
-            loginVO.setTenantName(tenant.getTenantName());
-        }
-
-        return loginVO;
     }
 
     /**

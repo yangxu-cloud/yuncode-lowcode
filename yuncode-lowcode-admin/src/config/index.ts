@@ -63,6 +63,11 @@ export const apiConfig = {
   baseURL: import.meta.env.VITE_API_BASE_URL || "/api",
 
   /**
+   * Token 参数名称（必须与后端 application.yml 中的 sa-token.token-name 一致）
+   */
+  tokenName: import.meta.env.VITE_TOKEN_NAME || "token",
+
+  /**
    * 请求超时时间（毫秒）
    */
   timeout: 10000,

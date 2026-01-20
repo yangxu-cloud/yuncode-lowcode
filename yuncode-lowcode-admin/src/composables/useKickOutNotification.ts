@@ -2,6 +2,7 @@ import { onUnmounted, ref } from 'vue'
 import { ElMessageBox, ElNotification } from 'element-plus'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
+import config from '@/config'
 
 /**
  * SSE 踢出通知管理
@@ -70,9 +71,9 @@ export function useKickOutNotification() {
 
     try {
       // 通过 URL 参数传递 token
-      // Sa-Token 默认从名为 'satoken' 的参数或请求头中读取 token
+      // token 参数名从配置文件读取（与后端 application.yml 中的 sa-token.token-name 一致）
       // 需要 /api 前缀让 Vite 代理拦截并转发到后端
-      const url = `/api/user/notifications?satoken=${encodeURIComponent(token)}`
+      const url = `/api/user/notifications?${config.tokenName}=${encodeURIComponent(token)}`
       eventSource = new EventSource(url)
 
       // 连接成功
@@ -113,13 +114,13 @@ export function useKickOutNotification() {
       eventSource.onerror = (error) => {
         console.error('[SSE] ❌ 连接错误', error)
 
+        // 检查是否是认证错误（401）
         if (eventSource && eventSource.readyState === EventSource.CLOSED) {
-          console.log('[SSE] 连接已关闭，3秒后重连...')
-          setTimeout(() => {
-            if (getCurrentToken()) {
-              connectSSE()
-            }
-          }, 3000)
+          console.warn('[SSE] 连接已关闭，可能是 token 失效，停止重连')
+          // 关闭连接并清理
+          eventSource.close()
+          eventSource = null
+          // 不再自动重连，避免无限重试失效的 token
         }
       }
     } catch (error) {
@@ -182,13 +183,23 @@ export function useKickOutNotification() {
       countdownTimer = null
     }
 
-    // 关闭 SSE 连接
+    // ⚠️ 先关闭 SSE 连接，防止重连
     if (eventSource) {
       eventSource.close()
       eventSource = null
     }
 
-    // 清除用户信息（异步）
+    // ⚠️ 立即清除本地 token，防止后续重试使用旧 token
+    const loginType = sessionStorage.getItem('activeLoginType') || sessionStorage.getItem('loginType')
+    if (loginType) {
+      localStorage.removeItem(`token_${loginType}`)
+      localStorage.removeItem(`userInfo_${loginType}`)
+      console.log('[SSE] 已清除本地 token 和用户信息, type=', loginType)
+    }
+    sessionStorage.removeItem('activeLoginType')
+    sessionStorage.removeItem('loginType')
+
+    // 调用退出登录 API（异步，不阻塞）
     try {
       await userStore.logout()
     } catch (error) {
@@ -235,6 +246,7 @@ export function useKickOutNotification() {
     connectSSE,
     disconnect,
     logoutNow,
-    handleLogout
+    handleLogout,
+    handleLogoutNow: logoutNow
   }
 }

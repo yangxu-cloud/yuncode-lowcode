@@ -14,8 +14,9 @@ public class SaTokenProperties {
 
     /**
      * Token 名称（同时也是 Cookie 名称）
+     * 默认值：token（与 application.yml 中的 sa-token.token-name 配置一致）
      */
-    private String tokenName = "satoken";
+    private String tokenName = "token";
 
     /**
      * Token 有效期（单位：秒）默认 30 天，-1 代表永不过期

@@ -1,10 +1,12 @@
 package com.yuncode.auth.filter;
 
+import com.yuncode.auth.properties.SaTokenProperties;
 import jakarta.servlet.*;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletRequestWrapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
@@ -27,7 +29,9 @@ public class SaTokenHeaderFilter implements Filter {
 
     private static final String AUTHORIZATION_HEADER = "Authorization";
     private static final String BEARER_PREFIX = "Bearer ";
-    private static final String SATOKEN_HEADER = "satoken";
+
+    @Autowired
+    private SaTokenProperties saTokenProperties;
 
     @Override
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
@@ -46,12 +50,15 @@ public class SaTokenHeaderFilter implements Filter {
                 log.debug("从 Authorization header 提取 Token: {}", token.substring(0, Math.min(20, token.length())) + "...");
             }
 
-            // 创建一个包装请求，将 token 添加到 satoken header
+            // 从配置文件读取 token 名称
+            String tokenHeader = saTokenProperties.getTokenName();
+
+            // 创建一个包装请求，将 token 添加到配置的 header 名称
             HttpServletRequest wrappedRequest = new HttpServletRequestWrapper(httpRequest) {
                 @Override
                 public String getHeader(String name) {
-                    // 如果请求的是 satoken header，返回从 Authorization 提取的 token
-                    if (SATOKEN_HEADER.equalsIgnoreCase(name)) {
+                    // 如果请求的是 token header，返回从 Authorization 提取的 token
+                    if (tokenHeader.equalsIgnoreCase(name)) {
                         return token;
                     }
                     // 其他 header 保持不变
@@ -60,7 +67,7 @@ public class SaTokenHeaderFilter implements Filter {
 
                 @Override
                 public Enumeration<String> getHeaders(String name) {
-                    if (SATOKEN_HEADER.equalsIgnoreCase(name)) {
+                    if (tokenHeader.equalsIgnoreCase(name)) {
                         return new Vector<String>() {{
                             add(token);
                         }}.elements();
@@ -75,7 +82,7 @@ public class SaTokenHeaderFilter implements Filter {
                     while (originalNames.hasMoreElements()) {
                         names.add(originalNames.nextElement());
                     }
-                    names.add(SATOKEN_HEADER);
+                    names.add(tokenHeader);
                     return new Vector<>(names).elements();
                 }
             };
