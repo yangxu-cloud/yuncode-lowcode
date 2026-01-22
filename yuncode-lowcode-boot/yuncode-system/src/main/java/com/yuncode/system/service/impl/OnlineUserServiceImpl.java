@@ -43,26 +43,31 @@ public class OnlineUserServiceImpl implements OnlineUserService {
     private static final int IDLE_THRESHOLD_MINUTES = 30;
 
     @Override
-    public void addOnlineUser(String token, OnlineUser onlineUser) {
+    public void addOnlineUser(String sessionId, OnlineUser onlineUser) {
         onlineUser.setLoginTime(LocalDateTime.now());
         onlineUser.setLastAccessTime(LocalDateTime.now());
         onlineUser.setStatus("active");
-        onlineUser.setSessionId(token);
+        onlineUser.setSessionId(sessionId);  // 业务会话ID
 
         // 存储到 Redis，7天过期
-        String key = ONLINE_USER_KEY_PREFIX + token;
+        String key = ONLINE_USER_KEY_PREFIX + sessionId;
+        log.info("[Redis] 添加在线用户记录，key={}, sessionId={}, userId={}, username={}",
+                key, sessionId, onlineUser.getUserId(), onlineUser.getUsername());
         redisTemplate.opsForValue().set(key, onlineUser, 7, TimeUnit.DAYS);
+        log.info("[Redis] 在线用户记录已添加，key={}", key);
     }
 
     @Override
-    public void removeOnlineUser(String token) {
-        String key = ONLINE_USER_KEY_PREFIX + token;
-        redisTemplate.delete(key);
+    public void removeOnlineUser(String sessionId) {
+        String key = ONLINE_USER_KEY_PREFIX + sessionId;
+        log.info("[Redis] 准备删除在线用户记录，key={}, sessionId={}", key, sessionId);
+        Boolean deleted = redisTemplate.delete(key);
+        log.info("[Redis] 删除结果: {}, key={}, sessionId={}", deleted, key, sessionId);
     }
 
     @Override
-    public OnlineUser getOnlineUser(String token) {
-        String key = ONLINE_USER_KEY_PREFIX + token;
+    public OnlineUser getOnlineUser(String sessionId) {
+        String key = ONLINE_USER_KEY_PREFIX + sessionId;
         return (OnlineUser) redisTemplate.opsForValue().get(key);
     }
 
@@ -82,26 +87,24 @@ public class OnlineUserServiceImpl implements OnlineUserService {
             for (String key : keys) {
                 try {
                     OnlineUser user = (OnlineUser) redisTemplate.opsForValue().get(key);
-                    if (user != null && user.getSessionId() != null) {
-                        // 验证 token 是否仍然有效（用户是否还在线）
-                        String token = key.substring(ONLINE_USER_KEY_PREFIX.length());
-
+                    if (user != null && user.getSessionId() != null && user.getToken() != null) {
+                        // 使用 OnlineUser 中存储的 Sa-Token 验证是否仍然有效
                         try {
                             // 尝试通过 token 获取 loginId，如果失败说明 token 已失效
-                            Object loginId = StpUtil.getLoginIdByToken(token);
+                            Object loginId = StpUtil.getLoginIdByToken(user.getToken());
                             if (loginId != null) {
                                 // Token 有效，添加到在线用户列表
                                 onlineUsers.add(user);
                             } else {
                                 // Token 已失效，清理 Redis 中的过期数据
-                                log.debug("Token 已失效，清理在线用户记录: token={}, username={}",
-                                    token.substring(0, Math.min(20, token.length())) + "...", user.getUsername());
+                                log.debug("Token 已失效，清理在线用户记录: sessionId={}, username={}",
+                                    user.getSessionId(), user.getUsername());
                                 redisTemplate.delete(key);
                             }
                         } catch (Exception e) {
                             // Token 验证失败，说明已失效，清理 Redis 中的过期数据
-                            log.debug("Token 验证失败，清理在线用户记录: token={}, error={}",
-                                token.substring(0, Math.min(20, token.length())) + "...", e.getMessage());
+                            log.debug("Token 验证失败，清理在线用户记录: sessionId={}, error={}",
+                                user.getSessionId(), e.getMessage());
                             redisTemplate.delete(key);
                         }
                     }
@@ -157,26 +160,34 @@ public class OnlineUserServiceImpl implements OnlineUserService {
     }
 
     @Override
-    public void kickOutUser(String token) {
-        log.info("开始踢出用户，token: {}", token.substring(0, Math.min(20, token.length())) + "...");
+    public void kickOutUser(String sessionId) {
+        log.info("开始踢出用户，sessionId: {}", sessionId);
 
         // 先获取被踢出用户的信息，用于记录日志和发送通知
-        OnlineUser kickedUser = getOnlineUser(token);
-        String kickedUsername = kickedUser != null ? kickedUser.getUsername() : "unknown";
-        Long kickedUserId = kickedUser != null ? kickedUser.getUserId() : null;
+        OnlineUser kickedUser = getOnlineUser(sessionId);
+        if (kickedUser == null) {
+            log.warn("未找到在线用户记录，sessionId: {}", sessionId);
+            return;
+        }
+
+        String kickedUsername = kickedUser.getUsername();
+        Long kickedUserId = kickedUser.getUserId();
+        String token = kickedUser.getToken();  // Sa-Token JWT
+
+        log.info("准备踢出用户: sessionId={}, userId={}, username={}, token (前32位)={}",
+            sessionId, kickedUserId, kickedUsername, token.substring(0, Math.min(32, token.length())));
 
         // 异步执行踢出操作，不阻塞管理员界面
-        performKickOutAsync(token, kickedUsername, kickedUserId);
+        performKickOutAsync(sessionId, token, kickedUsername, kickedUserId);
 
-        log.info("踢出指令已发送，token: {}, username={}",
-                token.substring(0, Math.min(20, token.length())) + "...", kickedUsername);
+        log.info("踢出指令已发送，sessionId: {}, username={}", sessionId, kickedUsername);
     }
 
     /**
      * 异步执行踢出操作
      * 包括发送通知、等待倒计时、踢出用户、关闭连接等
      */
-    private void performKickOutAsync(String token, String kickedUsername, Long kickedUserId) {
+    private void performKickOutAsync(String sessionId, String token, String kickedUsername, Long kickedUserId) {
         // 使用异步线程执行踢出逻辑，避免阻塞管理员界面
         new Thread(() -> {
             try {
@@ -188,14 +199,15 @@ public class OnlineUserServiceImpl implements OnlineUserService {
                     // 1. 先发送踢出通知（给用户5秒倒计时）
                     if (kickedUserId != null) {
                         try {
-                            log.info("[异步踢出] 准备发送踢出通知: userId={}, 当前SSE连接数={}", kickedUserId, notificationService.getActiveConnections());
-                            boolean isOnline = notificationService.isUserOnline(kickedUserId);
-                            log.info("[异步踢出] 用户 SSE 在线状态: userId={}, isOnline={}", kickedUserId, isOnline);
+                            log.info("[异步踢出] 准备发送踢出通知: userId={}, sessionId={}, 当前SSE连接数={}",
+                                kickedUserId, sessionId, notificationService.getActiveConnections());
 
-                            notificationService.sendKickOutNotification(kickedUserId, "被管理员踢出", 5);
-                            log.info("[异步踢出] 已发送踢出通知: userId={}, 倒计时=5秒", kickedUserId);
+                            notificationService.sendKickOutNotification(kickedUserId, sessionId, "被管理员踢出", 5);
+                            log.info("[异步踢出] 已发送踢出通知: userId={}, sessionId={}, 倒计时=5秒",
+                                kickedUserId, sessionId);
                         } catch (Exception e) {
-                            log.error("[异步踢出] 发送踢出通知失败: userId={}, error={}", kickedUserId, e.getMessage(), e);
+                            log.error("[异步踢出] 发送踢出通知失败: userId={}, sessionId={}, error={}",
+                                kickedUserId, sessionId, e.getMessage(), e);
                             // 通知失败不影响踢出操作
                         }
                     } else {
@@ -212,13 +224,16 @@ public class OnlineUserServiceImpl implements OnlineUserService {
                     }
 
                     // 2. 踢出登录（使 token 失效）
-                    StpUtil.kickout(loginId);
-                    log.info("[异步踢出] 已踢出用户: loginId={}", loginId);
+                    // 使用 kickoutByTokenValue 只踢出指定的 token，而不是踢出该用户的所有会话
+                    StpUtil.kickoutByTokenValue(token);
+                    log.info("[异步踢出] 已踢出指定 token: loginId={}, token (前32位)={}",
+                        loginId, token.substring(0, Math.min(32, token.length())));
 
                     // 3. 关闭用户的 SSE 连接
                     if (kickedUserId != null) {
-                        notificationService.closeUserConnection(kickedUserId);
-                        log.info("[异步踢出] 已关闭用户 SSE 连接: userId={}", kickedUserId);
+                        notificationService.closeUserConnection(kickedUserId, sessionId);
+                        log.info("[异步踢出] 已关闭用户 SSE 连接: userId={}, sessionId={}",
+                            kickedUserId, sessionId);
                     }
 
                 } else {
@@ -236,10 +251,9 @@ public class OnlineUserServiceImpl implements OnlineUserService {
                 }
 
                 // 5. 删除在线用户记录
-                removeOnlineUser(token);
+                removeOnlineUser(sessionId);
 
-                log.info("[异步踢出] 踢出流程完成，token: {}, username={}",
-                        token.substring(0, Math.min(20, token.length())) + "...", kickedUsername);
+                log.info("[异步踢出] 踢出流程完成，sessionId: {}, username={}", sessionId, kickedUsername);
 
             } catch (Exception e) {
                 log.error("[异步踢出] 踢出用户失败: {}", e.getMessage(), e);
@@ -248,9 +262,9 @@ public class OnlineUserServiceImpl implements OnlineUserService {
     }
 
     @Override
-    public void batchKickOutUsers(List<String> tokens) {
-        for (String token : tokens) {
-            kickOutUser(token);
+    public void batchKickOutUsers(List<String> sessionIds) {
+        for (String sessionId : sessionIds) {
+            kickOutUser(sessionId);
         }
     }
 
@@ -297,12 +311,12 @@ public class OnlineUserServiceImpl implements OnlineUserService {
     }
 
     @Override
-    public void updateLastAccessTime(String token) {
-        OnlineUser user = getOnlineUser(token);
+    public void updateLastAccessTime(String sessionId) {
+        OnlineUser user = getOnlineUser(sessionId);
         if (user != null) {
             user.updateLastAccessTime();
 
-            String key = ONLINE_USER_KEY_PREFIX + token;
+            String key = ONLINE_USER_KEY_PREFIX + sessionId;
             redisTemplate.opsForValue().set(key, user, 7, TimeUnit.DAYS);
         }
     }
@@ -317,6 +331,62 @@ public class OnlineUserServiceImpl implements OnlineUserService {
                 // 踢出闲置用户
                 kickOutUser(user.getSessionId());
             }
+        }
+    }
+
+    @Override
+    public void cleanExpiredSessionsForUser(Long userId) {
+        try {
+            log.debug("开始清理用户 {} 的失效会话", userId);
+            Set<String> keys = redisTemplate.keys(ONLINE_USER_KEY_PREFIX + "*");
+            if (keys == null || keys.isEmpty()) {
+                return;
+            }
+
+            int cleanedCount = 0;
+            for (String key : keys) {
+                try {
+                    OnlineUser user = (OnlineUser) redisTemplate.opsForValue().get(key);
+                    if (user != null && userId.equals(user.getUserId())) {
+                        // 找到该用户的会话，验证其 token 是否仍然有效
+                        String userToken = user.getToken();
+                        if (userToken == null) {
+                            // 没有 token，直接清理
+                            log.debug("清理没有 token 的会话: userId={}, sessionId={}",
+                                userId, user.getSessionId());
+                            redisTemplate.delete(key);
+                            cleanedCount++;
+                            continue;
+                        }
+
+                        try {
+                            // 尝试通过 token 获取 loginId，如果失败说明 token 已失效
+                            Object loginId = StpUtil.getLoginIdByToken(userToken);
+                            if (loginId == null) {
+                                // Token 已失效，清理 Redis 中的过期数据
+                                log.debug("清理失效会话: userId={}, sessionId={}",
+                                    userId, user.getSessionId());
+                                redisTemplate.delete(key);
+                                cleanedCount++;
+                            }
+                        } catch (Exception e) {
+                            // Token 验证失败，说明已失效，清理 Redis 中的过期数据
+                            log.debug("清理失效会话: userId={}, sessionId={}, error={}",
+                                userId, user.getSessionId(), e.getMessage());
+                            redisTemplate.delete(key);
+                            cleanedCount++;
+                        }
+                    }
+                } catch (Exception e) {
+                    log.error("处理在线用户记录失败: key={}, error={}", key, e.getMessage());
+                }
+            }
+
+            if (cleanedCount > 0) {
+                log.info("清理用户 {} 的失效会话完成，共清理 {} 条记录", userId, cleanedCount);
+            }
+        } catch (Exception e) {
+            log.error("清理用户 {} 的失效会话失败", userId, e);
         }
     }
 }

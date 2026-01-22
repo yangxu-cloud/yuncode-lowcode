@@ -26,7 +26,19 @@ export default {
     loginSuccess: "登录成功",
     loginFailed: "登录失败",
     logout: "退出登录",
-    logoutSuccess: "退出成功"
+    logoutSuccess: "退出成功",
+    logoutConfirm: "确定要退出登录吗？"
+  },
+  menus: {
+    search: "搜索",
+    fullscreen: "全屏",
+    exitFullscreen: "退出全屏",
+    notice: "消息通知",
+    theme: "切换主题",
+    profile: "个人中心",
+    settings: "系统设置",
+    collapseSidebar: "折叠侧边栏",
+    expandSidebar: "展开侧边栏"
   },
   menu: {
     home: "首页",
@@ -34,6 +46,12 @@ export default {
     system: "系统管理",
     logs: "日志管理",
     onlineUsers: "在线用户"
+  },
+  tagsView: {
+    refresh: "刷新",
+    close: "关闭",
+    closeOthers: "关闭其他",
+    closeAll: "关闭所有"
   },
   system: {
     logManage: "日志管理",
@@ -85,6 +103,28 @@ export default {
     storage: "存储设置",
     mail: "邮件设置",
     system: "系统信息",
+    // 布局设置
+    theme: "主题",
+    primaryColor: "主题色",
+    themeMode: "主题模式",
+    themeModeLight: "浅色",
+    themeModeDark: "深色",
+    themeModeAuto: "自动",
+    interfaceDisplay: "界面显示",
+    greyMode: "灰色模式",
+    weakMode: "色弱模式",
+    hideTags: "隐藏标签页",
+    hideFooter: "隐藏页脚",
+    hideLogo: "隐藏 Logo",
+    menuLayout: "菜单布局",
+    menuWidth: "菜单宽度",
+    menuCollapse: "折叠菜单",
+    tagsStyle: "页签风格",
+    tagsPersist: "标签持久化",
+    save: "保存配置",
+    reset: "重置配置",
+    saveSuccess: "配置已保存",
+    resetSuccess: "配置已重置",
     // Basic
     basicConfig: "基本设置",
     basicDesc: "配置系统的基本信息和显示设置",

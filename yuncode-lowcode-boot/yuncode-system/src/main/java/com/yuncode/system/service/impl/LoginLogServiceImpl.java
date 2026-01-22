@@ -85,14 +85,32 @@ public class LoginLogServiceImpl extends ServiceImpl<SysLoginLogMapper, SysLogin
 
     @Override
     public void updateLogoutTime(String username, LocalDateTime logoutTime) {
-        // 更新最近一次未登出的登录记录
-        LambdaUpdateWrapper<SysLoginLog> wrapper = new LambdaUpdateWrapper<>();
-        wrapper.eq(SysLoginLog::getUsername, username)
+        // 先查询最近一次未登出的登录记录
+        LambdaQueryWrapper<SysLoginLog> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(SysLoginLog::getUsername, username)
                 .isNull(SysLoginLog::getLogoutTime)
                 .orderByDesc(SysLoginLog::getLoginTime)
                 .last("LIMIT 1");
 
-        wrapper.set(SysLoginLog::getLogoutTime, logoutTime);
-        baseMapper.update(null, wrapper);
+        SysLoginLog loginLog = baseMapper.selectOne(queryWrapper);
+        if (loginLog == null) {
+            return;
+        }
+
+        // 计算在线时长（毫秒）
+        Long costTime = null;
+        if (loginLog.getLoginTime() != null) {
+            costTime = java.time.Duration.between(loginLog.getLoginTime(), logoutTime).toMillis();
+        }
+
+        // 更新登出时间和在线时长
+        LambdaUpdateWrapper<SysLoginLog> updateWrapper = new LambdaUpdateWrapper<>();
+        updateWrapper.eq(SysLoginLog::getId, loginLog.getId());
+        updateWrapper.set(SysLoginLog::getLogoutTime, logoutTime);
+        if (costTime != null) {
+            updateWrapper.set(SysLoginLog::getCostTime, costTime);
+        }
+
+        baseMapper.update(null, updateWrapper);
     }
 }

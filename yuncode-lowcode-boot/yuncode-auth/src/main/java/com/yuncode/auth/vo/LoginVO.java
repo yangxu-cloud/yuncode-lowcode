@@ -11,9 +11,14 @@ import java.io.Serializable;
 public class LoginVO implements Serializable {
 
     /**
-     * Token
+     * Token（Sa-Token JWT，用于 API 认证）
      */
     private String token;
+
+    /**
+     * 会话ID（业务会话标识，用于前端 Cookie 和 SSE 连接）
+     */
+    private String sessionId;
 
     /**
      * Token 名称

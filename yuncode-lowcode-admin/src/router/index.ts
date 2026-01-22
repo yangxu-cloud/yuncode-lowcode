@@ -7,6 +7,13 @@ const routes = [
     redirect: "/login"
   },
   {
+    path: "/redirect/:path(.*)",
+    component: () => import("@/views/redirect.vue"),
+    meta: {
+      requiresAuth: false
+    }
+  },
+  {
     path: "/login",
     name: "Login",
     component: () => import("@/views/login/index.vue"),

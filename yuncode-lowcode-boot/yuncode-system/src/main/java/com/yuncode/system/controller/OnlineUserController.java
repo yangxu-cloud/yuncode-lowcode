@@ -80,8 +80,11 @@ public class OnlineUserController {
     @Operation(summary = "获取当前在线用户信息", description = "获取当前登录用户的在线信息")
     @GetMapping("/current")
     public Result<OnlineUser> getCurrentUser() {
-        String token = StpUtil.getTokenValue();
-        OnlineUser user = onlineUserService.getOnlineUser(token);
+        String sessionId = StpUtil.getSession().get("sessionId", "");
+        if (sessionId == null || sessionId.isEmpty()) {
+            return Result.error("未找到会话信息");
+        }
+        OnlineUser user = onlineUserService.getOnlineUser(sessionId);
         return Result.success(user);
     }
 }

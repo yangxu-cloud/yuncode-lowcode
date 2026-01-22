@@ -128,8 +128,21 @@ public class TenantLoginService {
             // 9. 缓存用户信息到 Redis（30分钟）
             userCacheService.cacheUser(user.getId(), user, 1800);
 
-            // 10. 添加在线用户记录
+            // 10. 生成业务会话ID（UUID，用于 Redis key 和前端 Cookie）
+            String sessionId = java.util.UUID.randomUUID().toString().replace("-", "");
+            log.info("生成业务会话ID: userId={}, sessionId={}", user.getId(), sessionId);
+
+            // 将 sessionId 存入 Sa-Token session，供退出时使用
+            StpUtil.getSession().set("sessionId", sessionId);
+            log.info("sessionId 已存入 Sa-Token session，验证: {}", StpUtil.getSession().get("sessionId"));
+
+            // 11. 获取 Sa-Token 的 JWT Token
+            String token = StpUtil.getTokenValue();
+
+            // 12. 添加在线用户记录
             OnlineUser onlineUser = new OnlineUser();
+            onlineUser.setSessionId(sessionId);  // 业务会话ID
+            onlineUser.setToken(token);          // Sa-Token JWT
             onlineUser.setUserId(user.getId());
             onlineUser.setUsername(username);
             onlineUser.setNickname(user.getNickname());
@@ -140,12 +153,12 @@ public class TenantLoginService {
             onlineUser.setLocation("");
             onlineUser.setUserAgent(request.getHeader("User-Agent"));
 
-            String token = StpUtil.getTokenValue();
-            onlineUserService.addOnlineUser(token, onlineUser);
+            onlineUserService.addOnlineUser(sessionId, onlineUser);
 
             // 构建返回结果
             LoginVO loginVO = new LoginVO();
-            loginVO.setToken(StpUtil.getTokenValue());
+            loginVO.setToken(token);
+            loginVO.setSessionId(sessionId);  // 返回业务会话ID给前端
             loginVO.setTokenName(saTokenProperties.getTokenName());  // 从配置读取
             loginVO.setUserId(StpUtil.getLoginIdAsLong());
             loginVO.setUsername(username);

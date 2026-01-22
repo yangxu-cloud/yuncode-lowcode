@@ -3,6 +3,7 @@ package com.yuncode.system.controller;
 import com.yuncode.common.model.util.response.Result;
 import com.yuncode.system.service.SysSettingsService;
 import com.yuncode.system.vo.SettingsVO;
+import com.yuncode.system.vo.SystemInfoVO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -36,7 +37,7 @@ public class SettingsController {
     /**
      * 更新基础设置
      */
-    @PutMapping("/basic")
+    @PostMapping("/basic")
     @Operation(summary = "更新基础设置", description = "更新应用的基础设置信息")
     public Result<Void> updateBasicSettings(@RequestBody SettingsVO settingsVO) {
         settingsService.updateBasicSettings(settingsVO);
@@ -51,5 +52,35 @@ public class SettingsController {
     public Result<Map<String, String>> getSettingsByGroup(@PathVariable String group) {
         Map<String, String> settings = settingsService.getSettingsByGroup(group);
         return Result.success(settings);
+    }
+
+    /**
+     * 获取安全设置
+     */
+    @GetMapping("/security")
+    @Operation(summary = "获取安全设置", description = "获取密码和登录策略设置")
+    public Result<SettingsVO> getSecuritySettings() {
+        SettingsVO settings = settingsService.getSecuritySettings();
+        return Result.success(settings);
+    }
+
+    /**
+     * 更新安全设置
+     */
+    @PostMapping("/security")
+    @Operation(summary = "更新安全设置", description = "更新密码和登录策略设置")
+    public Result<Void> updateSecuritySettings(@RequestBody SettingsVO settingsVO) {
+        settingsService.updateSecuritySettings(settingsVO);
+        return Result.success();
+    }
+
+    /**
+     * 获取系统信息
+     */
+    @GetMapping("/system/info")
+    @Operation(summary = "获取系统信息", description = "获取系统运行信息")
+    public Result<SystemInfoVO> getSystemInfo() {
+        SystemInfoVO systemInfo = settingsService.getSystemInfo();
+        return Result.success(systemInfo);
     }
 }

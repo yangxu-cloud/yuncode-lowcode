@@ -14,25 +14,25 @@ public interface OnlineUserService {
     /**
      * 添加在线用户
      *
-     * @param token Token值
+     * @param sessionId 业务会话ID
      * @param onlineUser 在线用户信息
      */
-    void addOnlineUser(String token, OnlineUser onlineUser);
+    void addOnlineUser(String sessionId, OnlineUser onlineUser);
 
     /**
      * 移除在线用户
      *
-     * @param token Token值
+     * @param sessionId 业务会话ID
      */
-    void removeOnlineUser(String token);
+    void removeOnlineUser(String sessionId);
 
     /**
      * 获取在线用户
      *
-     * @param token Token值
+     * @param sessionId 业务会话ID
      * @return 在线用户信息
      */
-    OnlineUser getOnlineUser(String token);
+    OnlineUser getOnlineUser(String sessionId);
 
     /**
      * 获取所有在线用户
@@ -54,16 +54,16 @@ public interface OnlineUserService {
     /**
      * 踢出用户
      *
-     * @param token Token值
+     * @param sessionId 业务会话ID
      */
-    void kickOutUser(String token);
+    void kickOutUser(String sessionId);
 
     /**
      * 批量踢出用户
      *
-     * @param tokens Token列表
+     * @param sessionIds 业务会话ID列表
      */
-    void batchKickOutUsers(List<String> tokens);
+    void batchKickOutUsers(List<String> sessionIds);
 
     /**
      * 获取在线用户统计
@@ -75,9 +75,9 @@ public interface OnlineUserService {
     /**
      * 更新用户最后访问时间
      *
-     * @param token Token值
+     * @param sessionId 业务会话ID
      */
-    void updateLastAccessTime(String token);
+    void updateLastAccessTime(String sessionId);
 
     /**
      * 清理闲置用户（超过指定时间未活动）
@@ -85,4 +85,12 @@ public interface OnlineUserService {
      * @param idleMinutes 闲置分钟数
      */
     void cleanIdleUsers(int idleMinutes);
+
+    /**
+     * 清理指定用户的失效会话
+     * 遍历该用户的所有在线会话，移除 token 已失效的记录
+     *
+     * @param userId 用户ID
+     */
+    void cleanExpiredSessionsForUser(Long userId);
 }

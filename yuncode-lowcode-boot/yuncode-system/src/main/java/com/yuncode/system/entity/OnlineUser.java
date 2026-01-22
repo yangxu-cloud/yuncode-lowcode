@@ -16,9 +16,17 @@ public class OnlineUser implements Serializable {
     private static final long serialVersionUID = 1L;
 
     /**
-     * 会话ID（Token值）
+     * 会话ID（业务会话标识，UUID格式）
+     * 用于 Redis key 和前端 Cookie key
+     * 与 Sa-Token 的 token 是两个不同的概念
      */
     private String sessionId;
+
+    /**
+     * Sa-Token 的 JWT Token
+     * 用于 Sa-Token 认证，通过 StpUtil.kickoutByTokenValue() 踢出
+     */
+    private String token;
 
     /**
      * 租户ID

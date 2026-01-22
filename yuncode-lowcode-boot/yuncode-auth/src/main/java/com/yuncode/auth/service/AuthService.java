@@ -133,6 +133,18 @@ public class AuthService {
     public void logout() {
         StpLogic stpLogic = getCurrentStpLogic();
 
+        String sessionId = null;
+        String token = null;
+        try {
+            token = stpLogic.getTokenValue();
+            // 从 Sa-Token session 中获取业务会话ID
+            sessionId = stpLogic.getSession().get("sessionId", "");
+            log.info("[Logout] 开始登出流程，sessionId={}, token (前32位): {}",
+                sessionId, token != null ? token.substring(0, Math.min(32, token.length())) : "null");
+        } catch (Exception e) {
+            log.warn("[Logout] 获取 token 或 sessionId 失败: {}", e.getMessage());
+        }
+
         try {
             // 获取当前用户信息
             Long userId = stpLogic.getLoginIdAsLong();
@@ -141,32 +153,38 @@ public class AuthService {
             // 更新登录日志的登出时间
             loginLogService.updateLogoutTime(username, LocalDateTime.now());
 
-            log.info("用户登出成功: userId={}, username={}, loginType={}",
+            log.info("[Logout] 用户登出成功: userId={}, username={}, loginType={}",
                     userId, username, stpLogic.getLoginType());
 
         } catch (cn.dev33.satoken.exception.NotLoginException e) {
             // token 无效或已过期，这是正常情况
-            log.debug("登出时 token 已失效: {}", e.getMessage());
+            log.debug("[Logout] 登出时 token 已失效: {}", e.getMessage());
         } catch (Exception e) {
-            log.error("更新登出时间失败", e);
+            log.error("[Logout] 更新登出时间失败", e);
         } finally {
             // 移除在线用户记录
             try {
-                String token = stpLogic.getTokenValue();
-                if (token != null) {
-                    onlineUserService.removeOnlineUser(token);
+                if (sessionId != null && !sessionId.isEmpty()) {
+                    log.info("[Logout] 准备移除在线用户记录，sessionId={}", sessionId);
+                    onlineUserService.removeOnlineUser(sessionId);
+                    log.info("[Logout] 已移除在线用户记录，sessionId={}", sessionId);
+                } else {
+                    log.warn("[Logout] sessionId 为空，无法移除在线用户记录");
                 }
             } catch (Exception e) {
-                log.debug("移除在线用户记录失败: {}", e.getMessage());
+                log.error("[Logout] 移除在线用户记录失败: {}", e.getMessage(), e);
             }
 
             // 执行登出操作（即使 token 已失效也要尝试清理）
             try {
                 stpLogic.logout();
+                log.info("[Logout] StpLogic.logout() 执行成功");
             } catch (Exception e) {
-                log.debug("执行 logout 失败: {}", e.getMessage());
+                log.debug("[Logout] 执行 logout 失败: {}", e.getMessage());
             }
         }
+
+        log.info("[Logout] 登出流程完成");
     }
 
     /**

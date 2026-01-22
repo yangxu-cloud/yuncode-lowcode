@@ -26,7 +26,19 @@ export default {
     loginSuccess: "Login successful",
     loginFailed: "Login failed",
     logout: "Logout",
-    logoutSuccess: "Logout successful"
+    logoutSuccess: "Logout successful",
+    logoutConfirm: "Are you sure you want to logout?"
+  },
+  menus: {
+    search: "Search",
+    fullscreen: "Fullscreen",
+    exitFullscreen: "Exit Fullscreen",
+    notice: "Notice",
+    theme: "Switch Theme",
+    profile: "Profile",
+    settings: "Settings",
+    collapseSidebar: "Collapse Sidebar",
+    expandSidebar: "Expand Sidebar"
   },
   menu: {
     home: "Home",
@@ -34,6 +46,12 @@ export default {
     system: "System",
     logs: "Logs",
     onlineUsers: "Online Users"
+  },
+  tagsView: {
+    refresh: "Refresh",
+    close: "Close",
+    closeOthers: "Close Others",
+    closeAll: "Close All"
   },
   system: {
     logManage: "Log Management",
@@ -85,6 +103,28 @@ export default {
     storage: "Storage Settings",
     mail: "Mail Settings",
     system: "System Info",
+    // Layout Settings
+    theme: "Theme",
+    primaryColor: "Primary Color",
+    themeMode: "Theme Mode",
+    themeModeLight: "Light",
+    themeModeDark: "Dark",
+    themeModeAuto: "Auto",
+    interfaceDisplay: "Interface Display",
+    greyMode: "Grey Mode",
+    weakMode: "Weak Mode",
+    hideTags: "Hide Tags",
+    hideFooter: "Hide Footer",
+    hideLogo: "Hide Logo",
+    menuLayout: "Menu Layout",
+    menuWidth: "Menu Width",
+    menuCollapse: "Menu Collapse",
+    tagsStyle: "Tags Style",
+    tagsPersist: "Tags Persist",
+    save: "Save",
+    reset: "Reset",
+    saveSuccess: "Settings saved successfully",
+    resetSuccess: "Settings reset successfully",
     // Basic
     basicConfig: "Basic Settings",
     basicDesc: "Configure basic system information and display settings",

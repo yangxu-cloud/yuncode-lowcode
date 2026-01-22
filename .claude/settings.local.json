@@ -64,7 +64,18 @@
       "Bash(git branch:*)",
       "Bash(git push:*)",
       "Bash(if not exist \"docs\\\\功能文档\" mkdir \"docs\\\\功能文档\")",
-      "Bash(move:*)"
+      "Bash(move:*)",
+      "Bash(pnpm --version)",
+      "Bash(npm --version)",
+      "Bash(npm i:*)",
+      "Bash(pnpm install)",
+      "Bash(pnpm dev:*)",
+      "Bash(robocopy:*)",
+      "Bash(git clone:*)",
+      "Bash(git checkout:*)",
+      "Bash(pnpm add:*)",
+      "Bash(mvn compile:*)",
+      "Bash(pnpm list:*)"
     ]
   }
 }

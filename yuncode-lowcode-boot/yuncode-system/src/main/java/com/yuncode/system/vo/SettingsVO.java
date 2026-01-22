@@ -12,9 +12,9 @@ import java.util.Map;
 public class SettingsVO implements Serializable {
 
     /**
-     * 应用名称
+     * 系统名称
      */
-    private String appName;
+    private String systemName;
 
     /**
      * 应用版本
@@ -22,14 +22,14 @@ public class SettingsVO implements Serializable {
     private String appVersion;
 
     /**
-     * 应用Logo
+     * 系统 Logo
      */
-    private String appLogo;
+    private String systemLogo;
 
     /**
-     * 应用描述
+     * 系统描述
      */
-    private String appDescription;
+    private String systemDescription;
 
     /**
      * 版权信息
@@ -40,6 +40,81 @@ public class SettingsVO implements Serializable {
      * 备案号
      */
     private String icp;
+
+    /**
+     * 系统URL
+     */
+    private String systemUrl;
+
+    /**
+     * 语言
+     */
+    private String language;
+
+    /**
+     * 时区
+     */
+    private String timezone;
+
+    /**
+     * 日期格式
+     */
+    private String dateFormat;
+
+    /**
+     * 时间格式
+     */
+    private String timeFormat;
+
+    /**
+     * 密码最小长度
+     */
+    private Integer passwordMinLength;
+
+    /**
+     * 密码必须大写
+     */
+    private Boolean passwordRequireUppercase;
+
+    /**
+     * 密码必须小写
+     */
+    private Boolean passwordRequireLowercase;
+
+    /**
+     * 密码必须数字
+     */
+    private Boolean passwordRequireNumber;
+
+    /**
+     * 密码必须特殊字符
+     */
+    private Boolean passwordRequireSpecial;
+
+    /**
+     * 密码有效期（天）
+     */
+    private Integer passwordExpireDays;
+
+    /**
+     * 登录最大尝试次数
+     */
+    private Integer loginMaxAttempts;
+
+    /**
+     * 登录锁定时长（分钟）
+     */
+    private Integer loginLockDuration;
+
+    /**
+     * 会话超时（分钟）
+     */
+    private Integer loginSessionTimeout;
+
+    /**
+     * 是否启用验证码
+     */
+    private Boolean loginEnableCaptcha;
 
     /**
      * 其他设置（JSON格式）
