@@ -24,6 +24,11 @@ public class SysUser {
     private Long tenantId;
 
     /**
+     * 所属公司ID
+     */
+    private Long companyId;
+
+    /**
      * 用户名
      */
     private String username;
@@ -59,6 +64,26 @@ public class SysUser {
     private Integer gender;
 
     /**
+     * 真实姓名
+     */
+    private String realName;
+
+    /**
+     * 部门ID
+     */
+    private Long deptId;
+
+    /**
+     * 是否主部门领导：0-否 1-是
+     */
+    private Integer isLeader;
+
+    /**
+     * 角色ID列表（逗号分隔）
+     */
+    private String roleIds;
+
+    /**
      * 状态（0正常 1禁用）
      */
     private Integer status;
@@ -68,6 +93,11 @@ public class SysUser {
      */
     @TableLogic
     private Integer deleted;
+
+    /**
+     * 备注
+     */
+    private String remark;
 
     /**
      * 创建时间

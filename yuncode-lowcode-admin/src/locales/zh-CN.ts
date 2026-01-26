@@ -42,6 +42,8 @@ export default {
   },
   menu: {
     home: "首页",
+    commons: "公共设施",
+    org: "组织管理",
     settings: "系统设置",
     system: "系统管理",
     logs: "日志管理",

@@ -70,6 +70,12 @@ const routes = [
             name: "OnlineUsers",
             component: () => import("@/views/system/OnlineUsers.vue"),
             meta: { title: "在线用户", requiresAuth: true }
+          },
+          {
+            path: "/system/commons/org",
+            name: "Org",
+            component: () => import("@/views/commons/org/index.vue"),
+            meta: { title: "组织管理", requiresAuth: true }
           }
         ]
       },

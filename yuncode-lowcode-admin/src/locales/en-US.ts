@@ -42,6 +42,8 @@ export default {
   },
   menu: {
     home: "Home",
+    commons: "Common Facilities",
+    org: "Organization Management",
     settings: "Settings",
     system: "System",
     logs: "Logs",

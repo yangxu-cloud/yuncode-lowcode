@@ -44,6 +44,7 @@
 import { computed, ref, onMounted, watch } from "vue";
 import { useRoute } from "vue-router";
 import { useI18n } from "vue-i18n";
+import { House, Management, Setting, OfficeBuilding } from "@element-plus/icons-vue";
 import Navbar from "@/components/Navbar.vue";
 import TagsView from "@/components/TagsView.vue";
 

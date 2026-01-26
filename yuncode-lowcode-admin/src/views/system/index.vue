@@ -16,6 +16,15 @@
               <el-icon><User /></el-icon>
               <span>{{ t('system.onlineUsers') }}</span>
             </el-menu-item>
+            <el-sub-menu index="commons">
+              <template #title>
+                <el-icon><OfficeBuilding /></el-icon>
+                <span>{{ t('menu.commons') }}</span>
+              </template>
+              <el-menu-item index="/system/commons/org">
+                <span>{{ t('menu.org') }}</span>
+              </el-menu-item>
+            </el-sub-menu>
           </el-menu>
         </el-aside>
         <el-main class="system-main">
@@ -30,6 +39,7 @@
 import { computed } from "vue";
 import { useRoute } from "vue-router";
 import { useI18n } from "vue-i18n";
+import { Document, User, OfficeBuilding } from "@element-plus/icons-vue";
 
 const route = useRoute();
 const { t } = useI18n();

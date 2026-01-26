@@ -75,7 +75,9 @@
       "Bash(git checkout:*)",
       "Bash(pnpm add:*)",
       "Bash(mvn compile:*)",
-      "Bash(pnpm list:*)"
+      "Bash(pnpm list:*)",
+      "Bash(git rm:*)",
+      "Bash(npx vite:*)"
     ]
   }
 }
