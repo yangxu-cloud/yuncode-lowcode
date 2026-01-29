@@ -56,29 +56,27 @@ public class AdminLoginService {
 
     /**
      * 管理员登录
+     * 管理员使用系统租户（ID=2）登录
      */
     @LoginLog(loginType = "admin")
     public LoginVO login(LoginDTO loginDTO, HttpServletRequest request) {
-        Long tenantId = null;
         String username = loginDTO.getUsername();
-        SysTenant tenant = null;
 
         try {
-            // 1. 管理员登录使用系统内置租户
-            tenant = sysTenantMapper.selectByTenantCode(SYSTEM_TENANT_CODE);
-            if (tenant == null) {
-                throw new BusinessException(ErrorCode.TENANT_NOT_FOUND);
+            // 1. 查询系统租户（固定ID=2）
+            SysTenant systemTenant = sysTenantMapper.selectById(2L);
+            if (systemTenant == null) {
+                throw new BusinessException(ErrorCode.TENANT_NOT_FOUND, "系统租户不存在，请先初始化系统租户（ID=2）");
             }
 
             // 2. 校验系统租户状态
-            if (tenant.getStatus() == 1) {
+            if (systemTenant.getStatus() == 1) {
                 throw new BusinessException(ErrorCode.TENANT_DISABLED);
             }
 
-            tenantId = tenant.getId();
-
-            // 3. 查询用户
-            SysUser user = sysUserMapper.selectByUsernameAndTenantId(username, tenantId);
+            // 3. 使用系统租户ID（固定=2）查询用户
+            Long systemTenantId = 2L;
+            SysUser user = sysUserMapper.selectByUsernameAndTenantId(username, systemTenantId);
             if (user == null) {
                 throw new BusinessException(ErrorCode.USER_PASSWORD_ERROR);
             }
@@ -96,19 +94,21 @@ public class AdminLoginService {
             // 6. 使用 Sa-Token 进行登录
             StpUtil.login(user.getId());
 
-            // 将用户类型、租户ID等信息存入 Token Extra
+            // 将用户类型、系统租户ID、角色编码等信息存入 Token Extra
             StpUtil.getTokenSession().set("loginType", "admin");
-            StpUtil.getTokenSession().set("tenantId", tenantId);
+            StpUtil.getTokenSession().set("tenantId", systemTenantId);
             StpUtil.getTokenSession().set("username", user.getUsername());
             StpUtil.getTokenSession().set("nickname", user.getNickname() != null ? user.getNickname() : "");
+            StpUtil.getTokenSession().set("roleCode", user.getRoleCode() != null ? user.getRoleCode() : "PLATFORM_ADMIN");
 
-            // 将用户信息存入 Session
+            // 将用户信息存入 Session（使用系统租户ID）
             StpUtil.getSession().set("userId", user.getId());
+            StpUtil.getSession().set("tenantId", systemTenantId);
             StpUtil.getSession().set("username", user.getUsername());
             StpUtil.getSession().set("nickname", user.getNickname() != null ? user.getNickname() : "");
             StpUtil.getSession().set("avatar", user.getAvatar() != null ? user.getAvatar() : "");
-            StpUtil.getSession().set("tenantId", tenantId);
             StpUtil.getSession().set("loginType", "admin");
+            StpUtil.getSession().set("roleCode", user.getRoleCode() != null ? user.getRoleCode() : "PLATFORM_ADMIN");
 
             // 7. 缓存用户信息到 Redis（30分钟）
             userCacheService.cacheUser(user.getId(), user, 1800);
@@ -133,15 +133,15 @@ public class AdminLoginService {
             onlineUser.setUsername(username);
             onlineUser.setNickname(user.getNickname());
             onlineUser.setAvatar(user.getAvatar());
-            onlineUser.setTenantId(tenantId);
-            onlineUser.setTenantName(tenant.getTenantName());
+            onlineUser.setTenantId(systemTenantId);  // 使用系统租户ID
+            onlineUser.setTenantName(systemTenant.getTenantName());
             onlineUser.setIp(getClientIP(request));
             onlineUser.setLocation("");
             onlineUser.setUserAgent(request.getHeader("User-Agent"));
 
             onlineUserService.addOnlineUser(sessionId, onlineUser);
 
-            // 构建返回结果
+            // 11. 构建返回结果
             LoginVO loginVO = new LoginVO();
             loginVO.setToken(token);
             loginVO.setSessionId(sessionId);  // 返回业务会话ID给前端
@@ -150,11 +150,8 @@ public class AdminLoginService {
             loginVO.setUsername(username);
             loginVO.setNickname(StpUtil.getSession().get("nickname", ""));
             loginVO.setAvatar(StpUtil.getSession().get("avatar", ""));
-            loginVO.setTenantId(tenantId);
-
-            if (tenant != null) {
-                loginVO.setTenantName(tenant.getTenantName());
-            }
+            loginVO.setTenantId(systemTenantId);  // 使用系统租户ID
+            loginVO.setTenantName(systemTenant.getTenantName());
 
             return loginVO;
 

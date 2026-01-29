@@ -47,9 +47,14 @@ public class SysOrg implements Serializable {
     private Long parentId;
 
     /**
-     * 组织类型：1=集团/公司，2=部门
+     * 组织类型：0=根节点，1=集团/公司（租户），2=部门
      */
     private Integer orgType;
+
+    /**
+     * 租户编码（仅公司节点orgType=1时有值，用于登录租户识别）
+     */
+    private String tenantCode;
 
     /**
      * 是否公司：0=否，1=是
@@ -69,6 +74,7 @@ public class SysOrg implements Serializable {
     /**
      * 租户ID
      */
+    @TableField(fill = FieldFill.INSERT)
     private Long tenantId;
 
     /**

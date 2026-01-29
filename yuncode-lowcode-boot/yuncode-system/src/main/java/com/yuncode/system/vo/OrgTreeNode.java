@@ -52,6 +52,16 @@ public class OrgTreeNode implements Serializable {
     private Integer isCompany;
 
     /**
+     * 租户ID
+     */
+    private Long tenantId;
+
+    /**
+     * 租户编码
+     */
+    private String tenantCode;
+
+    /**
      * 用户ID（仅用户节点）
      */
     private Long userId;
@@ -67,9 +77,34 @@ public class OrgTreeNode implements Serializable {
     private String nickname;
 
     /**
+     * 用户真实姓名（仅用户节点）
+     */
+    private String realName;
+
+    /**
      * 用户头像（仅用户节点）
      */
     private String avatar;
+
+    /**
+     * 用户邮箱（仅用户节点）
+     */
+    private String email;
+
+    /**
+     * 用户手机号（仅用户节点）
+     */
+    private String phone;
+
+    /**
+     * 用户性别：0=男，1=女（仅用户节点）
+     */
+    private Integer gender;
+
+    /**
+     * 用户状态：0=正常，1=冻结（仅用户节点）
+     */
+    private Integer status;
 
     /**
      * 是否负责人：0=否，1=是（仅用户节点）

@@ -47,7 +47,7 @@ public class SysUserOrg implements Serializable {
     private Integer isMainDept;
 
     /**
-     * 租户ID
+     * 租户ID（注意：此字段不自动填充，在业务代码中手动设置为组织的tenantId）
      */
     private Long tenantId;
 
@@ -77,7 +77,8 @@ public class SysUserOrg implements Serializable {
 
     /**
      * 删除标记：0=未删除，1=已删除
+     * 注意：sys_user_org 是关联关系表，使用物理删除而非逻辑删除
+     * 因此不添加 @TableLogic 注解
      */
-    @TableLogic
     private Integer deleted;
 }

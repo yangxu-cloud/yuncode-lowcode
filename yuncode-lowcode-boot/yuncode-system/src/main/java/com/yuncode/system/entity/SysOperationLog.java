@@ -79,9 +79,9 @@ public class SysOperationLog {
     private Long executeTime;
 
     /**
-     * 状态
+     * 状态：0=失败，1=成功
      */
-    private String status;
+    private Integer status;
 
     /**
      * 错误信息

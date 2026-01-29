@@ -54,4 +54,9 @@ public class LoginVO implements Serializable {
      * 租户名称
      */
     private String tenantName;
+
+    /**
+     * 角色编码
+     */
+    private String roleCode;
 }

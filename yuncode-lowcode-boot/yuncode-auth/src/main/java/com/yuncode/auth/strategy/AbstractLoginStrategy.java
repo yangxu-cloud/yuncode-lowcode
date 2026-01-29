@@ -97,6 +97,7 @@ public abstract class AbstractLoginStrategy implements LoginStrategy {
             StpUtil.getSession().set("nickname", user.getNickname() != null ? user.getNickname() : "");
             StpUtil.getSession().set("avatar", user.getAvatar() != null ? user.getAvatar() : "");
             StpUtil.getSession().set("tenantId", tenantId);
+            StpUtil.getSession().set("roleCode", user.getRoleCode() != null ? user.getRoleCode() : "NORMAL");
             StpUtil.getSession().set("loginType", getLoginType());
 
             // 6. 缓存用户信息到 Redis（30分钟）
@@ -147,6 +148,7 @@ public abstract class AbstractLoginStrategy implements LoginStrategy {
         loginVO.setNickname(StpUtil.getSession().get("nickname", ""));
         loginVO.setAvatar(StpUtil.getSession().get("avatar", ""));
         loginVO.setTenantId(tenantId);
+        loginVO.setRoleCode(StpUtil.getSession().get("roleCode", "NORMAL"));
 
         if (tenant != null) {
             loginVO.setTenantName(tenant.getTenantName());

@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yuncode.system.mapper.SysUserMapper">
+
+    <!--
+        根据用户名和租户ID查询用户
+        注意：此方法仅用于登录场景，需要手动指定租户ID
+        使用 @InterceptorIgnore 注解在 Mapper 接口中忽略多租户插件的自动过滤
+    -->
+    <select id="selectByUsernameAndTenantId" resultType="com.yuncode.system.entity.SysUser">
+        SELECT *
+        FROM sys_user
+        WHERE username = #{username}
+          AND tenant_id = #{tenantId}
+          AND deleted = 0
+        LIMIT 1
+    </select>
+
+    <!--
+        根据用户名查询用户（用于管理员登录，忽略租户限制）
+        注意：此方法仅用于管理员登录，可以跨租户查询管理员账户
+        使用 @InterceptorIgnore 注解在 Mapper 接口中忽略多租户插件的自动过滤
+    -->
+    <select id="selectByUsernameForAdminLogin" resultType="com.yuncode.system.entity.SysUser">
+        SELECT *
+        FROM sys_user
+        WHERE username = #{username}
+          AND deleted = 0
+        LIMIT 1
+    </select>
+
+    <!--
+        根据ID查询用户（忽略租户限制）
+        注意：此方法用于跨租户查询用户，需要忽略租户限制
+        使用 @InterceptorIgnore 注解在 Mapper 接口中忽略多租户插件的自动过滤
+    -->
+    <select id="selectByIdIgnoreTenant" resultType="com.yuncode.system.entity.SysUser">
+        SELECT *
+        FROM sys_user
+        WHERE id = #{id}
+          AND deleted = 0
+        LIMIT 1
+    </select>
+
+    <!--
+        根据ID更新用户（忽略租户限制）
+        注意：此方法用于跨租户更新用户，需要忽略租户限制
+        使用 @InterceptorIgnore 注解在 Mapper 接口中忽略多租户插件的自动过滤
+        只更新非空字段
+    -->
+    <update id="updateByIdIgnoreTenant">
+        UPDATE sys_user
+        <set>
+            <if test="username != null">username = #{username},</if>
+            <if test="password != null">password = #{password},</if>
+            <if test="nickname != null">nickname = #{nickname},</if>
+            <if test="realName != null">real_name = #{realName},</if>
+            <if test="email != null">email = #{email},</if>
+            <if test="phone != null">phone = #{phone},</if>
+            <if test="gender != null">gender = #{gender},</if>
+            <if test="avatar != null">avatar = #{avatar},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="companyId != null">company_id = #{companyId},</if>
+            <if test="deptId != null">dept_id = #{deptId},</if>
+            update_time = NOW(),
+        </set>
+        WHERE id = #{id}
+          AND deleted = 0
+    </update>
+
+    <!--
+        根据ID删除用户（逻辑删除，忽略租户限制）
+        注意：此方法用于删除用户时不受租户限制
+        使用 @InterceptorIgnore 注解在 Mapper 接口中忽略多租户插件的自动过滤
+        @TableLogic 会自动将删除转换为 UPDATE deleted=1
+    -->
+    <update id="deleteByIdIgnoreTenant">
+        UPDATE sys_user
+        SET deleted = 1,
+            update_time = NOW(),
+            update_by = 'system'
+        WHERE id = #{id}
+          AND deleted = 0
+    </update>
+
+    <!--
+        根据ID物理删除用户（绕过 @TableLogic 逻辑删除）
+        注意：此方法会真正从数据库删除记录，而不是设置 deleted = 1
+        使用 @InterceptorIgnore 注解在 Mapper 接口中忽略多租户插件的自动过滤
+    -->
+    <delete id="deletePhysicalById">
+        DELETE FROM sys_user
+        WHERE id = #{id}
+    </delete>
+
+    <!--
+        批量物理删除用户（绕过 @TableLogic 逻辑删除）
+        注意：此方法会真正从数据库删除记录，而不是设置 deleted = 1
+        使用 @InterceptorIgnore 注解在 Mapper 接口中忽略多租户插件的自动过滤
+    -->
+    <delete id="deletePhysicalByIds">
+        DELETE FROM sys_user
+        WHERE id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+</mapper>

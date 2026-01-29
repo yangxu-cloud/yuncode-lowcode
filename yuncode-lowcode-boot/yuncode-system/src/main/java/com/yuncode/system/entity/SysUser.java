@@ -21,6 +21,7 @@ public class SysUser {
     /**
      * 租户ID
      */
+    @TableField(fill = FieldFill.INSERT)
     private Long tenantId;
 
     /**
@@ -36,6 +37,7 @@ public class SysUser {
     /**
      * 密码
      */
+    @TableField(insertStrategy = FieldStrategy.ALWAYS)
     private String password;
 
     /**
@@ -82,6 +84,11 @@ public class SysUser {
      * 角色ID列表（逗号分隔）
      */
     private String roleIds;
+
+    /**
+     * 角色编码：PLATFORM_ADMIN(平台管理员)/TENANT_ADMIN(租户管理员)/NORMAL(普通用户)
+     */
+    private String roleCode;
 
     /**
      * 状态（0正常 1禁用）

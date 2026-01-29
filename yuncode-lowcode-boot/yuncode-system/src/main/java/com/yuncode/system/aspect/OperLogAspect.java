@@ -67,18 +67,34 @@ public class OperLogAspect {
         // 创建操作日志对象
         SysOperationLog operationLog = new SysOperationLog();
         operationLog.setModule(operLogAnnotation.module());
-        operationLog.setOperation(getBusinessTypeName(operLogAnnotation.businessType()) + ":" + operLogAnnotation.description());
-        operationLog.setMethod(signature.getDeclaringType().getName() + "." + method.getName());
+        operationLog.setOperation(getBusinessTypeName(operLogAnnotation.businessType()) + " " + operLogAnnotation.description());
 
+        // 设置方法信息：请求方式 + URL + Java方法
         if (request != null) {
+            String requestMethod = request.getMethod();
+            String requestUri = request.getRequestURI();
+            String javaMethod = signature.getDeclaringType().getSimpleName() + "." + method.getName();
+            operationLog.setMethod(requestMethod + " " + requestUri + " -> " + javaMethod);
             operationLog.setIp(getIpAddr(request));
+            operationLog.setUserAgent(request.getHeader("User-Agent"));  // 浏览器和操作系统信息
+        } else {
+            operationLog.setMethod(signature.getDeclaringType().getSimpleName() + "." + method.getName());
         }
 
         // 设置用户信息
         try {
             if (StpUtil.isLogin()) {
                 operationLog.setUserId(StpUtil.getLoginIdAsLong());
-                operationLog.setUsername(StpUtil.getLoginIdAsString());
+                // 获取真实用户名（优先使用 nickname，其次 username）
+                Object nicknameObj = StpUtil.getSession().get("nickname");
+                Object usernameObj = StpUtil.getSession().get("username");
+                if (nicknameObj != null) {
+                    operationLog.setUsername(nicknameObj.toString());
+                } else if (usernameObj != null) {
+                    operationLog.setUsername(usernameObj.toString());
+                } else {
+                    operationLog.setUsername(StpUtil.getLoginIdAsString());
+                }
 
                 // 获取租户信息
                 Object tenantIdObj = StpUtil.getSession().get("tenantId");
@@ -106,8 +122,11 @@ public class OperLogAspect {
                 String params = objectMapper.writeValueAsString(args);
                 operationLog.setParams(params.length() > 2000 ? params.substring(0, 2000) : params);
             }
-        } catch (Exception e) {
-            logger.error("操作日志参数序列化失败", e);
+        } catch (Throwable e) {
+            // 忽略序列化异常（如 StackOverflowError），不影响业务逻辑
+            if (!(e instanceof StackOverflowError)) {
+                logger.error("操作日志参数序列化失败", e);
+            }
         }
 
         Object result = null;
@@ -116,11 +135,11 @@ public class OperLogAspect {
             result = joinPoint.proceed();
 
             // 操作成功
-            operationLog.setStatus("success");
+            operationLog.setStatus(1);  // 1=成功
 
         } catch (Exception e) {
             // 操作失败
-            operationLog.setStatus("error");
+            operationLog.setStatus(0);  // 0=失败
             operationLog.setErrorMsg(e.getMessage());
             logger.error("方法执行异常: {}", method.getName(), e);
             throw e;

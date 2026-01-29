@@ -77,7 +77,8 @@
       "Bash(mvn compile:*)",
       "Bash(pnpm list:*)",
       "Bash(git rm:*)",
-      "Bash(npx vite:*)"
+      "Bash(npx vite:*)",
+      "Bash(javac:*)"
     ]
   }
 }

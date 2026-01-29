@@ -85,6 +85,13 @@ public class SystemLogAspect {
     private void recordSystemLog(Method method, String requestMethod, String requestUrl,
                                  String requestIp, Throwable exception, long startTime) {
         try {
+            // 不记录 StackOverflowError，避免递归
+            if (exception instanceof StackOverflowError) {
+                log.warn("检测到 StackOverflowError: {}.{}, 跳过记录日志",
+                        method.getDeclaringClass().getSimpleName(), method.getName());
+                return;
+            }
+
             SysSystemLog systemLog = new SysSystemLog();
 
             // 设置日志级别
@@ -137,8 +144,11 @@ public class SystemLogAspect {
                 }
             }).start();
 
-        } catch (Exception e) {
-            log.error("记录系统日志失败: {}", e.getMessage(), e);
+        } catch (Throwable e) {
+            // 避免递归，不打印异常堆栈
+            if (!(e instanceof StackOverflowError)) {
+                log.error("记录系统日志失败: {}", e.getMessage());
+            }
         }
     }
 

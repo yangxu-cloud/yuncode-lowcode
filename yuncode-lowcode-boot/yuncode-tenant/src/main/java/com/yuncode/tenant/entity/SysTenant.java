@@ -19,6 +19,11 @@ public class SysTenant {
     private Long id;
 
     /**
+     * 关联的组织ID（sys_org.id）
+     */
+    private Long orgId;
+
+    /**
      * 租户名称
      */
     private String tenantName;

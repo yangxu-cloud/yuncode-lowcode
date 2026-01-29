@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yuncode.system.mapper.SysUserOrgMapper">
+
+    <!--
+        根据组织ID查询用户组织关系（用于平台管理员，忽略租户限制）
+        注意：此方法仅用于平台管理员查看所有租户的用户组织关系
+        使用 @InterceptorIgnore 注解在 Mapper 接口中忽略多租户插件的自动过滤
+    -->
+    <select id="selectByOrgIdForPlatformAdmin" resultType="com.yuncode.system.entity.SysUserOrg">
+        SELECT *
+        FROM sys_user_org
+        WHERE org_id = #{orgId}
+          AND deleted = 0
+        ORDER BY id ASC
+    </select>
+
+    <!--
+        根据ID物理删除用户组织关系（绕过 @TableLogic 逻辑删除）
+        注意：此方法会真正从数据库删除记录，而不是设置 deleted = 1
+    -->
+    <delete id="deletePhysicalById">
+        DELETE FROM sys_user_org
+        WHERE id = #{id}
+    </delete>
+
+    <!--
+        根据组织ID列表批量物理删除用户组织关系（绕过 @TableLogic 逻辑删除）
+        注意：此方法会真正从数据库删除记录，而不是设置 deleted = 1
+    -->
+    <delete id="deletePhysicalByOrgIds">
+        DELETE FROM sys_user_org
+        WHERE org_id IN
+        <foreach collection="orgIds" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+    <!--
+        根据用户ID列表批量物理删除用户组织关系（绕过 @TableLogic 逻辑删除）
+        注意：此方法会真正从数据库删除记录，而不是设置 deleted = 1
+    -->
+    <delete id="deletePhysicalByUserIds">
+        DELETE FROM sys_user_org
+        WHERE user_id IN
+        <foreach collection="userIds" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+    <!--
+        查询列表（忽略租户限制）
+        注意：此方法用于查询用户组织关系时不受租户限制
+        使用 @InterceptorIgnore 注解在 Mapper 接口中忽略多租户插件的自动过滤
+        ${ew.sqlSegment} 会替换为 LambdaQueryWrapper 中的条件（不包含 WHERE 关键字）
+    -->
+    <select id="selectListIgnoreTenant" resultType="com.yuncode.system.entity.SysUserOrg">
+        SELECT *
+        FROM sys_user_org
+        <where>
+            deleted = 0
+            <if test="ew != null">
+                AND ${ew.sqlSegment}
+            </if>
+        </where>
+    </select>
+
+</mapper>

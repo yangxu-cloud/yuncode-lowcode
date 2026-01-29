@@ -90,6 +90,11 @@ sa-token:
   # JWT 密钥（注意：键名是 jwt-secret-key，不是 jwt.secret-key）
   jwt-secret-key: "yuncode-lowcode-sa-token-jwt-secret-key-2024-hutool-bcrypt-compatible-with-spring-boot-3-x8k9m2v4n6"
 
+# 系统配置
+system:
+  # 用户默认密码
+  default-password: "123456"
+
 # 日志配置
 logging:
   level:
