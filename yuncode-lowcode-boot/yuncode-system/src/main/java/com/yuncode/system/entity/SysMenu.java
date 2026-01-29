@@ -24,6 +24,11 @@ public class SysMenu {
     private Long tenantId;
 
     /**
+     * 租户编码
+     */
+    private String tenantCode;
+
+    /**
      * 父菜单ID
      */
     private Long parentId;

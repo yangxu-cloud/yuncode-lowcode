@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yuncode.system.mapper.SysMenuPermissionMapper">
+
+    <!--
+        根据菜单ID获取权限列表
+    -->
+    <select id="selectPermissionsByMenuId" resultType="com.yuncode.system.entity.SysMenuPermission">
+        SELECT *
+        FROM sys_menu_permission
+        WHERE deleted = 0
+          AND menu_id = #{menuId}
+        ORDER BY target_type ASC, target_id ASC
+    </select>
+
+    <!--
+        根据目标类型和目标ID获取菜单列表
+    -->
+    <select id="selectMenusByTarget" resultType="com.yuncode.system.entity.SysMenuPermission">
+        SELECT *
+        FROM sys_menu_permission
+        WHERE deleted = 0
+          AND target_type = #{targetType}
+          AND target_id = #{targetId}
+        ORDER BY menu_id ASC
+    </select>
+
+    <!--
+        批量插入菜单权限
+    -->
+    <insert id="batchInsert">
+        INSERT INTO sys_menu_permission (
+            menu_id, target_type, target_id, tenant_id, deleted, create_time
+        ) VALUES
+        <foreach collection="permissions" item="item" separator=",">
+            (#{item.menuId}, #{item.targetType}, #{item.targetId}, #{item.tenantId}, 0, NOW())
+        </foreach>
+    </insert>
+
+    <!--
+        根据菜单ID删除权限
+    -->
+    <delete id="deleteByMenuId">
+        DELETE FROM sys_menu_permission
+        WHERE menu_id = #{menuId}
+    </delete>
+
+    <!--
+        根据目标删除权限
+    -->
+    <delete id="deleteByTarget">
+        DELETE FROM sys_menu_permission
+        WHERE target_type = #{targetType}
+          AND target_id = #{targetId}
+    </delete>
+
+    <!--
+        权限追加到下级
+        将当前菜单的所有权限追加到所有子菜单
+    -->
+    <insert id="copyPermissionsToChildren">
+        INSERT INTO sys_menu_permission (
+            menu_id, target_type, target_id, tenant_id, deleted, create_time
+        )
+        SELECT
+            child.id AS menu_id,
+            parent_perm.target_type,
+            parent_perm.target_id,
+            parent_perm.tenant_id,
+            0,
+            NOW()
+        FROM sys_menu_permission parent_perm
+        INNER JOIN sys_menu child ON child.parent_id = #{parentMenuId}
+        WHERE parent_perm.deleted = 0
+          AND child.deleted = 0
+          AND parent_perm.menu_id = #{parentMenuId}
+          AND NOT EXISTS (
+            SELECT 1 FROM sys_menu_permission existing
+            WHERE existing.deleted = 0
+              AND existing.menu_id = child.id
+              AND existing.target_type = parent_perm.target_type
+              AND existing.target_id = parent_perm.target_id
+          )
+    </insert>
+
+</mapper>

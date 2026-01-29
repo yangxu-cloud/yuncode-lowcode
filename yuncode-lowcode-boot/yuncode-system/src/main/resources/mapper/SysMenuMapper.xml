@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yuncode.system.mapper.SysMenuMapper">
+
+    <!--
+        获取菜单树
+        查询所有启用的菜单,按层级和排序号排序
+    -->
+    <select id="selectMenuTree" resultType="com.yuncode.system.entity.SysMenu">
+        SELECT *
+        FROM sys_menu
+        WHERE deleted = 0
+          AND status = 0
+        ORDER BY parent_id ASC, sort_order ASC, id ASC
+    </select>
+
+    <!--
+        根据租户ID获取菜单列表
+        tenant_id为NULL的表示默认菜单(所有租户可见)
+    -->
+    <select id="selectMenusByTenantId" resultType="com.yuncode.system.entity.SysMenu">
+        SELECT *
+        FROM sys_menu
+        WHERE deleted = 0
+          AND status = 0
+          AND (tenant_id = #{tenantId} OR tenant_id IS NULL)
+        ORDER BY parent_id ASC, sort_order ASC, id ASC
+    </select>
+
+    <!--
+        获取用户可访问的菜单列表
+        通过角色、用户直接授权、部门授权获取菜单
+    -->
+    <select id="selectMenusByUserId" resultType="com.yuncode.system.entity.SysMenu">
+        SELECT DISTINCT m.*
+        FROM sys_menu m
+        INNER JOIN sys_menu_permission mp ON m.id = mp.menu_id
+        WHERE m.deleted = 0
+          AND m.status = 0
+          AND m.visible = 0
+          AND mp.deleted = 0
+          AND mp.target_type = 1
+          AND mp.target_id = #{userId}
+        ORDER BY m.parent_id ASC, m.sort_order ASC, m.id ASC
+    </select>
+
+    <!--
+        更新菜单排序
+    -->
+    <update id="updateSortOrder">
+        UPDATE sys_menu
+        SET sort_order = #{newSortOrder},
+            update_time = NOW()
+        WHERE id = #{menuId}
+    </update>
+
+    <!--
+        交换两个菜单的排序号
+    -->
+    <update id="swapSortOrder">
+        UPDATE sys_menu m1, sys_menu m2
+        SET m1.sort_order = m2.sort_order,
+            m2.sort_order = m1.sort_order,
+            m1.update_time = NOW(),
+            m2.update_time = NOW()
+        WHERE m1.id = #{menuId1}
+          AND m2.id = #{menuId2}
+    </update>
+
+    <!--
+        获取子菜单数量
+    -->
+    <select id="countChildMenus" resultType="java.lang.Long">
+        SELECT COUNT(*)
+        FROM sys_menu
+        WHERE deleted = 0
+          AND parent_id = #{parentId}
+    </select>
+
+    <!--
+        删除菜单及其所有子菜单（逻辑删除）
+    -->
+    <update id="deleteMenuRecursively">
+        UPDATE sys_menu
+        SET deleted = 1,
+            update_time = NOW()
+        WHERE deleted = 0
+          AND (
+            id = #{menuId}
+            OR parent_id IN (
+                SELECT id FROM (
+                    SELECT id FROM sys_menu
+                    WHERE deleted = 0
+                      AND (
+                        id = #{menuId}
+                        OR FIND_IN_SET(#{menuId}, parent_id)
+                    )
+                ) AS temp
+            )
+        )
+    </update>
+
+    <!--
+        检查菜单下是否有权限配置
+    -->
+    <select id="countPermissionsByMenuId" resultType="java.lang.Long">
+        SELECT COUNT(*)
+        FROM sys_menu_permission
+        WHERE deleted = 0
+          AND menu_id = #{menuId}
+    </select>
+
+</mapper>
