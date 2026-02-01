@@ -70,10 +70,12 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { OfficeBuilding, User } from '@element-plus/icons-vue'
+import { getOrgTree } from '@/api/org'
 
 interface OrgTreeNode {
   id: number
-  nodeType: 'org' | 'user'
+  nodeType?: 'org' | 'user'
+  type?: 'company' | 'department' | 'position'
   label: string
   children?: OrgTreeNode[]
 }
@@ -87,14 +89,33 @@ const treeProps = {
   label: 'label'
 }
 
+/**
+ * 转换节点类型：将 type 映射为 nodeType
+ */
+const convertNodeType = (node: any): OrgTreeNode => {
+  const converted: OrgTreeNode = {
+    ...node,
+    // 如果已有 nodeType 直接使用，否则根据 type 判断
+    nodeType: node.nodeType || (node.type ? 'org' : 'org')
+  }
+
+  // 递归转换子节点
+  if (node.children && node.children.length > 0) {
+    converted.children = node.children.map(convertNodeType)
+  }
+
+  return converted
+}
+
 // 加载组织树数据
 const loadOrgTree = async () => {
   try {
-    // TODO: 调用后端API获取组织树
-    // const response = await getOrgTree()
-    // orgTreeData.value = response.data
-
-    // 模拟数据
+    const response = await getOrgTree()
+    // 转换节点类型
+    orgTreeData.value = (response.data || []).map(convertNodeType)
+  } catch (error) {
+    console.error('加载组织树失败:', error)
+    // 使用默认数据作为降级方案
     orgTreeData.value = [
       {
         id: 1,
@@ -116,8 +137,6 @@ const loadOrgTree = async () => {
         ]
       }
     ]
-  } catch (error) {
-    console.error('加载组织树失败:', error)
   }
 }
 

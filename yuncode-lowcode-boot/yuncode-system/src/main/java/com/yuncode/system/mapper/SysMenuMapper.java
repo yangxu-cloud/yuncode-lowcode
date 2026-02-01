@@ -1,5 +1,6 @@
 package com.yuncode.system.mapper;
 
+import com.baomidou.mybatisplus.annotation.InterceptorIgnore;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.yuncode.system.entity.SysMenu;
 import org.apache.ibatis.annotations.Mapper;
@@ -18,17 +19,23 @@ public interface SysMenuMapper extends BaseMapper<SysMenu> {
 
     /**
      * 获取菜单树
+     * 注意：使用 @InterceptorIgnore 注解忽略多租户插件的自动过滤
+     * 查询所有菜单（包括默认菜单和所有租户菜单）
      *
      * @return 菜单树列表
      */
+    @InterceptorIgnore(tenantLine = "true")
     List<SysMenu> selectMenuTree();
 
     /**
      * 根据租户ID获取菜单列表
+     * 注意：使用 @InterceptorIgnore 注解忽略多租户插件的自动过滤
+     * XML中已手动处理租户ID过滤逻辑（包含默认菜单）
      *
      * @param tenantId 租户ID
      * @return 菜单列表
      */
+    @InterceptorIgnore(tenantLine = "true")
     List<SysMenu> selectMenusByTenantId(@Param("tenantId") Long tenantId);
 
     /**
@@ -81,4 +88,22 @@ public interface SysMenuMapper extends BaseMapper<SysMenu> {
      * @return 权限配置数量
      */
     Long countPermissionsByMenuId(@Param("menuId") Long menuId);
+
+    /**
+     * 根据ID查询菜单（忽略多租户）
+     *
+     * @param menuId 菜单ID
+     * @return 菜单实体
+     */
+    @InterceptorIgnore(tenantLine = "true")
+    SysMenu selectByIdIgnoreTenant(@Param("menuId") Long menuId);
+
+    /**
+     * 更新菜单（忽略多租户）
+     *
+     * @param menu 菜单实体
+     * @return 影响行数
+     */
+    @InterceptorIgnore(tenantLine = "true")
+    int updateByIdIgnoreTenant(SysMenu menu);
 }

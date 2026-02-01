@@ -110,4 +110,35 @@
           AND menu_id = #{menuId}
     </select>
 
+    <!--
+        根据ID查询菜单（忽略多租户）
+    -->
+    <select id="selectByIdIgnoreTenant" resultType="com.yuncode.system.entity.SysMenu">
+        SELECT *
+        FROM sys_menu
+        WHERE id = #{menuId}
+          AND deleted = 0
+    </select>
+
+    <!--
+        更新菜单（忽略多租户）
+    -->
+    <update id="updateByIdIgnoreTenant">
+        UPDATE sys_menu
+        SET parent_id = #{parentId},
+            menu_name = #{menuName},
+            menu_type = #{menuType},
+            path = #{path},
+            component = #{component},
+            permission = #{permission},
+            icon = #{icon},
+            sort_order = #{sortOrder},
+            visible = #{visible},
+            status = #{status},
+            update_time = NOW(),
+            update_by = #{updateBy}
+        WHERE id = #{id}
+          AND deleted = 0
+    </update>
+
 </mapper>

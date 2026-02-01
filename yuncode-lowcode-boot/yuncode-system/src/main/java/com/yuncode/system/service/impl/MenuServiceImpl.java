@@ -40,19 +40,23 @@ public class MenuServiceImpl implements MenuService {
     public List<MenuTreeNode> getMenuTree() {
         List<SysMenu> allMenus;
         try {
-            if (SecurityUtil.isPlatformAdmin()) {
-                // 平台管理员查看所有菜单（包括默认菜单和所有租户菜单）
-                log.info("平台管理员查询所有菜单（忽略租户限制）");
-                allMenus = menuMapper.selectList(new LambdaQueryWrapper<>());
-            } else {
-                // 普通用户只能查看自己租户的菜单和默认菜单
+            // 查询所有菜单（包括默认菜单和所有租户菜单）
+            allMenus = menuMapper.selectMenuTree();
+            log.info("查询到菜单数量: {}", allMenus.size());
+
+            // 如果不是平台管理员，过滤出当前租户的菜单和默认菜单
+            if (!SecurityUtil.isPlatformAdmin()) {
                 Long tenantId = SecurityUtil.getTenantId();
-                log.info("普通用户查询菜单（租户ID: {}）", tenantId);
-                allMenus = menuMapper.selectMenusByTenantId(tenantId);
+                log.info("过滤租户菜单（租户ID: {}）", tenantId);
+                // 保留：默认菜单（tenantId=null）+ 当前租户的菜单
+                allMenus = allMenus.stream()
+                        .filter(menu -> menu.getTenantId() == null || menu.getTenantId().equals(tenantId))
+                        .collect(Collectors.toList());
+                log.info("过滤后菜单数量: {}", allMenus.size());
             }
         } catch (Exception e) {
-            log.warn("获取用户信息失败，使用默认租户限制查询", e);
-            allMenus = menuMapper.selectList(new LambdaQueryWrapper<>());
+            log.warn("获取菜单失败", e);
+            allMenus = new ArrayList<>();
         }
 
         // 构建菜单树
@@ -130,10 +134,23 @@ public class MenuServiceImpl implements MenuService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @com.baomidou.mybatisplus.annotation.InterceptorIgnore(tenantLine = "true")
     public boolean updateMenu(MenuForm menuForm) {
+        // 先查询出原始菜单，保留租户信息（使用忽略多租户的方法）
+        SysMenu existingMenu = menuMapper.selectByIdIgnoreTenant(menuForm.getId());
+        if (existingMenu == null) {
+            throw new RuntimeException("菜单不存在");
+        }
+
         SysMenu menu = new SysMenu();
         BeanUtils.copyProperties(menuForm, menu);
-        return menuMapper.updateById(menu) > 0;
+
+        // 保留原始租户信息，防止误修改
+        menu.setTenantId(existingMenu.getTenantId());
+        menu.setTenantCode(existingMenu.getTenantCode());
+
+        // 使用忽略多租户的更新方法
+        return menuMapper.updateByIdIgnoreTenant(menu) > 0;
     }
 
     @Override
@@ -278,13 +295,12 @@ public class MenuServiceImpl implements MenuService {
     public void initDefaultMenus() {
         log.info("开始初始化默认菜单...");
 
-        // 检查是否已存在默认菜单
-        LambdaQueryWrapper<SysMenu> wrapper = new LambdaQueryWrapper<>();
-        wrapper.isNull(SysMenu::getTenantId)
-                .eq(SysMenu::getMenuName, "办公");
-        Long count = menuMapper.selectCount(wrapper);
+        // 检查是否已存在默认菜单（使用 selectMenuTree 避免多租户插件拦截）
+        List<SysMenu> allMenus = menuMapper.selectMenuTree();
+        boolean exists = allMenus.stream()
+                .anyMatch(menu -> "办公".equals(menu.getMenuName()) && menu.getTenantId() == null);
 
-        if (count > 0) {
+        if (exists) {
             log.info("默认菜单已存在，跳过初始化");
             return;
         }
