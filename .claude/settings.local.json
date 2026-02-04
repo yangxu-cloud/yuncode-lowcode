@@ -78,7 +78,12 @@
       "Bash(pnpm list:*)",
       "Bash(git rm:*)",
       "Bash(npx vite:*)",
-      "Bash(javac:*)"
+      "Bash(javac:*)",
+      "Bash(\"C:\\\\workspace\\\\JeecgBoot-springboot3\\\\jeecg-boot\\\\jdk17\\\\bin\\\\java.exe\" -version)",
+      "Bash(\"C:\\\\tools\\\\apache-maven-3.9.12\\\\bin\\\\mvn.cmd\":*)",
+      "Bash(git check-ignore:*)",
+      "Bash(git ls-tree:*)",
+      "Bash(git remote set-url:*)"
     ]
   }
 }

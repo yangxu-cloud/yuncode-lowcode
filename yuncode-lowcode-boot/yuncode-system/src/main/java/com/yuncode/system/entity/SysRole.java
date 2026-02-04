@@ -24,6 +24,16 @@ public class SysRole {
     private Long tenantId;
 
     /**
+     * 父级ID（0表示根级分类）
+     */
+    private Long parentId;
+
+    /**
+     * 角色类型（1-分类，2-具体角色）
+     */
+    private Integer roleType;
+
+    /**
      * 角色名称
      */
     private String roleName;
@@ -77,4 +87,10 @@ public class SysRole {
      */
     @TableField(fill = FieldFill.INSERT_UPDATE)
     private String updateBy;
+
+    /**
+     * 子角色列表（非数据库字段）
+     */
+    @TableField(exist = false)
+    private java.util.List<SysRole> children;
 }

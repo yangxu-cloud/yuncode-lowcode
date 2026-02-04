@@ -35,7 +35,8 @@ export default {
     errorPages: "异常页面",
     facilities: "公共设施",
     org: "组织管理",
-    navigation: "导航管理"
+    navigation: "导航管理",
+    role: "角色管理"
   },
   login: {
     title: "Yuncode LowCode",

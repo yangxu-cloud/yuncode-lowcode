@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yuncode.system.mapper.SysRoleUserMapper">
+
+    <!-- 根据角色ID查询用户列表 -->
+    <select id="selectUserIdsByRoleId" resultType="java.lang.Long">
+        SELECT user_id
+        FROM sys_role_user
+        WHERE role_id = #{roleId}
+    </select>
+
+    <!-- 根据角色ID删除关联 -->
+    <delete id="deleteByRoleId">
+        DELETE FROM sys_role_user
+        WHERE role_id = #{roleId}
+    </delete>
+
+    <!-- 批量插入角色用户关联 -->
+    <insert id="batchInsert">
+        INSERT INTO sys_role_user (id, role_id, user_id, tenant_id, create_time)
+        VALUES
+        <foreach collection="list" item="item" separator=",">
+            (#{item.id}, #{item.roleId}, #{item.userId}, #{item.tenantId}, #{item.createTime})
+        </foreach>
+    </insert>
+
+</mapper>

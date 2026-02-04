@@ -37,6 +37,18 @@ const facilitiesRoutes: RouteRecordRaw = {
         showParent: true,
         showLink: true
       }
+    },
+    {
+      path: "/facilities/role",
+      name: "Role",
+      component: () => import("@/views/facilities/role/index.vue"),
+      meta: {
+        icon: "ep:user",
+        title: "routes.role",
+        i18nKey: "routes.role",
+        showParent: true,
+        showLink: true
+      }
     }
   ]
 } satisfies RouteConfigsTable;

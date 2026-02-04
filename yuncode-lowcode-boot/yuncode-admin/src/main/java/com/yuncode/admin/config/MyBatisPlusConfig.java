@@ -39,30 +39,25 @@ public class MyBatisPlusConfig {
                     if (!StpUtil.isLogin()) {
                         // 未登录时返回 null，不进行租户过滤
                         // 用于系统初始化等场景
-                        System.out.println("[MyBatisPlus] 未登录，返回 null");
                         return null;
                     }
 
                     String roleCode = StpUtil.getSession().get("roleCode", "");
                     Long tenantId = StpUtil.getSession().get("tenantId", 0L);
 
-                    System.out.println("[MyBatisPlus] getTenantId - roleCode=" + roleCode + ", tenantId=" + tenantId);
-
                     // 平台管理员也有自己的租户ID（系统租户），在进行增删改操作时应该使用这个租户ID
                     // 只有在需要查看所有租户数据时，才使用 @InterceptorIgnore 注解的方法
                     if (tenantId == null || tenantId == 0) {
-                        System.out.println("[MyBatisPlus] tenantId 为 null 或 0，返回 null");
                         return null;
                     }
 
-                    System.out.println("[MyBatisPlus] 返回 tenantId=" + tenantId);
                     return new LongValue(tenantId);
+                } catch (cn.dev33.satoken.exception.NotWebContextException e) {
+                    // 非 web 上下文异常，静默处理，不进行租户过滤
+                    // 常见场景：应用启动初始化、定时任务、异步线程等
+                    return null;
                 } catch (Exception e) {
-                    // 在异步线程等非 Web 上下文中，无法获取租户ID
-                    // 返回 null，不进行租户过滤
-                    // 常见场景：异步日志记录、定时任务等
-                    System.out.println("[MyBatisPlus] 获取 tenantId 异常: " + e.getMessage());
-                    e.printStackTrace();
+                    // 其他异常也返回 null，不进行租户过滤
                     return null;
                 }
             }
