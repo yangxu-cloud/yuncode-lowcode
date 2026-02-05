@@ -1934,40 +1934,40 @@ onMounted(() => {
 
 <style scoped lang="scss">
 .org-container {
-  padding: 20px;
+  height: 100%;
+  padding: 0px 0px 30px 0px;
+  box-sizing: border-box;
 
   .org-card {
-    .card-header {
-      display: flex;
-      align-items: center;
-      gap: 12px;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
 
-      span {
-        font-size: 16px;
-        font-weight: 500;
-        flex: 1;
-      }
+    :deep(.el-card__body) {
+      flex: 1;
+      overflow: hidden;
+      padding: 20px;
+    }
+
+    .card-header {
+      font-size: 16px;
+      font-weight: 500;
     }
 
     .org-content {
       display: flex;
-      height: calc(100vh - 240px);
       gap: 20px;
+      height: 100%;
 
       .org-tree-panel {
-        flex: 0 0 300px;
-        max-width: 300px;
+        width: 300px;
+        flex-shrink: 0;
         border-right: 1px solid #e4e7ed;
-        padding-right: 20px;
+        padding-right: 16px;
         overflow-y: auto;
-        display: flex;
-        flex-direction: column;
 
         .tree-search {
           margin-bottom: 16px;
-          padding: 12px;
-          background-color: #f5f7fa;
-          border-radius: 4px;
         }
 
         .custom-tree-node {
@@ -2004,12 +2004,17 @@ onMounted(() => {
             }
           }
         }
+
+        :deep(.el-tree-node__content) {
+          height: 36px;
+        }
       }
 
       .org-detail-panel {
         flex: 1;
-        padding-left: 20px;
+        padding: 0 16px 16px 16px;
         overflow-y: auto;
+        min-width: 0;
 
         .detail-content {
           .detail-tabs {
@@ -2031,6 +2036,34 @@ onMounted(() => {
           .user-detail {
             padding: 20px;
           }
+        }
+      }
+    }
+  }
+}
+
+// 响应式布局
+@media (max-width: 768px) {
+  .org-container {
+    padding: 12px;
+
+    .org-card {
+      .org-content {
+        flex-direction: column;
+        gap: 16px;
+
+        .org-tree-panel {
+          width: 100%;
+          border-right: none;
+          border-bottom: 1px solid #e4e7ed;
+          padding-right: 16px;
+          padding-bottom: 16px;
+          max-height: 400px;
+          overflow-y: auto;
+        }
+
+        .org-detail-panel {
+          padding: 0;
         }
       }
     }

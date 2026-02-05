@@ -1,29 +1,39 @@
 <template>
   <div class="navigation-management">
-    <div class="layout-container">
-      <!-- 左侧：菜单树 -->
-      <div class="left-panel">
-        <!-- 搜索框 -->
-        <div class="search-area">
-          <el-input
-            v-model="searchKeyword"
-            placeholder="搜索菜单..."
-            prefix-icon="Search"
-            clearable
-            size="default"
-            @input="handleSearch"
-          />
+    <el-card class="navigation-card">
+      <!-- 页面头部 -->
+      <template #header>
+        <div class="card-header">
+          <span>导航管理</span>
         </div>
+      </template>
 
-        <!-- 新建子系统按钮 -->
-        <div class="action-area">
-          <el-button type="primary" :icon="Plus" @click="handleAddRootMenu">
-            新建子系统
-          </el-button>
-        </div>
+      <!-- 主体内容：左右布局 -->
+      <div class="navigation-content">
+        <!-- 左侧：菜单树 -->
+        <div class="navigation-tree-panel">
+          <!-- 搜索框 -->
+          <div class="tree-search">
+            <el-input
+              v-model="searchKeyword"
+              placeholder="搜索菜单..."
+              clearable
+              @input="handleSearch"
+            >
+              <template #prefix>
+                <el-icon><Search /></el-icon>
+              </template>
+            </el-input>
+          </div>
 
-        <!-- 菜单树 -->
-        <div class="tree-area">
+          <!-- 新建子系统按钮 -->
+          <div class="tree-actions">
+            <el-button type="primary" :icon="Plus" @click="handleAddRootMenu">
+              新建子系统
+            </el-button>
+          </div>
+
+          <!-- 菜单树 -->
           <el-tree
             ref="treeRef"
             v-loading="loading"
@@ -88,14 +98,13 @@
               </div>
             </template>
           </el-tree>
-        </div>
       </div>
 
       <!-- 右侧：菜单详情和权限管理 -->
-      <div class="right-panel">
+      <div class="navigation-detail-panel">
         <el-empty v-if="!currentMenu" description="请选择左侧菜单节点" />
 
-        <div v-else class="menu-detail">
+        <div v-else class="detail-content">
           <!-- Tab页签 -->
           <el-tabs v-model="activeTab" class="menu-tabs">
             <!-- 菜单信息 -->
@@ -214,6 +223,7 @@
         </div>
       </div>
     </div>
+    </el-card>
 
     <!-- 菜单编辑对话框 -->
     <MenuFormDialog
@@ -615,159 +625,152 @@ onMounted(() => {
 <style scoped lang="scss">
 .navigation-management {
   height: 100%;
-  padding: 16px;
+  padding: 0px 0px 30px 0px;
+  box-sizing: border-box;
 
-  .layout-container {
+  .navigation-card {
+    height: 100%;
     display: flex;
-    gap: 16px;
-    height: calc(100vh - 120px);
-  }
+    flex-direction: column;
 
-  .left- {
-    &panel {
-      flex: 0 0 400px;
-      display: flex;
-      flex-direction: column;
-      border: 1px solid #e4e7ed;
-      border-radius: 4px;
-      background-color: #fff;
+    :deep(.el-card__body) {
+      flex: 1;
       overflow: hidden;
+      padding: 20px;
     }
-  }
 
-  .right- {
-    &panel {
-      flex: 1;
-      border: 1px solid #e4e7ed;
-      border-radius: 4px;
-      background-color: #fff;
+    .card-header {
+      font-size: 16px;
+      font-weight: 500;
+    }
+
+    .navigation-content {
+      display: flex;
+      gap: 20px;
+      height: 100%;
+    }
+
+    .navigation-tree-panel {
+      width: 300px;
+      min-width: 300px;
+      max-width: 300px;
+      border-right: 1px solid #e4e7ed;
       padding: 16px;
       overflow-y: auto;
-    }
-  }
+      flex-shrink: 0;
 
-  .search- {
-    &area {
-      padding: 12px 16px;
-      border-bottom: 1px solid #e4e7ed;
-    }
-  }
+      .tree-search {
+        margin-bottom: 16px;
+      }
 
-  .action- {
-    &area {
-      padding: 12px 16px;
-      border-bottom: 1px solid #e4e7ed;
-    }
-  }
+      .tree-actions {
+        margin-bottom: 16px;
+      }
 
-  .tree- {
-    &area {
-      flex: 1;
-      overflow-y: auto;
-      padding: 12px;
-    }
-  }
-
-  .tree-node {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    flex: 1;
-    padding-right: 8px;
-
-    .node- {
-      &label {
+      .tree-node {
         flex: 1;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-      }
-    }
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding-right: 8px;
 
-    .node- {
-      &actions {
-        display: none;
-        gap: 4px;
-      }
-    }
+        .node-label {
+          flex: 1;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
 
-    &:hover .node-actions {
-      display: flex;
-    }
-  }
+        .node-actions {
+          display: none;
+          gap: 4px;
+        }
 
-  :deep(.el-tree-node__content) {
-    height: 36px;
-  }
-
-  .menu- {
-    &detail {
-      height: 100%;
-    }
-  }
-
-  .menu- {
-    &tabs {
-      height: 100%;
-      display: flex;
-      flex-direction: column;
-
-      :deep(.el-tabs__content) {
-        flex: 1;
-        overflow-y: auto;
-      }
-
-      :deep(.el-tab-pane) {
-        height: 100%;
-      }
-    }
-  }
-
-  .tab- {
-    &content {
-      height: 100%;
-      display: flex;
-      flex-direction: column;
-    }
-  }
-
-  .tab- {
-    &header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 16px;
-      background-color: #fff;
-      border-bottom: 1px solid #e4e7ed;
-
-      .menu- {
-        &title {
+        &:hover .node-actions {
           display: flex;
-          align-items: center;
-          font-size: 16px;
-          font-weight: 500;
-          color: #303133;
+        }
+      }
 
-          .title- {
-            &text {
-              font-size: 18px;
+      :deep(.el-tree-node__content) {
+        height: 36px;
+      }
+    }
+
+    .navigation-detail-panel {
+      flex: 1;
+      padding: 16px;
+      overflow-y: auto;
+      min-width: 0;
+
+      .detail-content {
+        .menu-tabs {
+          display: flex;
+          flex-direction: column;
+
+          :deep(.el-tabs__content) {
+            flex: 1;
+            overflow-y: auto;
+          }
+
+          .tab-header {
+            margin-bottom: 16px;
+            padding: 16px;
+            background-color: #f5f7fa;
+            border-radius: 4px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+
+            .menu-title {
+              display: flex;
+              align-items: center;
+              font-size: 16px;
+              font-weight: 500;
+              color: #303133;
+
+              .title-text {
+                font-size: 18px;
+              }
+            }
+
+            .tab-title {
+              font-size: 16px;
+              font-weight: 500;
+              color: #303133;
+            }
+
+            .header-actions {
+              display: flex;
+              gap: 8px;
             }
           }
         }
-      }
 
-      .tab- {
-        &title {
-          font-size: 16px;
-          font-weight: 500;
-          color: #303133;
+        :deep(.el-descriptions) {
+          margin-bottom: 16px;
         }
       }
+    }
+  }
+}
 
-      .header- {
-        &actions {
-          display: flex;
-          gap: 8px;
+// 响应式布局
+@media (max-width: 768px) {
+  .navigation-management {
+    .navigation-card {
+      .navigation-content {
+        flex-direction: column;
+
+        .navigation-tree-panel {
+          width: 100%;
+          max-width: none;
+          border-right: none;
+          border-bottom: 1px solid #e4e7ed;
+          max-height: 400px;
+        }
+
+        .navigation-detail-panel {
+          padding: 12px;
         }
       }
     }

@@ -232,19 +232,43 @@ public class SysRoleServiceImpl implements SysRoleService {
             return;
         }
 
-        List<SysRoleUser> list = userIds.stream()
+        // 查询已存在的人员ID，过滤掉重复的
+        List<SysRoleUser> existingUsers = roleUserMapper.selectList(
+            new LambdaQueryWrapper<SysRoleUser>()
+                .eq(SysRoleUser::getRoleId, roleId)
+                .in(SysRoleUser::getUserId, userIds)
+        );
+
+        List<Long> existingUserIds = existingUsers.stream()
+            .map(SysRoleUser::getUserId)
+            .collect(Collectors.toList());
+
+        // 过滤掉已存在的人员
+        List<Long> newUserIds = userIds.stream()
+            .filter(userId -> !existingUserIds.contains(userId))
+            .collect(Collectors.toList());
+
+        if (newUserIds.isEmpty()) {
+            log.info("所有人员都已存在，无需添加: roleId={}", roleId);
+            return;
+        }
+
+        // 从 Sa-Token Session 获取当前登录用户的租户ID
+        Long tenantId = cn.dev33.satoken.stp.StpUtil.getSession().get("tenantId", 2L);
+
+        List<SysRoleUser> list = newUserIds.stream()
             .map(userId -> {
                 SysRoleUser roleUser = new SysRoleUser();
                 roleUser.setRoleId(roleId);
                 roleUser.setUserId(userId);
-                roleUser.setTenantId(0L);
+                roleUser.setTenantId(tenantId);
                 roleUser.setCreateTime(LocalDateTime.now());
                 return roleUser;
             })
             .collect(Collectors.toList());
 
         roleUserMapper.batchInsert(list);
-        log.info("添加人员到角色成功: roleId={}, count={}", roleId, userIds.size());
+        log.info("添加人员到角色成功: roleId={}, count={}", roleId, newUserIds.size());
     }
 
     /**
@@ -269,19 +293,43 @@ public class SysRoleServiceImpl implements SysRoleService {
             return;
         }
 
-        List<SysRoleDept> list = deptIds.stream()
+        // 查询已存在的部门ID，过滤掉重复的
+        List<SysRoleDept> existingDepts = roleDeptMapper.selectList(
+            new LambdaQueryWrapper<SysRoleDept>()
+                .eq(SysRoleDept::getRoleId, roleId)
+                .in(SysRoleDept::getDeptId, deptIds)
+        );
+
+        List<Long> existingDeptIds = existingDepts.stream()
+            .map(SysRoleDept::getDeptId)
+            .collect(Collectors.toList());
+
+        // 过滤掉已存在的部门
+        List<Long> newDeptIds = deptIds.stream()
+            .filter(deptId -> !existingDeptIds.contains(deptId))
+            .collect(Collectors.toList());
+
+        if (newDeptIds.isEmpty()) {
+            log.info("所有部门都已存在，无需添加: roleId={}", roleId);
+            return;
+        }
+
+        // 从 Sa-Token Session 获取当前登录用户的租户ID
+        Long tenantId = cn.dev33.satoken.stp.StpUtil.getSession().get("tenantId", 2L);
+
+        List<SysRoleDept> list = newDeptIds.stream()
             .map(deptId -> {
                 SysRoleDept roleDept = new SysRoleDept();
                 roleDept.setRoleId(roleId);
                 roleDept.setDeptId(deptId);
-                roleDept.setTenantId(0L);
+                roleDept.setTenantId(tenantId);
                 roleDept.setCreateTime(LocalDateTime.now());
                 return roleDept;
             })
             .collect(Collectors.toList());
 
         roleDeptMapper.batchInsert(list);
-        log.info("添加部门到角色成功: roleId={}, count={}", roleId, deptIds.size());
+        log.info("添加部门到角色成功: roleId={}, count={}", roleId, newDeptIds.size());
     }
 
     /**
@@ -306,19 +354,43 @@ public class SysRoleServiceImpl implements SysRoleService {
             return;
         }
 
-        List<SysRolePermission> list = permissionIds.stream()
+        // 查询已存在的权限ID，过滤掉重复的
+        List<SysRolePermission> existingPermissions = rolePermissionMapper.selectList(
+            new LambdaQueryWrapper<SysRolePermission>()
+                .eq(SysRolePermission::getRoleId, roleId)
+                .in(SysRolePermission::getPermissionId, permissionIds)
+        );
+
+        List<Long> existingPermissionIds = existingPermissions.stream()
+            .map(SysRolePermission::getPermissionId)
+            .collect(Collectors.toList());
+
+        // 过滤掉已存在的权限
+        List<Long> newPermissionIds = permissionIds.stream()
+            .filter(permissionId -> !existingPermissionIds.contains(permissionId))
+            .collect(Collectors.toList());
+
+        if (newPermissionIds.isEmpty()) {
+            log.info("所有权限都已存在，无需添加: roleId={}", roleId);
+            return;
+        }
+
+        // 从 Sa-Token Session 获取当前登录用户的租户ID
+        Long tenantId = cn.dev33.satoken.stp.StpUtil.getSession().get("tenantId", 2L);
+
+        List<SysRolePermission> list = newPermissionIds.stream()
             .map(permissionId -> {
                 SysRolePermission rolePermission = new SysRolePermission();
                 rolePermission.setRoleId(roleId);
                 rolePermission.setPermissionId(permissionId);
-                rolePermission.setTenantId(0L);
+                rolePermission.setTenantId(tenantId);
                 rolePermission.setCreateTime(LocalDateTime.now());
                 return rolePermission;
             })
             .collect(Collectors.toList());
 
         rolePermissionMapper.batchInsert(list);
-        log.info("添加权限到角色成功: roleId={}, count={}", roleId, permissionIds.size());
+        log.info("添加权限到角色成功: roleId={}, count={}", roleId, newPermissionIds.size());
     }
 
     /**

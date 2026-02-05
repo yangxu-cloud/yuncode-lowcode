@@ -136,28 +136,46 @@
             <el-tabs v-if="selectedNode.roleType === 2" v-model="activeTab" class="detail-tabs">
               <!-- Tab1: 基本信息 -->
               <el-tab-pane label="基本信息" name="basic">
-                <el-descriptions :column="2" border>
-                  <el-descriptions-item label="角色名称">
-                    {{ selectedNode.label }}
-                  </el-descriptions-item>
-                  <el-descriptions-item label="角色编码">
-                    {{ selectedNode.roleCode }}
-                  </el-descriptions-item>
-                  <el-descriptions-item label="所属分类">
-                    {{ categoryName }}
-                  </el-descriptions-item>
-                  <el-descriptions-item label="排序">
-                    {{ selectedNode.sortOrder }}
-                  </el-descriptions-item>
-                  <el-descriptions-item label="状态" :span="2">
-                    <el-tag :type="selectedNode.status === 0 ? 'success' : 'danger'">
-                      {{ selectedNode.status === 0 ? '正常' : '禁用' }}
-                    </el-tag>
-                  </el-descriptions-item>
-                  <el-descriptions-item label="描述" :span="2">
-                    {{ selectedNode.description || '无' }}
-                  </el-descriptions-item>
-                </el-descriptions>
+                <div class="tab-content">
+                  <div class="tab-header">
+                    <div class="role-title">
+                      <el-icon class="role-icon" :size="24" style="margin-right: 8px">
+                        <Stamp />
+                      </el-icon>
+                      <span class="title-text">{{ selectedNode.label }}</span>
+                    </div>
+                    <el-button
+                      type="primary"
+                      :icon="Edit"
+                      size="small"
+                      @click="handleEditRole(selectedNode)"
+                    >
+                      编辑
+                    </el-button>
+                  </div>
+                  <el-descriptions :column="2" border>
+                    <el-descriptions-item label="角色名称">
+                      {{ selectedNode.label }}
+                    </el-descriptions-item>
+                    <el-descriptions-item label="角色编码">
+                      {{ selectedNode.roleCode }}
+                    </el-descriptions-item>
+                    <el-descriptions-item label="所属分类">
+                      {{ categoryName }}
+                    </el-descriptions-item>
+                    <el-descriptions-item label="排序">
+                      {{ selectedNode.sortOrder }}
+                    </el-descriptions-item>
+                    <el-descriptions-item label="状态" :span="2">
+                      <el-tag :type="selectedNode.status === 0 ? 'success' : 'danger'">
+                        {{ selectedNode.status === 0 ? '正常' : '禁用' }}
+                      </el-tag>
+                    </el-descriptions-item>
+                    <el-descriptions-item label="描述" :span="2">
+                      {{ selectedNode.description || '无' }}
+                    </el-descriptions-item>
+                  </el-descriptions>
+                </div>
               </el-tab-pane>
 
               <!-- Tab2: 人员 -->
@@ -236,10 +254,24 @@
       @success="handleRoleFormSuccess"
     />
 
-    <!-- 用户选择组件 -->
-    <UserSelect
-      ref="userSelectRef"
-      @confirm="handleUserSelectConfirm"
+    <!-- 用户选择器 -->
+    <UserSelector
+      ref="userSelectorRef"
+      v-model="selectedUsers"
+      :multiple="true"
+      :exclude-ids="roleUsers.map(u => u.userId)"
+      title="添加人员"
+      @change="handleUserSelectConfirm"
+    />
+
+    <!-- 部门选择器 -->
+    <DeptSelector
+      ref="deptSelectorRef"
+      v-model="selectedDepts"
+      :multiple="false"
+      :exclude-ids="roleDepts.map(d => d.deptId)"
+      title="添加部门"
+      @change="handleDeptSelected"
     />
 
     <!-- 权限选择对话框 -->
@@ -281,8 +313,9 @@ import {
   type RolePermission
 } from "@/api/role";
 import RoleFormDialog from "./components/RoleFormDialog.vue";
-import UserSelect from "@/components/UserSelect.vue";
+import UserSelector from "@/components/UserSelector.vue";
 import PermissionSelectDialog from "./components/PermissionSelectDialog.vue";
+import DeptSelector from "@/components/DeptSelector.vue";
 
 // 角色树数据
 const roleTreeData = ref<RoleNode[]>([]);
@@ -330,14 +363,19 @@ const categories = computed(() => {
   return rootNode?.children || [];
 });
 
-// 用户选择组件
-const userSelectRef = ref<InstanceType<typeof UserSelect>>();
+// 用户选择器
+const userSelectorRef = ref<InstanceType<typeof UserSelector>>();
+const selectedUsers = ref<number[]>([]);
 
 // 权限选择对话框
 const permissionSelectVisible = ref(false);
 const selectedPermissionIds = computed(() =>
   rolePermissions.value.map(p => p.permissionId)
 );
+
+// 部门选择器
+const deptSelectorRef = ref<InstanceType<typeof DeptSelector>>();
+const selectedDepts = ref<number | number[]>(0);
 
 /**
  * 加载角色树
@@ -448,6 +486,14 @@ const handleAction = (command: string, data: RoleNode) => {
 };
 
 /**
+ * 编辑角色
+ */
+const handleEditRole = (data: RoleNode) => {
+  currentRole.value = data;
+  roleFormVisible.value = true;
+};
+
+/**
  * 删除角色
  */
 const handleDelete = async (data: RoleNode) => {
@@ -484,9 +530,44 @@ const handleDelete = async (data: RoleNode) => {
  * 添加人员
  */
 const handleAddUser = () => {
-  // 获取已选择的用户ID
+  if (!selectedNode.value) {
+    ElMessage.warning("请先选择角色");
+    return;
+  }
+
+  // 重置选中
+  selectedUsers.value = [];
+
+  // 获取已选用户ID列表，用于排除
   const excludeIds = roleUsers.value.map(u => u.userId);
-  userSelectRef.value?.open(excludeIds);
+
+  // 打开用户选择器
+  userSelectorRef.value?.open();
+};
+
+/**
+ * 用户选择完成
+ */
+const handleUserSelectConfirm = async (userIds: number[], users: any[]) => {
+  if (!userIds || userIds.length === 0) {
+    return;
+  }
+
+  const roleId = selectedNode.value?.id;
+
+  try {
+    const response = await addUsersToRole(roleId!, userIds);
+    if (response.code === 200) {
+      ElMessage.success("添加成功");
+      // 重新加载详情
+      await loadRoleDetail(roleId!);
+    } else {
+      ElMessage.error(response.message || "添加失败");
+    }
+  } catch (error: any) {
+    console.error("添加失败:", error);
+    ElMessage.error(error.message || "添加失败");
+  }
 };
 
 /**
@@ -609,26 +690,6 @@ const handlePermissionSelectConfirm = async (permissionIds: number[]) => {
 };
 
 /**
- * 用户选择确认
- */
-const handleUserSelectConfirm = async (users: any[]) => {
-  try {
-    const userIds = users.map(u => u.userId);
-    const response = await addUsersToRole(selectedNode.value!.id!, userIds);
-    if (response.code === 200) {
-      ElMessage.success("添加成功");
-      // 重新加载详情
-      await loadRoleDetail(selectedNode.value!.id!);
-    } else {
-      ElMessage.error(response.message || "添加失败");
-    }
-  } catch (error: any) {
-    console.error("添加失败:", error);
-    ElMessage.error(error.message || "添加失败");
-  }
-};
-
-/**
  * 角色表单成功回调
  */
 const handleRoleFormSuccess = async () => {
@@ -645,8 +706,44 @@ const handleRoleFormSuccess = async () => {
  * 添加部门
  */
 const handleAddDept = () => {
-  // TODO: 打开部门选择组件
-  ElMessage.info("添加部门功能待实现（可参考 DeptSelect 组件）");
+  if (!selectedNode.value) {
+    ElMessage.warning("请先选择角色");
+    return;
+  }
+
+  // 重置选中
+  selectedDepts.value = 0;
+
+  // 获取已选部门ID列表，用于排除
+  const excludeIds = roleDepts.value.map(d => d.deptId);
+
+  // 打开部门选择器
+  deptSelectorRef.value?.open();
+};
+
+/**
+ * 部门选择完成
+ */
+const handleDeptSelected = async (deptId: number, deptItems: any[]) => {
+  if (!deptId || deptItems.length === 0) {
+    return;
+  }
+
+  const roleId = selectedNode.value?.id;
+
+  try {
+    const response = await addDeptsToRole(roleId!, [deptId]);
+    if (response.code === 200) {
+      ElMessage.success("添加成功");
+      // 重新加载详情
+      await loadRoleDetail(roleId!);
+    } else {
+      ElMessage.error(response.message || "添加失败");
+    }
+  } catch (error: any) {
+    console.error("添加失败:", error);
+    ElMessage.error(error.message || "添加失败");
+  }
 };
 
 // 组件挂载时加载角色树
@@ -657,14 +754,19 @@ onMounted(() => {
 
 <style scoped lang="scss">
 .role-management {
-  height: calc(100vh - 200px);
+  height: 100%;
+  padding: 0px 0px 30px 0px;
+  box-sizing: border-box;
 
   .role-card {
     height: 100%;
+    display: flex;
+    flex-direction: column;
 
     :deep(.el-card__body) {
-      height: calc(100% - 60px);
-      padding: 0;
+      flex: 1;
+      overflow: hidden;
+      padding: 20px;
     }
 
     .card-header {
@@ -674,14 +776,18 @@ onMounted(() => {
 
     .role-content {
       display: flex;
+      gap: 20px;
       height: 100%;
     }
 
     .role-tree-panel {
       width: 300px;
+      min-width: 300px;
+      max-width: 300px;
       border-right: 1px solid #e4e7ed;
       padding: 16px;
       overflow-y: auto;
+      flex-shrink: 0;
 
       .tree-search {
         margin-bottom: 16px;
@@ -774,14 +880,74 @@ onMounted(() => {
       flex: 1;
       padding: 16px;
       overflow-y: auto;
+      min-width: 0;
 
       .detail-tabs {
+        display: flex;
+        flex-direction: column;
+
+        :deep(.el-tabs__content) {
+          flex: 1;
+          overflow-y: auto;
+        }
+
+        .tab-content {
+          .tab-header {
+            margin-bottom: 16px;
+            padding: 16px;
+            background-color: #f5f7fa;
+            border-radius: 4px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+
+            .role-title {
+              display: flex;
+              align-items: center;
+              font-size: 16px;
+              font-weight: 500;
+              color: #303133;
+
+              .role-icon {
+                color: #e6a23c;
+              }
+
+              .title-text {
+                font-size: 18px;
+              }
+            }
+          }
+        }
+
         .tab-header {
           margin-bottom: 16px;
         }
 
         :deep(.el-descriptions) {
           margin-bottom: 16px;
+        }
+      }
+    }
+  }
+}
+
+// 响应式布局
+@media (max-width: 768px) {
+  .role-management {
+    .role-card {
+      .role-content {
+        flex-direction: column;
+
+        .role-tree-panel {
+          width: 100%;
+          max-width: none;
+          border-right: none;
+          border-bottom: 1px solid #e4e7ed;
+          max-height: 400px;
+        }
+
+        .role-detail-panel {
+          padding: 12px;
         }
       }
     }

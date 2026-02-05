@@ -1,5 +1,5 @@
 <template>
-  <div class="dept-selector">
+  <div class="user-selector">
     <el-dialog
       v-model="dialogVisible"
       :title="title"
@@ -7,14 +7,14 @@
       :close-on-click-modal="false"
       @close="handleClose"
     >
-      <!-- 上部：已选部门 -->
+      <!-- 上部：已选用户 -->
       <div class="selected-area">
         <div class="selected-header">
           <span class="selected-label">
-            已选部门 ({{ selectedDepts.length }})：
+            已选用户 ({{ selectedUsers.length }})：
           </span>
           <el-button
-            v-if="selectedDepts.length > 0"
+            v-if="selectedUsers.length > 0"
             link
             type="danger"
             size="small"
@@ -23,26 +23,25 @@
             清空
           </el-button>
         </div>
-        <div class="selected-content" :class="{ 'has-content': selectedDepts.length > 0 }">
+        <div class="selected-content" :class="{ 'has-content': selectedUsers.length > 0 }">
           <transition-group name="list" tag="div" class="selected-tags">
             <el-tag
-              v-for="dept in selectedDepts"
-              :key="dept.id"
+              v-for="user in selectedUsers"
+              :key="user.userId"
               closable
-              @close="handleRemove(dept)"
+              @close="handleRemove(user)"
               class="selected-tag"
               size="small"
             >
               <el-icon style="margin-right: 4px; font-size: 13px">
-                <OfficeBuilding v-if="dept.orgType === 1" />
-                <Folder v-else />
+                <User />
               </el-icon>
-              {{ dept.label }}
+              {{ user.realName }} ({{ user.userName }})
             </el-tag>
           </transition-group>
           <el-empty
-            v-if="selectedDepts.length === 0"
-            description="请从下方选择部门"
+            v-if="selectedUsers.length === 0"
+            description="请从下方选择用户"
             :image-size="40"
             class="empty-state"
           />
@@ -50,14 +49,14 @@
       </div>
 
       <!-- 下部：左右分栏 -->
-      <div class="dept-selector-content">
-        <!-- 左侧：部门树 -->
-        <div class="dept-tree-panel">
+      <div class="user-selector-content">
+        <!-- 左侧：组织树 -->
+        <div class="org-tree-panel">
           <div class="panel-header">
-            <span>全部部门</span>
+            <span>组织架构</span>
             <el-input
               v-model="filterText"
-              placeholder="搜索部门"
+              placeholder="搜索组织"
               prefix-icon="Search"
               clearable
               size="small"
@@ -67,21 +66,22 @@
           <div class="tree-wrapper">
             <el-tree
               ref="treeRef"
-              :data="deptTreeData"
+              :data="orgTreeData"
               :props="treeProps"
               :filter-node-method="filterNode"
-              :show-checkbox="multiple"
-              :check-strictly="false"
               node-key="id"
               highlight-current
               default-expand-all
               @node-click="handleNodeClick"
-              @check="handleCheck"
             >
               <template #default="{ node, data }">
                 <div class="tree-node">
+                  <!-- 用户节点使用用户图标 -->
+                  <el-icon v-if="data.nodeType === 'user'" color="#909399">
+                    <User />
+                  </el-icon>
                   <!-- 根节点使用文件夹图标 -->
-                  <el-icon v-if="data.orgType === 0" color="#67c23a">
+                  <el-icon v-else-if="data.orgType === 0" color="#67c23a">
                     <Folder />
                   </el-icon>
                   <!-- 公司节点使用地球图标 -->
@@ -93,54 +93,55 @@
                     <OfficeBuilding />
                   </el-icon>
                   <span class="node-label">{{ node.label }}</span>
-                  <span v-if="data.orgType === 1" class="node-tag">
-                    <el-tag size="small" type="primary">公司</el-tag>
-                  </span>
+                  <el-badge
+                    v-if="data.userCount > 0"
+                    :value="data.userCount"
+                    class="node-badge"
+                    type="primary"
+                  />
                 </div>
               </template>
             </el-tree>
           </div>
         </div>
 
-        <!-- 右侧：常用部门 -->
-        <div class="dept-frequent-panel">
+        <!-- 右侧：用户列表 -->
+        <div class="user-list-panel">
           <div class="panel-header">
-            <span>常用部门</span>
-            <el-tooltip content="点击快捷选择，再次点击取消选择" placement="top">
-              <el-icon :size="16" color="#909399">
-                <QuestionFilled />
-              </el-icon>
-            </el-tooltip>
+            <span>{{ currentOrgName || '全部用户' }}</span>
+            <el-input
+              v-model="userSearchKeyword"
+              placeholder="搜索用户"
+              prefix-icon="Search"
+              clearable
+              size="small"
+              style="width: 200px"
+            />
           </div>
-          <div class="frequent-list">
+          <div class="user-list-wrapper">
             <el-empty
-              v-if="frequentDepts.length === 0"
-              description="暂无常用部门"
+              v-if="filteredUserList.length === 0"
+              description="暂无用户"
               :image-size="60"
             />
-            <div v-else class="frequent-items">
+            <div v-else class="user-items">
               <div
-                v-for="dept in frequentDepts"
-                :key="dept.id"
-                class="frequent-item"
-                :class="{ 'is-selected': isDeptSelected(dept.id) }"
-                @click="handleSelectFrequentDept(dept)"
+                v-for="user in filteredUserList"
+                :key="user.userId"
+                class="user-item"
+                :class="{ 'is-selected': isUserSelected(user.userId) }"
+                @click="handleSelectUser(user)"
               >
-                <div class="item-icon">
-                  <el-icon :size="20">
-                    <!-- 根节点使用文件夹图标 -->
-                    <Folder v-if="dept.orgType === 0" color="#67c23a" />
-                    <!-- 公司节点使用地球图标 -->
-                    <Location v-else-if="dept.orgType === 1" color="#409eff" />
-                    <!-- 部门节点使用办公楼图标 -->
-                    <OfficeBuilding v-else color="#409eff" />
-                  </el-icon>
+                <div class="item-avatar">
+                  <el-avatar :size="32" :src="user.avatar">
+                    <el-icon><User /></el-icon>
+                  </el-avatar>
                 </div>
                 <div class="item-content">
-                  <div class="item-name">{{ dept.label }}</div>
-                  <div class="item-code">{{ dept.orgCode }}</div>
+                  <div class="item-name">{{ user.realName }}</div>
+                  <div class="item-code">{{ user.userName }}</div>
                 </div>
-                <el-icon v-if="isDeptSelected(dept.id)" class="check-icon" color="#67c23a">
+                <el-icon v-if="isUserSelected(user.userId)" class="check-icon" color="#67c23a">
                   <CircleCheck />
                 </el-icon>
               </div>
@@ -162,45 +163,52 @@ import { ref, computed, watch } from "vue";
 import { ElMessage } from "element-plus";
 import {
   Search,
+  User,
   OfficeBuilding,
   Folder,
   Location,
-  QuestionFilled,
   CircleCheck
 } from "@element-plus/icons-vue";
 import { getOrgTree } from "@/api/org";
+import { getUserList } from "@/api/user";
 
 /**
- * 部门选择器组件
- * 支持单选/多选模式，支持租户过滤
- * 左侧：完整部门树
- * 右侧：常用部门快捷选择
- * 底部：已选部门显示
+ * 用户选择器组件
+ * 支持多选模式，支持租户过滤
+ * 左侧：组织树
+ * 右侧：用户列表
+ * 顶部：已选用户显示
  */
 
+interface UserInfo {
+  userId: number;
+  userName: string;
+  realName: string;
+  avatar?: string;
+  deptName?: string;
+}
+
 interface Props {
-  modelValue?: number | number[];
+  modelValue?: number[];
   multiple?: boolean;
   tenantId?: number | null;
   title?: string;
   placeholder?: string;
-  excludeIds?: number[]; // 排除的部门ID
-  frequentLimit?: number; // 常用部门数量限制
+  excludeIds?: number[]; // 排除的用户ID
 }
 
 interface Emits {
-  (e: "update:modelValue", value: number | number[]): void;
-  (e: "change", value: number | number[], items: any[]): void;
+  (e: "update:modelValue", value: number[]): void;
+  (e: "change", value: number[], items: UserInfo[]): void;
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  modelValue: undefined,
-  multiple: false,
+  modelValue: () => [],
+  multiple: true,
   tenantId: null,
-  title: "选择部门",
-  placeholder: "请选择部门",
-  excludeIds: () => [],
-  frequentLimit: 6 // 默认显示6个常用部门
+  title: "选择用户",
+  placeholder: "请选择用户",
+  excludeIds: () => []
 });
 
 const emit = defineEmits<Emits>();
@@ -210,18 +218,23 @@ const dialogVisible = ref(false);
 
 // 搜索关键词
 const filterText = ref("");
+const userSearchKeyword = ref("");
 
-// 树形数据
-const deptTreeData = ref<any[]>([]);
+// 组织树数据
+const orgTreeData = ref<any[]>([]);
 
-// 常用部门列表
-const frequentDepts = ref<any[]>([]);
+// 用户列表
+const userList = ref<UserInfo[]>([]);
 
 // 树形组件ref
 const treeRef = ref();
 
-// 已选部门列表
-const selectedDepts = ref<any[]>([]);
+// 当前选中的组织
+const currentOrg = ref<any>(null);
+const currentOrgName = computed(() => currentOrg.value?.label || "");
+
+// 已选用户列表
+const selectedUsers = ref<UserInfo[]>([]);
 
 // 树形配置
 const treeProps = {
@@ -232,132 +245,91 @@ const treeProps = {
 /**
  * 打开对话框
  */
-const open = async () => {
+const open = () => {
   dialogVisible.value = true;
-  await loadDeptTree();
-  loadFrequentDepts();
-  initSelectedDepts();
+  loadOrgTree();
+  loadUserList();
+  initSelectedUsers();
 };
 
 /**
- * 加载部门树
+ * 加载组织树
  */
-const loadDeptTree = async () => {
+const loadOrgTree = async () => {
   try {
     const tree = await getOrgTree();
-
-    console.log("原始组织树数据:", tree);
-    console.log("props.tenantId:", props.tenantId, "类型:", typeof props.tenantId);
-    console.log("props.excludeIds:", props.excludeIds);
-
-    // 过滤掉排除的部门
-    const filterTree = (nodes: any[]): any[] => {
-      if (!nodes || !Array.isArray(nodes)) {
-        return [];
-      }
-
-      return nodes
-        .filter(node => {
-          console.log("检查节点:", node.label, "nodeType:", node.nodeType, "id:", node.id, "tenantId:", node.tenantId, "parentId:", node.parentId);
-
-          // 只显示组织节点（没有 nodeType 字段的也保留，兼容旧数据）
-          if (node.nodeType && node.nodeType !== "org") {
-            console.log("  -> 过滤: 非组织节点");
-            return false;
-          }
-          // 过滤排除的部门（兼容字符串和数字类型的 ID）
-          const nodeId = typeof node.id === 'string' ? parseInt(node.id) : node.id;
-          const excludeIdsNum = props.excludeIds.map(id => typeof id === 'string' ? parseInt(id) : id);
-          console.log("  -> nodeId:", nodeId, "excludeIdsNum:", excludeIdsNum);
-          if (excludeIdsNum.includes(nodeId)) {
-            console.log("  -> 过滤: 在排除列表中");
-            return false;
-          }
-
-          // 判断是否为根节点（虚拟容器节点）
-          const isRootNode = node.parentId === "0" || node.parentId === 0 || parseInt(node.parentId) === 0;
-
-          // 如果指定了租户ID，只显示该租户的部门（兼容字符串和数字类型）
-          // 根节点不参与租户ID过滤
-          if (!isRootNode && props.tenantId !== null) {
-            const nodeTenantId = typeof node.tenantId === 'string' ? parseInt(node.tenantId) : node.tenantId;
-            const propsTenantId = typeof props.tenantId === 'string' ? parseInt(props.tenantId) : props.tenantId;
-            console.log("  -> nodeTenantId:", nodeTenantId, "propsTenantId:", propsTenantId);
-            if (nodeTenantId !== propsTenantId) {
-              console.log("  -> 过滤: 租户ID不匹配");
-              return false;
-            }
-          }
-
-          console.log("  -> 通过");
-          return true;
-        })
-        .map(node => ({
-          ...node,
-          children: node.children ? filterTree(node.children) : []
-        }));
-    };
-
-    const filteredTree = filterTree(tree);
-    console.log("过滤后的组织树数据:", filteredTree);
-
-    deptTreeData.value = filteredTree;
+    orgTreeData.value = tree;
   } catch (error: any) {
-    console.error("加载部门树失败:", error);
-    ElMessage.error(error.message || "加载部门树失败");
+    console.error("加载组织树失败:", error);
+    ElMessage.error(error.message || "加载组织树失败");
   }
 };
 
 /**
- * 加载常用部门
- * 提取一级部门（父节点是根节点的一级子节点）
+ * 从树节点递归提取所有用户节点
  */
-const loadFrequentDepts = () => {
-  if (deptTreeData.value.length === 0) return;
+const extractUsersFromNode = (node: any): UserInfo[] => {
+  const users: UserInfo[] = [];
 
-  // 获取所有一级部门
-  const rootNode = deptTreeData.value[0];
-  if (rootNode && rootNode.children && rootNode.children.length > 0) {
-    // 取前 N 个部门
-    frequentDepts.value = rootNode.children.slice(0, props.frequentLimit);
+  // 如果是用户节点，直接添加
+  if (node.nodeType === 'user') {
+    users.push({
+      userId: node.id || node.userId,
+      userName: node.userName || node.username || '',
+      realName: node.realName || node.label || '',
+      avatar: node.avatar || '',
+      deptName: node.deptName || ''
+    });
+    return users;
   }
+
+  // 如果是组织节点，递归遍历子节点
+  if (node.children && Array.isArray(node.children)) {
+    for (const child of node.children) {
+      users.push(...extractUsersFromNode(child));
+    }
+  }
+
+  return users;
 };
 
 /**
- * 初始化已选部门
+ * 加载用户列表
  */
-const initSelectedDepts = () => {
-  if (props.multiple) {
-    const ids = props.modelValue as number[];
-    selectedDepts.value = ids.map(id => findDeptById(id)).filter(Boolean);
-  } else {
-    const id = props.modelValue as number;
-    if (id) {
-      const dept = findDeptById(id);
-      selectedDepts.value = dept ? [dept] : [];
+const loadUserList = async () => {
+  try {
+    let users: UserInfo[] = [];
+
+    if (currentOrg.value) {
+      // 如果选中了组织节点，提取该组织下的所有用户
+      users = extractUsersFromNode(currentOrg.value);
     } else {
-      selectedDepts.value = [];
+      // 如果没有选中组织，提取整个树中的所有用户
+      for (const rootNode of orgTreeData.value) {
+        users.push(...extractUsersFromNode(rootNode));
+      }
     }
+
+    // 排除已选择的用户
+    userList.value = users.filter(user => !props.excludeIds.includes(user.userId));
+
+    console.log('加载用户列表:', {
+      currentOrg: currentOrg.value?.label,
+      totalUsers: users.length,
+      filteredUsers: userList.value.length
+    });
+  } catch (error: any) {
+    console.error("加载用户列表失败:", error);
+    ElMessage.error(error.message || "加载用户列表失败");
   }
 };
 
 /**
- * 根据ID查找部门
+ * 初始化已选用户
  */
-const findDeptById = (id: number): any => {
-  const findInTree = (nodes: any[]): any => {
-    for (const node of nodes) {
-      if (node.id === id) {
-        return node;
-      }
-      if (node.children) {
-        const found = findInTree(node.children);
-        if (found) return found;
-      }
-    }
-    return null;
-  };
-  return findInTree(deptTreeData.value);
+const initSelectedUsers = () => {
+  const ids = props.modelValue as number[];
+  selectedUsers.value = userList.value.filter(user => ids.includes(user.userId));
 };
 
 /**
@@ -369,92 +341,62 @@ const filterNode = (value: string, data: any) => {
 };
 
 /**
- * 判断部门是否已选
+ * 判断用户是否已选
  */
-const isDeptSelected = (id: number): boolean => {
-  return selectedDepts.value.some(dept => dept.id === id);
+const isUserSelected = (userId: number): boolean => {
+  return selectedUsers.value.some(user => user.userId === userId);
 };
 
 /**
  * 节点点击
  */
 const handleNodeClick = (data: any) => {
-  if (!props.multiple) {
-    // 单选模式：点击即选中
-    // 如果点击的是已选中的节点，不做任何操作（不取消选中）
-    if (selectedDepts.value.length > 0 && selectedDepts.value[0].id === data.id) {
-      return;
-    }
-    selectedDepts.value = [{ ...data, children: undefined }];
-    if (treeRef.value) {
-      treeRef.value.setCurrentNode(data);
-    }
-  }
-};
+  // 如果是用户节点，添加到已选列表
+  if (data.nodeType === 'user') {
+    const user: UserInfo = {
+      userId: data.id || data.userId,
+      userName: data.userName || data.username,
+      realName: data.realName || data.label,
+      avatar: data.avatar
+    };
 
-/**
- * 复选框变化
- */
-const handleCheck = () => {
-  if (!props.multiple || !treeRef.value) return;
-
-  const checkedNodes = treeRef.value.getCheckedNodes();
-  selectedDepts.value = checkedNodes
-    .filter(node => node.nodeType === "org")
-    .map(node => ({
-      ...node,
-      children: undefined // 移除children避免循环引用
-    }));
-};
-
-/**
- * 选择常用部门
- */
-const handleSelectFrequentDept = (dept: any) => {
-  if (props.multiple) {
-    // 多选模式：切换选中状态
-    const index = selectedDepts.value.findIndex(d => d.id === dept.id);
+    // 切换选中状态
+    const index = selectedUsers.value.findIndex(u => u.userId === user.userId);
     if (index > -1) {
       // 已选中，取消选中
-      selectedDepts.value.splice(index, 1);
-      if (treeRef.value) {
-        treeRef.value.setChecked(dept.id, false);
-      }
+      selectedUsers.value.splice(index, 1);
     } else {
       // 未选中，添加选中
-      selectedDepts.value.push({ ...dept, children: undefined });
-      if (treeRef.value) {
-        treeRef.value.setChecked(dept.id, true);
-      }
+      selectedUsers.value.push(user);
     }
   } else {
-    // 单选模式：点击已选中节点不做操作，否则选中
-    if (selectedDepts.value.length > 0 && selectedDepts.value[0].id === dept.id) {
-      return;
-    }
-    selectedDepts.value = [{ ...dept, children: undefined }];
-    if (treeRef.value) {
-      treeRef.value.setCurrentNode(dept);
-    }
+    // 如果是组织节点，加载该组织下的用户
+    currentOrg.value = data;
+    loadUserList();
   }
 };
 
 /**
- * 移除已选部门
+ * 选择用户
  */
-const handleRemove = (dept: any) => {
-  const index = selectedDepts.value.findIndex(d => d.id === dept.id);
+const handleSelectUser = (user: UserInfo) => {
+  const index = selectedUsers.value.findIndex(u => u.userId === user.userId);
   if (index > -1) {
-    selectedDepts.value.splice(index, 1);
+    // 已选中，取消选中
+    selectedUsers.value.splice(index, 1);
+  } else {
+    // 未选中，添加选中
+    selectedUsers.value.push(user);
+  }
+};
 
-    // 取消树形组件的选中状态
-    if (treeRef.value) {
-      if (props.multiple) {
-        treeRef.value.setChecked(dept.id, false);
-      } else {
-        treeRef.value.setCurrentKey(null);
-      }
-    }
+/**
+ * 移除已选用户
+ */
+const handleRemove = (user: UserInfo) => {
+  const index = selectedUsers.value.findIndex(u => u.userId === user.userId);
+  if (index > -1) {
+    selectedUsers.value.splice(index, 1);
   }
 };
 
@@ -462,29 +404,16 @@ const handleRemove = (dept: any) => {
  * 清空所有
  */
 const handleClearAll = () => {
-  selectedDepts.value = [];
-  if (treeRef.value) {
-    if (props.multiple) {
-      treeRef.value.setCheckedKeys([]);
-    } else {
-      treeRef.value.setCurrentKey(null);
-    }
-  }
+  selectedUsers.value = [];
 };
 
 /**
  * 确定
  */
 const handleConfirm = () => {
-  if (props.multiple) {
-    const ids = selectedDepts.value.map(d => d.id);
-    emit("update:modelValue", ids);
-    emit("change", ids, selectedDepts.value);
-  } else {
-    const id = selectedDepts.value.length > 0 ? selectedDepts.value[0].id : 0;
-    emit("update:modelValue", id);
-    emit("change", id, selectedDepts.value);
-  }
+  const ids = selectedUsers.value.map(u => u.userId);
+  emit("update:modelValue", ids);
+  emit("change", ids, selectedUsers.value);
   handleClose();
 };
 
@@ -494,7 +423,22 @@ const handleConfirm = () => {
 const handleClose = () => {
   dialogVisible.value = false;
   filterText.value = "";
+  userSearchKeyword.value = "";
+  currentOrg.value = null;
 };
+
+// 过滤用户列表
+const filteredUserList = computed(() => {
+  if (!userSearchKeyword.value) {
+    return userList.value;
+  }
+  const keyword = userSearchKeyword.value.toLowerCase();
+  return userList.value.filter(
+    user =>
+      user.userName.toLowerCase().includes(keyword) ||
+      user.realName.toLowerCase().includes(keyword)
+  );
+});
 
 // 监听搜索关键词
 watch(filterText, val => {
@@ -510,7 +454,7 @@ defineExpose({
 </script>
 
 <style scoped lang="scss">
-.dept-selector {
+.user-selector {
   :deep(.el-dialog__body) {
     padding: 0;
   }
@@ -548,7 +492,7 @@ defineExpose({
     }
   }
 
-  .dept- {
+  .org- {
     &tree- {
       &panel {
         flex: 1;
@@ -559,10 +503,12 @@ defineExpose({
         background-color: #fafbfc;
       }
     }
+  }
 
-    &frequent- {
+  .user- {
+    &list- {
       &panel {
-        width: 320px;
+        flex: 1.2;
         display: flex;
         flex-direction: column;
         overflow: hidden;
@@ -572,7 +518,7 @@ defineExpose({
   }
 
   .tree-wrapper,
-  .frequent-list {
+  .user-list-wrapper {
     flex: 1;
     overflow-y: auto;
     padding: 16px;
@@ -611,10 +557,6 @@ defineExpose({
         background-color: rgba(64, 158, 255, 0.15);
         font-weight: 500;
       }
-
-      .el-tree-node__label {
-        font-size: 13px;
-      }
     }
   }
 
@@ -635,13 +577,21 @@ defineExpose({
         color: #303133;
       }
 
-      &tag {
+      &badge {
         margin-left: auto;
+        :deep(.el-badge__content) {
+          border-radius: 10px;
+          font-size: 11px;
+          height: 18px;
+          line-height: 18px;
+          padding: 0 6px;
+          min-width: 18px;
+        }
       }
     }
   }
 
-  .frequent- {
+  .user- {
     &items {
       display: flex;
       flex-direction: column;
@@ -667,25 +617,21 @@ defineExpose({
         transform: translateY(-2px);
       }
 
-      &.is- {
-        &selected {
-          border-color: #67c23a;
-          background: linear-gradient(135deg, #f0f9ff 0%, #e1f3d8 100%);
-          box-shadow: 0 4px 12px rgba(103, 194, 58, 0.2);
-        }
+      &.is-selected {
+        border-color: #67c23a;
+        background: linear-gradient(135deg, #f0f9ff 0%, #e1f3d8 100%);
+        box-shadow: 0 4px 12px rgba(103, 194, 58, 0.2);
       }
 
       .item- {
-        &icon {
+        &avatar {
           flex-shrink: 0;
-          width: 40px;
-          height: 40px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%);
-          border-radius: 10px;
-          box-shadow: 0 2px 6px rgba(14, 165, 233, 0.15);
+
+          :deep(.el-avatar) {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: 2px solid #ffffff;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+          }
         }
 
         &content {
@@ -698,9 +644,6 @@ defineExpose({
           font-weight: 500;
           color: #303133;
           margin-bottom: 2px;
-          overflow: hidden;
-          text-overflow: ellipsis;
-          white-space: nowrap;
         }
 
         &code {
@@ -747,7 +690,7 @@ defineExpose({
           content: "";
           width: 3px;
           height: 14px;
-          background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
           border-radius: 2px;
         }
       }
@@ -825,16 +768,16 @@ defineExpose({
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       border: none;
       border-radius: 8px;
       color: #ffffff;
       font-weight: 500;
-      box-shadow: 0 2px 6px rgba(14, 165, 233, 0.3);
+      box-shadow: 0 2px 6px rgba(102, 126, 234, 0.3);
       transition: all 0.3s;
 
       &:hover {
-        box-shadow: 0 4px 12px rgba(14, 165, 233, 0.4);
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
         transform: translateY(-1px);
       }
 

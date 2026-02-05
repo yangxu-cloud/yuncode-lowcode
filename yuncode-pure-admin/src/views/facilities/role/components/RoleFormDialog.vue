@@ -230,9 +230,6 @@ const resetForm = () => {
 watch(
   () => props.role,
   (newRole) => {
-    // 只有在 Drawer 打开时才更新表单
-    if (!visible.value) return;
-
     if (newRole) {
       // 编辑模式：填充表单数据
       // 如果是具体角色且有 parentId，查找分类名称

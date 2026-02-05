@@ -126,3 +126,10 @@ export const updateUserStatus = async (userId: number, status: number) => {
   }
   return response.data;
 };
+
+/**
+ * 获取用户列表
+ */
+export const getUserList = async (params?: any) => {
+  return http.request<any>("get", `${API_BASE_PREFIX}/user/list`, { params });
+};
