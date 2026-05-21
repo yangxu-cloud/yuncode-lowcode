@@ -55,6 +55,16 @@
     </delete>
 
     <!--
+        根据菜单ID、目标类型和目标ID删除权限
+    -->
+    <delete id="deleteByMenuIdAndTarget">
+        DELETE FROM sys_menu_permission
+        WHERE menu_id = #{menuId}
+          AND target_type = #{targetType}
+          AND target_id = #{targetId}
+    </delete>
+
+    <!--
         权限追加到下级
         将当前菜单的所有权限追加到所有子菜单
     -->

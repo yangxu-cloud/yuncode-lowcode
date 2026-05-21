@@ -36,7 +36,12 @@ export default {
     facilities: "公共设施",
     org: "组织管理",
     navigation: "导航管理",
-    role: "角色管理"
+    role: "角色管理",
+    application: "应用管理",
+    appDev: "应用开发",
+    modeling: "业务建模",
+    schedule: "定时任务",
+    systemService: "系统服务"
   },
   login: {
     title: "Yuncode LowCode",

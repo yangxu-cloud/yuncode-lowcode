@@ -22,4 +22,13 @@
         ORDER BY sort_order ASC
     </select>
 
+    <!-- 根据ID查询角色（忽略租户限制） -->
+    <select id="selectByIdIgnoreTenant" resultType="com.yuncode.system.entity.SysRole">
+        SELECT *
+        FROM sys_role
+        WHERE id = #{id}
+          AND deleted = 0
+        LIMIT 1
+    </select>
+
 </mapper>

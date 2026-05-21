@@ -188,10 +188,10 @@
                 <el-table :data="roleUsers" v-loading="usersLoading">
                   <el-table-column prop="userName" label="用户名" />
                   <el-table-column prop="realName" label="姓名" />
-                  <el-table-column label="操作" width="100">
+                  <el-table-column label="操作" width="80" align="center">
                     <template #default="{ row }">
                       <el-button link type="danger" @click="handleRemoveUser(row)">
-                        移除
+                        <el-icon><Delete /></el-icon>
                       </el-button>
                     </template>
                   </el-table-column>
@@ -207,10 +207,10 @@
                 </div>
                 <el-table :data="roleDepts" v-loading="deptsLoading">
                   <el-table-column prop="deptName" label="部门名称" />
-                  <el-table-column label="操作" width="100">
+                  <el-table-column label="操作" width="80" align="center">
                     <template #default="{ row }">
                       <el-button link type="danger" @click="handleRemoveDept(row)">
-                        移除
+                        <el-icon><Delete /></el-icon>
                       </el-button>
                     </template>
                   </el-table-column>
@@ -227,10 +227,10 @@
                 <el-table :data="rolePermissions" v-loading="permissionsLoading">
                   <el-table-column prop="permissionName" label="权限名称" />
                   <el-table-column prop="permissionCode" label="权限编码" />
-                  <el-table-column label="操作" width="100">
+                  <el-table-column label="操作" width="80" align="center">
                     <template #default="{ row }">
                       <el-button link type="danger" @click="handleRemovePermission(row)">
-                        移除
+                        <el-icon><Delete /></el-icon>
                       </el-button>
                     </template>
                   </el-table-column>
@@ -268,7 +268,7 @@
     <DeptSelector
       ref="deptSelectorRef"
       v-model="selectedDepts"
-      :multiple="false"
+      :multiple="true"
       :exclude-ids="roleDepts.map(d => d.deptId)"
       title="添加部门"
       @change="handleDeptSelected"
@@ -375,7 +375,7 @@ const selectedPermissionIds = computed(() =>
 
 // 部门选择器
 const deptSelectorRef = ref<InstanceType<typeof DeptSelector>>();
-const selectedDepts = ref<number | number[]>(0);
+const selectedDepts = ref<number[]>([]);
 
 /**
  * 加载角色树
@@ -424,9 +424,18 @@ const handleNodeClick = (data: RoleNode) => {
  * 加载角色详情
  */
 const loadRoleDetail = async (id: number) => {
+  console.log("🔍 loadRoleDetail 开始, id:", id);
   try {
     const response = await getRoleDetail(id);
+    console.log("✅ getRoleDetail 响应:", response);
     const detail = response.data;
+
+    console.log("🔍 角色详情数据:", {
+      categoryName: detail.categoryName,
+      users: detail.users,
+      depts: detail.depts,
+      permissions: detail.permissions
+    });
 
     // 更新基本信息
     categoryName.value = detail.categoryName || "";
@@ -435,8 +444,14 @@ const loadRoleDetail = async (id: number) => {
     roleUsers.value = detail.users || [];
     roleDepts.value = detail.depts || [];
     rolePermissions.value = detail.permissions || [];
+
+    console.log("✅ 数据更新完成", {
+      roleUsers: roleUsers.value,
+      roleDepts: roleDepts.value,
+      rolePermissions: rolePermissions.value
+    });
   } catch (error) {
-    console.error("加载角色详情失败:", error);
+    console.error("❌ 加载角色详情失败:", error);
     ElMessage.error("加载角色详情失败");
   }
 };
@@ -549,23 +564,31 @@ const handleAddUser = () => {
  * 用户选择完成
  */
 const handleUserSelectConfirm = async (userIds: number[], users: any[]) => {
+  console.log("🔍 handleUserSelectConfirm 被调用", { userIds, users, selectedNode: selectedNode.value });
+
   if (!userIds || userIds.length === 0) {
+    console.warn("⚠️ userIds 为空，返回");
     return;
   }
 
   const roleId = selectedNode.value?.id;
+  console.log("🔍 准备添加用户到角色", { roleId, userIds });
 
   try {
     const response = await addUsersToRole(roleId!, userIds);
+    console.log("✅ addUsersToRole 响应:", response);
+
     if (response.code === 200) {
       ElMessage.success("添加成功");
+      console.log("🔍 开始重新加载角色详情, roleId:", roleId!);
       // 重新加载详情
       await loadRoleDetail(roleId!);
+      console.log("✅ 角色详情重新加载完成", { roleUsers: roleUsers.value });
     } else {
       ElMessage.error(response.message || "添加失败");
     }
   } catch (error: any) {
-    console.error("添加失败:", error);
+    console.error("❌ 添加失败:", error);
     ElMessage.error(error.message || "添加失败");
   }
 };
@@ -712,7 +735,7 @@ const handleAddDept = () => {
   }
 
   // 重置选中
-  selectedDepts.value = 0;
+  selectedDepts.value = [];
 
   // 获取已选部门ID列表，用于排除
   const excludeIds = roleDepts.value.map(d => d.deptId);
@@ -724,24 +747,39 @@ const handleAddDept = () => {
 /**
  * 部门选择完成
  */
-const handleDeptSelected = async (deptId: number, deptItems: any[]) => {
-  if (!deptId || deptItems.length === 0) {
+const handleDeptSelected = async (deptIds: number | number[], deptItems: any[]) => {
+  console.log("🔍 handleDeptSelected 被调用", { deptIds, deptItems });
+
+  // 处理多选情况
+  const idsToAdd = Array.isArray(deptIds) ? deptIds : [deptIds];
+
+  if (!idsToAdd || idsToAdd.length === 0) {
+    console.warn("❌ 没有选择任何部门");
     return;
   }
 
+  console.log("📋 准备添加部门:", idsToAdd);
+
   const roleId = selectedNode.value?.id;
+  if (!roleId) {
+    ElMessage.warning("请先选择角色");
+    return;
+  }
 
   try {
-    const response = await addDeptsToRole(roleId!, [deptId]);
+    console.log("🚀 调用 addDeptsToRole API:", { roleId, deptIds: idsToAdd });
+    const response = await addDeptsToRole(roleId!, idsToAdd);
+    console.log("✅ API 响应:", response);
+
     if (response.code === 200) {
-      ElMessage.success("添加成功");
+      ElMessage.success(`成功添加 ${idsToAdd.length} 个部门`);
       // 重新加载详情
       await loadRoleDetail(roleId!);
     } else {
       ElMessage.error(response.message || "添加失败");
     }
   } catch (error: any) {
-    console.error("添加失败:", error);
+    console.error("❌ 添加失败:", error);
     ElMessage.error(error.message || "添加失败");
   }
 };

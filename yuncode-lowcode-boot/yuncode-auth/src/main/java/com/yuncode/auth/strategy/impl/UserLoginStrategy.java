@@ -1,6 +1,7 @@
 package com.yuncode.auth.strategy.impl;
 
 import com.yuncode.auth.dto.LoginDTO;
+import com.yuncode.auth.properties.SaTokenProperties;
 import com.yuncode.auth.strategy.AbstractLoginStrategy;
 import com.yuncode.common.exception.BusinessException;
 import com.yuncode.system.enums.LoginType;
@@ -23,12 +24,13 @@ import java.time.LocalDateTime;
 @Component("userLoginStrategy")
 public class UserLoginStrategy extends AbstractLoginStrategy {
 
-    public UserLoginStrategy(SysTenantMapper sysTenantMapper,
+    public UserLoginStrategy(SaTokenProperties saTokenProperties,
+                            SysTenantMapper sysTenantMapper,
                             SysUserMapper sysUserMapper,
                             SysLoginLogService sysLoginLogService,
                             OnlineUserService onlineUserService,
                             UserCacheService userCacheService) {
-        super(sysTenantMapper, sysUserMapper, sysLoginLogService, onlineUserService, userCacheService);
+        super(saTokenProperties, sysTenantMapper, sysUserMapper, sysLoginLogService, onlineUserService, userCacheService);
     }
 
     @Override

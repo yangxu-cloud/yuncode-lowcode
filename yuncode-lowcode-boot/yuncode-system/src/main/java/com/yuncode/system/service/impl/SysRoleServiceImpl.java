@@ -1,14 +1,24 @@
 package com.yuncode.system.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.yuncode.system.entity.*;
-import com.yuncode.system.mapper.*;
+import com.yuncode.system.entity.SysRole;
+import com.yuncode.system.entity.SysRoleUser;
+import com.yuncode.system.entity.SysUser;
+import com.yuncode.system.entity.SysOrg;
+import com.yuncode.system.entity.SysMenu;
+import com.yuncode.system.mapper.SysRoleMapper;
+import com.yuncode.system.mapper.SysRoleUserMapper;
+import com.yuncode.system.mapper.SysRoleDeptMapper;
+import com.yuncode.system.mapper.SysRolePermissionMapper;
+import com.yuncode.system.mapper.SysUserMapper;
+import com.yuncode.system.mapper.SysOrgMapper;
+import com.yuncode.system.mapper.SysMenuMapper;
 import com.yuncode.system.service.SysRoleService;
 import com.yuncode.system.vo.RoleDetailVO;
 import com.yuncode.system.vo.RoleNodeVO;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,46 +31,54 @@ import java.util.stream.Collectors;
  * 角色服务实现
  */
 @Slf4j
+@RequiredArgsConstructor
 @Service
 public class SysRoleServiceImpl implements SysRoleService {
 
-    @Autowired
-    private SysRoleMapper roleMapper;
-
-    @Autowired
-    private SysRoleUserMapper roleUserMapper;
-
-    @Autowired
-    private SysRoleDeptMapper roleDeptMapper;
-
-    @Autowired
-    private SysRolePermissionMapper rolePermissionMapper;
-
-    @Autowired
-    private SysUserMapper userMapper;
-
-    @Autowired
-    private SysOrgMapper orgMapper;
-
-    @Autowired
-    private SysMenuMapper menuMapper;
+    private final SysRoleMapper roleMapper;
+    private final SysRoleUserMapper roleUserMapper;
+    private final SysRoleDeptMapper roleDeptMapper;
+    private final SysRolePermissionMapper rolePermissionMapper;
+    private final SysUserMapper userMapper;
+    private final SysOrgMapper orgMapper;
+    private final SysMenuMapper menuMapper;
 
     /**
      * 获取角色树（三层结构：根节点 -> 分类 -> 角色）
      */
     @Override
     public List<RoleNodeVO> getRoleTree() {
-        // 查询所有分类（role_type = 1）
-        List<SysRole> categories = roleMapper.selectList(
-            new LambdaQueryWrapper<SysRole>()
-                .eq(SysRole::getRoleType, 1)
-                .eq(SysRole::getDeleted, 0)
-                .orderByAsc(SysRole::getSortOrder)
-        );
+        // 从 Sa-Token Session 获取登录类型
+        String loginType = cn.dev33.satoken.stp.StpUtil.getSession().get("loginType", "");
+        Long tenantId = cn.dev33.satoken.stp.StpUtil.getSession().get("tenantId", 0L);
 
-        // 创建虚拟根节点
+        log.info("获取角色树 - loginType={}, tenantId={}", loginType, tenantId);
+
+        // 查询所有分类（role_type = 1）
+        List<SysRole> categories;
+        if ("admin".equals(loginType)) {
+            // 平台管理员：查询所有租户的角色分类
+            categories = roleMapper.selectList(
+                new LambdaQueryWrapper<SysRole>()
+                    .eq(SysRole::getRoleType, 1)
+                    .eq(SysRole::getDeleted, 0)
+                    .orderByAsc(SysRole::getSortOrder)
+            );
+            log.info("平台管理员查询到 {} 个分类", categories.size());
+        } else {
+            // 租户用户：只查询本租户的角色分类
+            categories = roleMapper.selectList(
+                new LambdaQueryWrapper<SysRole>()
+                    .eq(SysRole::getRoleType, 1)
+                    .eq(SysRole::getTenantId, tenantId)
+                    .eq(SysRole::getDeleted, 0)
+                    .orderByAsc(SysRole::getSortOrder)
+            );
+            log.info("租户用户查询到 {} 个分类", categories.size());
+        }
+
+        // 创建虚拟        rootNode.setId(-1L);  // 使用负ID表示虚拟节点根节点
         RoleNodeVO rootNode = new RoleNodeVO();
-        rootNode.setId(-1L);  // 使用负ID表示虚拟节点
         rootNode.setParentId(0L);
         rootNode.setLabel("角色");
         rootNode.setRoleType(0);  // 0 表示根节点
@@ -73,12 +91,28 @@ public class SysRoleServiceImpl implements SysRoleService {
             RoleNodeVO categoryNode = convertToNodeVO(category);
 
             // 查询该分类下的角色
-            List<SysRole> roles = roleMapper.selectList(
-                new LambdaQueryWrapper<SysRole>()
-                    .eq(SysRole::getParentId, category.getId())
-                    .eq(SysRole::getDeleted, 0)
-                    .orderByAsc(SysRole::getSortOrder)
-            );
+            List<SysRole> roles;
+            if ("admin".equals(loginType)) {
+                // 平台管理员：查询所有租户的角色
+                roles = roleMapper.selectList(
+                    new LambdaQueryWrapper<SysRole>()
+                        .eq(SysRole::getParentId, category.getId())
+                        .eq(SysRole::getDeleted, 0)
+                        .orderByAsc(SysRole::getSortOrder)
+                );
+            } else {
+                // 租户用户：只查询本租户的角色
+                roles = roleMapper.selectList(
+                    new LambdaQueryWrapper<SysRole>()
+                        .eq(SysRole::getParentId, category.getId())
+                        .eq(SysRole::getTenantId, tenantId)
+                        .eq(SysRole::getDeleted, 0)
+                        .orderByAsc(SysRole::getSortOrder)
+                );
+            }
+
+            log.info("分类 {} 下查询到 {} 个角色", category.getRoleName(), roles.size());
+
             List<RoleNodeVO> children = new ArrayList<>();
             for (SysRole role : roles) {
                 children.add(convertToNodeVO(role));
@@ -122,12 +156,19 @@ public class SysRoleServiceImpl implements SysRoleService {
         List<RoleDetailVO.RoleUserVO> users = new ArrayList<>();
         if (userIds != null && !userIds.isEmpty()) {
             List<SysUser> userList = userMapper.selectBatchIds(userIds);
-            for (SysUser user : userList) {
-                RoleDetailVO.RoleUserVO userVO = new RoleDetailVO.RoleUserVO();
-                userVO.setUserId(user.getId());
-                userVO.setUserName(user.getUsername());
-                userVO.setRealName(user.getRealName());
-                users.add(userVO);
+            // 过滤掉无效的用户（可能租户不同或已删除）
+            if (userList != null && !userList.isEmpty()) {
+                for (SysUser user : userList) {
+                    if (user != null) {
+                        RoleDetailVO.RoleUserVO userVO = new RoleDetailVO.RoleUserVO();
+                        userVO.setUserId(user.getId());
+                        userVO.setUserName(user.getUsername());
+                        userVO.setRealName(user.getRealName());
+                        users.add(userVO);
+                    } else {
+                        log.warn("发现无效的用户ID，role_id={}", id);
+                    }
+                }
             }
         }
         detail.setUsers(users);
@@ -223,192 +264,6 @@ public class SysRoleServiceImpl implements SysRoleService {
         log.info("删除角色成功: id={}", id);
     }
 
-    /**
-     * 添加人员到角色
-     */
-    @Override
-    public void addUsersToRole(Long roleId, List<Long> userIds) {
-        if (userIds == null || userIds.isEmpty()) {
-            return;
-        }
-
-        // 查询已存在的人员ID，过滤掉重复的
-        List<SysRoleUser> existingUsers = roleUserMapper.selectList(
-            new LambdaQueryWrapper<SysRoleUser>()
-                .eq(SysRoleUser::getRoleId, roleId)
-                .in(SysRoleUser::getUserId, userIds)
-        );
-
-        List<Long> existingUserIds = existingUsers.stream()
-            .map(SysRoleUser::getUserId)
-            .collect(Collectors.toList());
-
-        // 过滤掉已存在的人员
-        List<Long> newUserIds = userIds.stream()
-            .filter(userId -> !existingUserIds.contains(userId))
-            .collect(Collectors.toList());
-
-        if (newUserIds.isEmpty()) {
-            log.info("所有人员都已存在，无需添加: roleId={}", roleId);
-            return;
-        }
-
-        // 从 Sa-Token Session 获取当前登录用户的租户ID
-        Long tenantId = cn.dev33.satoken.stp.StpUtil.getSession().get("tenantId", 2L);
-
-        List<SysRoleUser> list = newUserIds.stream()
-            .map(userId -> {
-                SysRoleUser roleUser = new SysRoleUser();
-                roleUser.setRoleId(roleId);
-                roleUser.setUserId(userId);
-                roleUser.setTenantId(tenantId);
-                roleUser.setCreateTime(LocalDateTime.now());
-                return roleUser;
-            })
-            .collect(Collectors.toList());
-
-        roleUserMapper.batchInsert(list);
-        log.info("添加人员到角色成功: roleId={}, count={}", roleId, newUserIds.size());
-    }
-
-    /**
-     * 从角色移除人员
-     */
-    @Override
-    public void removeUserFromRole(Long roleId, Long userId) {
-        roleUserMapper.delete(
-            new LambdaQueryWrapper<SysRoleUser>()
-                .eq(SysRoleUser::getRoleId, roleId)
-                .eq(SysRoleUser::getUserId, userId)
-        );
-        log.info("从角色移除人员成功: roleId={}, userId={}", roleId, userId);
-    }
-
-    /**
-     * 添加部门到角色
-     */
-    @Override
-    public void addDeptsToRole(Long roleId, List<Long> deptIds) {
-        if (deptIds == null || deptIds.isEmpty()) {
-            return;
-        }
-
-        // 查询已存在的部门ID，过滤掉重复的
-        List<SysRoleDept> existingDepts = roleDeptMapper.selectList(
-            new LambdaQueryWrapper<SysRoleDept>()
-                .eq(SysRoleDept::getRoleId, roleId)
-                .in(SysRoleDept::getDeptId, deptIds)
-        );
-
-        List<Long> existingDeptIds = existingDepts.stream()
-            .map(SysRoleDept::getDeptId)
-            .collect(Collectors.toList());
-
-        // 过滤掉已存在的部门
-        List<Long> newDeptIds = deptIds.stream()
-            .filter(deptId -> !existingDeptIds.contains(deptId))
-            .collect(Collectors.toList());
-
-        if (newDeptIds.isEmpty()) {
-            log.info("所有部门都已存在，无需添加: roleId={}", roleId);
-            return;
-        }
-
-        // 从 Sa-Token Session 获取当前登录用户的租户ID
-        Long tenantId = cn.dev33.satoken.stp.StpUtil.getSession().get("tenantId", 2L);
-
-        List<SysRoleDept> list = newDeptIds.stream()
-            .map(deptId -> {
-                SysRoleDept roleDept = new SysRoleDept();
-                roleDept.setRoleId(roleId);
-                roleDept.setDeptId(deptId);
-                roleDept.setTenantId(tenantId);
-                roleDept.setCreateTime(LocalDateTime.now());
-                return roleDept;
-            })
-            .collect(Collectors.toList());
-
-        roleDeptMapper.batchInsert(list);
-        log.info("添加部门到角色成功: roleId={}, count={}", roleId, newDeptIds.size());
-    }
-
-    /**
-     * 从角色移除部门
-     */
-    @Override
-    public void removeDeptFromRole(Long roleId, Long deptId) {
-        roleDeptMapper.delete(
-            new LambdaQueryWrapper<SysRoleDept>()
-                .eq(SysRoleDept::getRoleId, roleId)
-                .eq(SysRoleDept::getDeptId, deptId)
-        );
-        log.info("从角色移除部门成功: roleId={}, deptId={}", roleId, deptId);
-    }
-
-    /**
-     * 添加权限到角色
-     */
-    @Override
-    public void addPermissionsToRole(Long roleId, List<Long> permissionIds) {
-        if (permissionIds == null || permissionIds.isEmpty()) {
-            return;
-        }
-
-        // 查询已存在的权限ID，过滤掉重复的
-        List<SysRolePermission> existingPermissions = rolePermissionMapper.selectList(
-            new LambdaQueryWrapper<SysRolePermission>()
-                .eq(SysRolePermission::getRoleId, roleId)
-                .in(SysRolePermission::getPermissionId, permissionIds)
-        );
-
-        List<Long> existingPermissionIds = existingPermissions.stream()
-            .map(SysRolePermission::getPermissionId)
-            .collect(Collectors.toList());
-
-        // 过滤掉已存在的权限
-        List<Long> newPermissionIds = permissionIds.stream()
-            .filter(permissionId -> !existingPermissionIds.contains(permissionId))
-            .collect(Collectors.toList());
-
-        if (newPermissionIds.isEmpty()) {
-            log.info("所有权限都已存在，无需添加: roleId={}", roleId);
-            return;
-        }
-
-        // 从 Sa-Token Session 获取当前登录用户的租户ID
-        Long tenantId = cn.dev33.satoken.stp.StpUtil.getSession().get("tenantId", 2L);
-
-        List<SysRolePermission> list = newPermissionIds.stream()
-            .map(permissionId -> {
-                SysRolePermission rolePermission = new SysRolePermission();
-                rolePermission.setRoleId(roleId);
-                rolePermission.setPermissionId(permissionId);
-                rolePermission.setTenantId(tenantId);
-                rolePermission.setCreateTime(LocalDateTime.now());
-                return rolePermission;
-            })
-            .collect(Collectors.toList());
-
-        rolePermissionMapper.batchInsert(list);
-        log.info("添加权限到角色成功: roleId={}, count={}", roleId, newPermissionIds.size());
-    }
-
-    /**
-     * 从角色移除权限
-     */
-    @Override
-    public void removePermissionFromRole(Long roleId, Long permissionId) {
-        rolePermissionMapper.delete(
-            new LambdaQueryWrapper<SysRolePermission>()
-                .eq(SysRolePermission::getRoleId, roleId)
-                .eq(SysRolePermission::getPermissionId, permissionId)
-        );
-        log.info("从角色移除权限成功: roleId={}, permissionId={}", roleId, permissionId);
-    }
-
-    /**
-     * 转换为节点VO
-     */
     private RoleNodeVO convertToNodeVO(SysRole role) {
         RoleNodeVO node = new RoleNodeVO();
         node.setId(role.getId());

@@ -1,12 +1,15 @@
 package com.yuncode.system.dto;
 
 import lombok.Data;
+import java.io.Serializable;
 
 /**
- * 操作日志查询 DTO
+ * 操作日志查询DTO
  */
 @Data
-public class OperationLogQueryDTO {
+public class OperationLogQueryDTO implements Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     /**
      * 页码

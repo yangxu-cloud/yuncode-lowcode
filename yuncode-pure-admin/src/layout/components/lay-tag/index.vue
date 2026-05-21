@@ -10,13 +10,26 @@ import { handleAliveRoute, getTopMenu } from "@/router/utils";
 import { useSettingStoreHook } from "@/store/modules/settings";
 import { useMultiTagsStoreHook } from "@/store/modules/multiTags";
 import { usePermissionStoreHook } from "@/store/modules/permission";
-import { ref, watch, unref, toRaw, nextTick, onBeforeUnmount } from "vue";
+import { ref, watch, unref, toRaw, nextTick, onBeforeUnmount, computed } from "vue";
+import { useI18n } from "vue-i18n";
 import {
   delay,
   isEqual,
   isAllEmpty,
   useResizeObserver
 } from "@pureadmin/utils";
+
+const { t } = useI18n();
+
+// 获取翻译后的标题
+const getTitle = (meta: any) => {
+  const title = meta.title || meta.i18nKey;
+  // 如果 title 以 'routes.' 开头，使用 i18n 翻译
+  if (title && title.toString().startsWith("routes.")) {
+    return t(title);
+  }
+  return title;
+};
 
 import ExitFullscreen from "~icons/ri/fullscreen-exit-fill";
 import Fullscreen from "~icons/ri/fullscreen-fill";
@@ -595,7 +608,7 @@ onBeforeUnmount(() => {
             <span
               class="tag-title dark:text-text_color_primary! dark:hover:text-primary!"
             >
-              {{ item.meta.title }}
+              {{ getTitle(item.meta) }}
             </span>
             <span
               v-if="
@@ -620,7 +633,7 @@ onBeforeUnmount(() => {
               <TagChrome />
             </div>
             <span class="tag-title">
-              {{ item.meta.title }}
+              {{ getTitle(item.meta) }}
             </span>
             <span
               v-if="isFixedTag(item) ? false : index !== 0"

@@ -8,7 +8,7 @@ import com.yuncode.system.entity.OnlineUser;
 import com.yuncode.system.service.OnlineUserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -18,12 +18,12 @@ import java.util.Map;
  * 在线用户管理控制器
  */
 @Tag(name = "在线用户管理", description = "在线用户管理相关接口")
+@RequiredArgsConstructor
 @RestController
 @RequestMapping("/system/online-users")
 public class OnlineUserController {
 
-    @Autowired
-    private OnlineUserService onlineUserService;
+    private final OnlineUserService onlineUserService;
 
     /**
      * 获取在线用户列表

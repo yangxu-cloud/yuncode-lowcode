@@ -1,4 +1,4 @@
-package com.yuncode.common.util;
+package com.yuncode.common.utils;
 
 import cn.dev33.satoken.stp.StpUtil;
 import com.yuncode.common.exception.BaseException;
@@ -22,8 +22,6 @@ public class ExceptionLogUtil {
 
     /**
      * 记录异常日志（完整版）
-     *
-     * @param exception 异常对象
      */
     public static void logException(Exception exception) {
         logException(exception, null);
@@ -31,26 +29,20 @@ public class ExceptionLogUtil {
 
     /**
      * 记录异常日志（带自定义消息）
-     *
-     * @param exception 异常对象
-     * @param message   自定义消息
      */
     public static void logException(Exception exception, String message) {
         HttpServletRequest request = getRequest();
         Map<String, Object> requestInfo = buildRequestInfo(request);
         Map<String, Object> userInfo = buildUserInfo();
 
-        // 构建日志消息
         StringBuilder logMessage = new StringBuilder();
         if (message != null) {
             logMessage.append(message).append(" | ");
         }
 
-        // 异常类型和消息
         logMessage.append("异常类型: ").append(exception.getClass().getSimpleName());
         logMessage.append(", 异常消息: ").append(exception.getMessage());
 
-        // 如果是 BaseException，记录错误码
         if (exception instanceof BaseException) {
             BaseException baseException = (BaseException) exception;
             logMessage.append(", 错误码: ").append(baseException.getCode());
@@ -59,15 +51,11 @@ public class ExceptionLogUtil {
             }
         }
 
-        // 记录日志
         log.error(buildLogString(logMessage.toString(), requestInfo, userInfo), exception);
     }
 
     /**
      * 记录业务异常日志（不记录堆栈）
-     * 适用于预期的业务异常，不需要完整堆栈信息
-     *
-     * @param exception 业务异常
      */
     public static void logBusinessException(BaseException exception) {
         logBusinessException(exception, null);
@@ -75,16 +63,12 @@ public class ExceptionLogUtil {
 
     /**
      * 记录业务异常日志（不记录堆栈，带自定义消息）
-     *
-     * @param exception 业务异常
-     * @param message   自定义消息
      */
     public static void logBusinessException(BaseException exception, String message) {
         HttpServletRequest request = getRequest();
         Map<String, Object> requestInfo = buildRequestInfo(request);
         Map<String, Object> userInfo = buildUserInfo();
 
-        // 构建日志消息
         StringBuilder logMessage = new StringBuilder();
         if (message != null) {
             logMessage.append(message).append(" | ");
@@ -102,16 +86,11 @@ public class ExceptionLogUtil {
             logMessage.append(", 详情: ").append(exception.getDetail());
         }
 
-        // 记录日志（不记录堆栈）
         log.warn(buildLogString(logMessage.toString(), requestInfo, userInfo));
     }
 
     /**
      * 记录参数校验异常日志
-     *
-     * @param fieldName 字段名
-     * @param fieldValue 字段值
-     * @param errorMessage 错误消息
      */
     public static void logParamError(String fieldName, Object fieldValue, String errorMessage) {
         HttpServletRequest request = getRequest();
@@ -131,9 +110,6 @@ public class ExceptionLogUtil {
 
     /**
      * 记录系统异常日志（完整堆栈）
-     * 适用于未预期的系统异常
-     *
-     * @param exception 系统异常
      */
     public static void logSystemException(Exception exception) {
         logSystemException(exception, "系统异常");
@@ -141,9 +117,6 @@ public class ExceptionLogUtil {
 
     /**
      * 记录系统异常日志（完整堆栈，带自定义消息）
-     *
-     * @param exception 系统异常
-     * @param message   自定义消息
      */
     public static void logSystemException(Exception exception, String message) {
         HttpServletRequest request = getRequest();
@@ -157,9 +130,6 @@ public class ExceptionLogUtil {
 
     // ========== 私有辅助方法 ==========
 
-    /**
-     * 获取当前请求对象
-     */
     private static HttpServletRequest getRequest() {
         try {
             ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
@@ -169,9 +139,6 @@ public class ExceptionLogUtil {
         }
     }
 
-    /**
-     * 构建请求信息
-     */
     private static Map<String, Object> buildRequestInfo(HttpServletRequest request) {
         Map<String, Object> requestInfo = new HashMap<>();
 
@@ -185,21 +152,14 @@ public class ExceptionLogUtil {
         requestInfo.put("remoteAddr", request.getRemoteAddr());
         requestInfo.put("userAgent", request.getHeader("User-Agent"));
 
-        // 记录请求头（可选，敏感信息需要过滤）
-        // requestInfo.put("headers", getHeaders(request));
-
         return requestInfo;
     }
 
-    /**
-     * 获取所有请求头（供外部使用）
-     */
     public static Map<String, String> getRequestHeaders(HttpServletRequest request) {
         Map<String, String> headers = new HashMap<>();
         Enumeration<String> headerNames = request.getHeaderNames();
         while (headerNames.hasMoreElements()) {
             String headerName = headerNames.nextElement();
-            // 过滤敏感信息
             if (!headerName.toLowerCase().contains("authorization") &&
                 !headerName.toLowerCase().contains("token")) {
                 headers.put(headerName, request.getHeader(headerName));
@@ -208,9 +168,6 @@ public class ExceptionLogUtil {
         return headers;
     }
 
-    /**
-     * 构建用户信息
-     */
     private static Map<String, Object> buildUserInfo() {
         Map<String, Object> userInfo = new HashMap<>();
 
@@ -219,7 +176,6 @@ public class ExceptionLogUtil {
                 Object loginId = StpUtil.getLoginIdDefaultNull();
                 userInfo.put("loginId", loginId != null ? loginId.toString() : null);
 
-                // 尝试获取用户名
                 try {
                     String username = StpUtil.getSession().get("username") != null ?
                             StpUtil.getSession().get("username").toString() : null;
@@ -228,7 +184,6 @@ public class ExceptionLogUtil {
                     // 忽略获取用户名失败
                 }
 
-                // 尝试获取租户ID
                 try {
                     Object tenantId = StpUtil.getSession().get("tenantId");
                     userInfo.put("tenantId", tenantId != null ? tenantId.toString() : null);
@@ -243,23 +198,17 @@ public class ExceptionLogUtil {
         return userInfo;
     }
 
-    /**
-     * 构建完整的日志字符串
-     */
     private static String buildLogString(String message, Map<String, Object> requestInfo, Map<String, Object> userInfo) {
         StringBuilder sb = new StringBuilder();
 
         sb.append("【异常日志】");
 
-        // 消息
         sb.append(" ").append(message);
 
-        // 用户信息
         if (!userInfo.isEmpty()) {
             sb.append(" | 用户信息: ").append(userInfo);
         }
 
-        // 请求信息
         if (!requestInfo.isEmpty()) {
             sb.append(" | 请求信息: ");
             sb.append(requestInfo.get("method")).append(" ");

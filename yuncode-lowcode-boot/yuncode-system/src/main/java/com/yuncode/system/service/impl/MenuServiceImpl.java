@@ -1,12 +1,18 @@
 package com.yuncode.system.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.yuncode.common.util.security.SecurityUtil;
+import com.yuncode.common.utils.SecurityUtil;
 import com.yuncode.system.dto.MenuForm;
 import com.yuncode.system.entity.SysMenu;
 import com.yuncode.system.entity.SysMenuPermission;
+import com.yuncode.system.entity.SysOrg;
+import com.yuncode.system.entity.SysRole;
+import com.yuncode.system.entity.SysUser;
 import com.yuncode.system.mapper.SysMenuMapper;
 import com.yuncode.system.mapper.SysMenuPermissionMapper;
+import com.yuncode.system.mapper.SysOrgMapper;
+import com.yuncode.system.mapper.SysRoleMapper;
+import com.yuncode.system.mapper.SysUserMapper;
 import com.yuncode.system.service.MenuService;
 import com.yuncode.system.vo.MenuPermissionVO;
 import com.yuncode.system.vo.MenuTreeNode;
@@ -35,6 +41,9 @@ public class MenuServiceImpl implements MenuService {
 
     private final SysMenuMapper menuMapper;
     private final SysMenuPermissionMapper menuPermissionMapper;
+    private final SysRoleMapper roleMapper;
+    private final SysUserMapper userMapper;
+    private final SysOrgMapper orgMapper;
 
     @Override
     public List<MenuTreeNode> getMenuTree() {
@@ -262,9 +271,19 @@ public class MenuServiceImpl implements MenuService {
             throw new RuntimeException("菜单不存在");
         }
 
-        // 批量插入权限
+        // 获取已有权限，用于去重
+        List<SysMenuPermission> existingPermissions = menuPermissionMapper.selectPermissionsByMenuId(menuId);
+
+        // 批量插入权限（排除已存在的）
         List<SysMenuPermission> permissions = new ArrayList<>();
         for (Long targetId : targetIds) {
+            // 检查是否已存在
+            boolean exists = existingPermissions.stream()
+                    .anyMatch(p -> p.getTargetType().equals(targetType) && p.getTargetId().equals(targetId));
+            if (exists) {
+                continue;
+            }
+
             SysMenuPermission permission = new SysMenuPermission();
             permission.setMenuId(menuId);
             permission.setTargetType(targetType);
@@ -274,13 +293,17 @@ public class MenuServiceImpl implements MenuService {
             permissions.add(permission);
         }
 
+        if (permissions.isEmpty()) {
+            return true;
+        }
+
         return menuPermissionMapper.batchInsert(permissions) > 0;
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public boolean removePermission(Long menuId, Integer targetType, Long targetId) {
-        int count = menuPermissionMapper.deleteByMenuId(menuId);
+        int count = menuPermissionMapper.deleteByMenuIdAndTarget(menuId, targetType, targetId);
         return count > 0;
     }
 
@@ -464,16 +487,40 @@ public class MenuServiceImpl implements MenuService {
         vo.setTargetType(permission.getTargetType());
         vo.setTargetId(permission.getTargetId());
 
-        // 根据targetType设置类型名称
+        // 根据targetType查询目标名称
         switch (permission.getTargetType()) {
             case 0:
                 vo.setTargetTypeName("角色");
+                try {
+                    SysRole role = roleMapper.selectByIdIgnoreTenant(permission.getTargetId());
+                    if (role != null) {
+                        vo.setTargetName(role.getRoleName());
+                    }
+                } catch (Exception e) {
+                    log.warn("查询角色名称失败, targetId={}", permission.getTargetId(), e);
+                }
                 break;
             case 1:
                 vo.setTargetTypeName("用户");
+                try {
+                    SysUser user = userMapper.selectByIdIgnoreTenant(permission.getTargetId());
+                    if (user != null) {
+                        vo.setTargetName(user.getRealName() != null ? user.getRealName() : user.getUsername());
+                    }
+                } catch (Exception e) {
+                    log.warn("查询用户名称失败, targetId={}", permission.getTargetId(), e);
+                }
                 break;
             case 2:
                 vo.setTargetTypeName("部门");
+                try {
+                    SysOrg org = orgMapper.selectByIdIgnoreTenant(permission.getTargetId());
+                    if (org != null) {
+                        vo.setTargetName(org.getOrgName());
+                    }
+                } catch (Exception e) {
+                    log.warn("查询部门名称失败, targetId={}", permission.getTargetId(), e);
+                }
                 break;
             default:
                 vo.setTargetTypeName("未知");

@@ -3,6 +3,7 @@ package com.yuncode.system.aspect;
 import cn.dev33.satoken.stp.StpUtil;
 import com.yuncode.system.entity.SysSystemLog;
 import com.yuncode.system.service.SysSystemLogService;
+import com.yuncode.common.utils.web.ServletUtils;
 import com.yuncode.common.utils.web.TraceIdContext;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
@@ -62,7 +63,7 @@ public class SystemLogAspect {
             request = attributes.getRequest();
             requestMethod = request.getMethod();
             requestUrl = request.getRequestURI();
-            requestIp = getClientIP(request);
+            requestIp = ServletUtils.getClientIP(request);
         }
 
         Object result = null;
@@ -180,37 +181,6 @@ public class SystemLogAspect {
         } catch (Exception e) {
             log.debug("获取用户信息失败: {}", e.getMessage());
         }
-    }
-
-    /**
-     * 获取客户端IP地址
-     */
-    private String getClientIP(HttpServletRequest request) {
-        if (request == null) {
-            return "unknown";
-        }
-
-        String ip = request.getHeader("X-Forwarded-For");
-        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
-            ip = request.getHeader("Proxy-Client-IP");
-        }
-        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
-            ip = request.getHeader("WL-Proxy-Client-IP");
-        }
-        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
-            ip = request.getHeader("HTTP_CLIENT_IP");
-        }
-        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
-            ip = request.getHeader("HTTP_X_FORWARDED_FOR");
-        }
-        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
-            ip = request.getRemoteAddr();
-        }
-        if (ip != null && ip.contains(",")) {
-            ip = ip.split(",")[0].trim();
-        }
-
-        return ip;
     }
 
     /**

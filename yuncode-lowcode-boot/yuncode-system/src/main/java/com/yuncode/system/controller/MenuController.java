@@ -2,6 +2,7 @@ package com.yuncode.system.controller;
 
 import com.yuncode.common.model.util.response.Result;
 import com.yuncode.system.annotation.OperLog;
+import com.yuncode.system.dto.AddMenuPermissionDTO;
 import com.yuncode.system.dto.MenuForm;
 import com.yuncode.system.entity.SysMenu;
 import com.yuncode.system.service.MenuService;
@@ -230,21 +231,16 @@ public class MenuController {
     /**
      * 添加权限到菜单
      *
-     * @param menuId 菜单ID
-     * @param targetType 目标类型（0=角色, 1=用户, 2=部门）
-     * @param targetIds 目标ID列表
+     * @param dto 添加权限DTO
      * @return 是否成功
      */
     @PostMapping("/permissions")
     @Operation(summary = "添加菜单权限", description = "为菜单添加权限配置")
     @OperLog(module = "菜单管理", businessType = 1, description = "添加菜单权限")
-    public Result<Void> addPermissions(
-            @Parameter(description = "菜单ID") @RequestParam Long menuId,
-            @Parameter(description = "目标类型（0=角色, 1=用户, 2=部门）") @RequestParam Integer targetType,
-            @Parameter(description = "目标ID列表") @RequestParam List<Long> targetIds) {
-        log.info("添加菜单权限, menuId={}, targetType={}, targetIds={}", menuId, targetType, targetIds);
+    public Result<Void> addPermissions(@RequestBody AddMenuPermissionDTO dto) {
+        log.info("添加菜单权限, dto={}", dto);
         try {
-            menuService.addPermissions(menuId, targetType, targetIds);
+            menuService.addPermissions(dto.getMenuId(), dto.getTargetType(), dto.getTargetIds());
             return Result.success();
         } catch (RuntimeException e) {
             log.error("添加菜单权限失败", e);

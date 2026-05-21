@@ -6,8 +6,8 @@ import com.yuncode.system.entity.OnlineUser;
 import com.yuncode.system.service.NotificationService;
 import com.yuncode.system.service.OnlineUserService;
 import com.yuncode.system.service.SysLoginLogService;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
@@ -20,24 +20,13 @@ import java.util.concurrent.TimeUnit;
  * 使用 Redis 存储在线用户信息
  */
 @Slf4j
+@RequiredArgsConstructor
 @Service
 public class OnlineUserServiceImpl implements OnlineUserService {
 
-    @Autowired
-    private RedisTemplate<String, Object> redisTemplate;
-
-    @Autowired
-    private SysLoginLogService loginLogService;
-
-    @Autowired
-    private NotificationService notificationService;
-
-    public OnlineUserServiceImpl(
-            RedisTemplate<String, Object> redisTemplate,
-            SysLoginLogService loginLogService) {
-        this.redisTemplate = redisTemplate;
-        this.loginLogService = loginLogService;
-    }
+    private final RedisTemplate<String, Object> redisTemplate;
+    private final SysLoginLogService loginLogService;
+    private final NotificationService notificationService;
 
     private static final String ONLINE_USER_KEY_PREFIX = "online_user:";
     private static final int IDLE_THRESHOLD_MINUTES = 30;

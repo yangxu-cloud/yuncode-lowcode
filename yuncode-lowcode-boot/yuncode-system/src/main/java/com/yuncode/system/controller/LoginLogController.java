@@ -7,7 +7,7 @@ import com.yuncode.system.entity.SysLoginLog;
 import com.yuncode.system.service.LoginLogService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
 
@@ -16,13 +16,13 @@ import java.time.LocalDateTime;
 /**
  * 登录日志控制器
  */
+@RequiredArgsConstructor
 @RestController
 @RequestMapping("/log/user")
 @Tag(name = "登录日志管理", description = "登录日志管理相关接口")
 public class LoginLogController {
 
-    @Autowired
-    private LoginLogService loginLogService;
+    private final LoginLogService loginLogService;
 
     /**
      * 分页查询登录日志

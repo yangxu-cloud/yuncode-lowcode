@@ -2,7 +2,7 @@ package com.yuncode.system.service.impl;
 
 import com.yuncode.system.entity.SysUser;
 import com.yuncode.system.service.UserCacheService;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
@@ -12,11 +12,11 @@ import java.util.concurrent.TimeUnit;
  * 用户缓存服务实现
  * 使用 Redis 缓存用户基本信息
  */
+@RequiredArgsConstructor
 @Service
 public class UserCacheServiceImpl implements UserCacheService {
 
-    @Autowired
-    private RedisTemplate<String, Object> redisTemplate;
+    private final RedisTemplate<String, Object> redisTemplate;
 
     private static final String USER_CACHE_KEY_PREFIX = "user:info:";
     private static final long DEFAULT_CACHE_TIMEOUT = 1800; // 默认30分钟

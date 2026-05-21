@@ -13,7 +13,7 @@ import org.aspectj.lang.annotation.Pointcut;
 import org.aspectj.lang.reflect.MethodSignature;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.lang.reflect.Method;
@@ -24,14 +24,14 @@ import java.lang.reflect.Method;
  *
  * @author yuncode
  */
+@RequiredArgsConstructor
 @Aspect
 @Component
 public class LoginLogAspect {
 
     private static final Logger log = LoggerFactory.getLogger(LoginLogAspect.class);
 
-    @Autowired
-    private SysLoginLogService loginLogService;
+    private final SysLoginLogService loginLogService;
 
     /**
      * 配置织入点

@@ -7,6 +7,7 @@ import org.springframework.context.annotation.ComponentScan;
 
 /**
  * Yuncode LowCode Admin Application
+ * 云码低代码平台 - 后端服务
  */
 @SpringBootApplication
 @ComponentScan(basePackages = "com.yuncode")
@@ -21,9 +22,17 @@ public class YuncodeAdminApplication {
         SpringApplication.run(YuncodeAdminApplication.class, args);
         System.out.println("""
 
-                ======================================
-                 Yuncode LowCode Platform Started!
-                ======================================
+                ================================================
+                    Yuncode LowCode - Backend Service
+                    云码低代码平台 - 后端服务
+                ================================================
+                   [Port] 8080
+                   [Path] /api
+                ================================================
+                   [API Address] http://localhost:8080/api
+                   [API Docs]    http://localhost:8080/api/doc.html
+                   [Event API]   http://localhost:8080/api/event/types
+                ================================================
                 """);
     }
 }

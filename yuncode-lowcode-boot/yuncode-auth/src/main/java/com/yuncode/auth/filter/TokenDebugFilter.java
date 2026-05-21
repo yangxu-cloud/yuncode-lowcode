@@ -10,7 +10,7 @@ import jakarta.servlet.ServletResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
@@ -21,14 +21,14 @@ import java.io.IOException;
  * Token 调试过滤器
  * 用于调试 JWT Token 的读取情况
  */
+@RequiredArgsConstructor
 @Component
 @Order(Ordered.HIGHEST_PRECEDENCE + 1)
 public class TokenDebugFilter implements Filter {
 
     private static final Logger log = LoggerFactory.getLogger(TokenDebugFilter.class);
 
-    @Autowired
-    private SaTokenProperties saTokenProperties;
+    private final SaTokenProperties saTokenProperties;
 
     @Override
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)

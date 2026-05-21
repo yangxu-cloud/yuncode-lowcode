@@ -7,7 +7,7 @@ import com.yuncode.system.entity.SysSystemLog;
 import com.yuncode.system.service.SysSystemLogService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
@@ -16,13 +16,13 @@ import java.util.Arrays;
 /**
  * 系统日志控制器
  */
+@RequiredArgsConstructor
 @RestController
 @RequestMapping("/log/system")
 @Tag(name = "系统日志管理", description = "系统日志管理相关接口")
 public class SystemLogController {
 
-    @Autowired
-    private SysSystemLogService sysSystemLogService;
+    private final SysSystemLogService sysSystemLogService;
 
     /**
      * 分页查询系统日志

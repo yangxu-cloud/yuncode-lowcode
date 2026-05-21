@@ -10,6 +10,12 @@ import EpUserFilled from "~icons/ep/user-filled?raw";
 import EpUser from "~icons/ep/user?raw";
 import EpDocument from "~icons/ep/document?raw";
 import EpEdit from "~icons/ep/edit?raw";
+import EpMonitor from "~icons/ep/monitor?raw";
+import EpOperation from "~icons/ep/operation?raw";
+import EpTimer from "~icons/ep/timer?raw";
+import EpManagement from "~icons/ep/management?raw";
+import EpOfficeBuilding from "~icons/ep/office-building?raw";
+import EpMenu from "~icons/ep/menu?raw";
 
 // https://icon-sets.iconify.design/ri/?keyword=ri
 import RiSearchLine from "~icons/ri/search-line?raw";
@@ -24,6 +30,12 @@ const icons = [
   ["ep/user", EpUser],
   ["ep/document", EpDocument],
   ["ep/edit", EpEdit],
+  ["ep/monitor", EpMonitor],
+  ["ep/operation", EpOperation],
+  ["ep/timer", EpTimer],
+  ["ep/management", EpManagement],
+  ["ep/office-building", EpOfficeBuilding],
+  ["ep/menu", EpMenu],
   // Remix Icon: https://github.com/Remix-Design/RemixIcon
   ["ri/search-line", RiSearchLine],
   ["ri/information-line", RiInformationLine]

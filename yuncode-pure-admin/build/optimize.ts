@@ -17,7 +17,8 @@ const include = [
   "sortablejs",
   "@vueuse/core",
   "@pureadmin/utils",
-  "responsive-storage"
+  "responsive-storage",
+  "@element-plus/icons-vue"
 ];
 
 /**

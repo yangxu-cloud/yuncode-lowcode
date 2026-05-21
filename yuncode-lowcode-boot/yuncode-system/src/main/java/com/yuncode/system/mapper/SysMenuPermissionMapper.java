@@ -1,5 +1,6 @@
 package com.yuncode.system.mapper;
 
+import com.baomidou.mybatisplus.annotation.InterceptorIgnore;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.yuncode.system.entity.SysMenuPermission;
 import org.apache.ibatis.annotations.Mapper;
@@ -36,10 +37,12 @@ public interface SysMenuPermissionMapper extends BaseMapper<SysMenuPermission> {
 
     /**
      * 批量插入菜单权限
+     * 注意：使用 @InterceptorIgnore 忽略多租户插件，因为菜单权限表有自己的 tenant_id 字段
      *
      * @param permissions 权限列表
      * @return 插入数量
      */
+    @InterceptorIgnore(tenantLine = "true")
     int batchInsert(@Param("permissions") List<SysMenuPermission> permissions);
 
     /**
@@ -58,6 +61,18 @@ public interface SysMenuPermissionMapper extends BaseMapper<SysMenuPermission> {
      * @return 删除数量
      */
     int deleteByTarget(@Param("targetType") Integer targetType, @Param("targetId") Long targetId);
+
+    /**
+     * 根据菜单ID、目标类型和目标ID删除权限
+     *
+     * @param menuId 菜单ID
+     * @param targetType 目标类型
+     * @param targetId 目标ID
+     * @return 删除数量
+     */
+    int deleteByMenuIdAndTarget(@Param("menuId") Long menuId,
+                                @Param("targetType") Integer targetType,
+                                @Param("targetId") Long targetId);
 
     /**
      * 权限追加到下级

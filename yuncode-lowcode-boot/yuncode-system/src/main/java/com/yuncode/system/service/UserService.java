@@ -5,8 +5,8 @@ import cn.hutool.crypto.digest.BCrypt;
 import com.yuncode.common.model.util.response.Result;
 import com.yuncode.system.entity.SysUser;
 import com.yuncode.system.mapper.SysUserOrgMapper;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -15,17 +15,13 @@ import org.springframework.transaction.annotation.Transactional;
  * 处理用户缓存相关的业务逻辑
  */
 @Slf4j
+@RequiredArgsConstructor
 @Service
 public class UserService {
 
-    @Autowired
-    private com.yuncode.system.mapper.SysUserMapper sysUserMapper;
-
-    @Autowired
-    private UserCacheService userCacheService;
-
-    @Autowired
-    private SysUserOrgMapper sysUserOrgMapper;
+    private final com.yuncode.system.mapper.SysUserMapper sysUserMapper;
+    private final UserCacheService userCacheService;
+    private final SysUserOrgMapper sysUserOrgMapper;
 
     /**
      * 创建用户

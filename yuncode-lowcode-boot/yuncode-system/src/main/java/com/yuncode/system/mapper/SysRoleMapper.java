@@ -32,4 +32,13 @@ public interface SysRoleMapper extends BaseMapper<SysRole> {
      */
     @InterceptorIgnore(tenantLine = "true")
     List<SysRole> selectCategories(@Param("tenantId") Long tenantId);
+
+    /**
+     * 根据ID查询角色（忽略租户限制）
+     *
+     * @param id 角色ID
+     * @return 角色实体
+     */
+    @InterceptorIgnore(tenantLine = "true")
+    SysRole selectByIdIgnoreTenant(@Param("id") Long id);
 }

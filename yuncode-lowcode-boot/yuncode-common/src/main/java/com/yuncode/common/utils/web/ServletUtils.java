@@ -8,7 +8,7 @@ import jakarta.servlet.http.HttpServletRequest;
 public class ServletUtils {
 
     /**
-     * 获取请求的 IP 地址
+     * 获取请求的 IP 地址（合并所有代理头检测，取第一个非内网 IP）
      */
     public static String getClientIP(HttpServletRequest request) {
         if (request == null) {
@@ -16,16 +16,25 @@ public class ServletUtils {
         }
 
         String ip = request.getHeader("x-forwarded-for");
-        if (ip == null || ip.length() == 0 || "unknown".equalsIgnoreCase(ip)) {
+        if (isEmptyOrUnknown(ip)) {
             ip = request.getHeader("Proxy-Client-IP");
         }
-        if (ip == null || ip.length() == 0 || "unknown".equalsIgnoreCase(ip)) {
+        if (isEmptyOrUnknown(ip)) {
+            ip = request.getHeader("X-Forwarded-For");
+        }
+        if (isEmptyOrUnknown(ip)) {
             ip = request.getHeader("WL-Proxy-Client-IP");
         }
-        if (ip == null || ip.length() == 0 || "unknown".equalsIgnoreCase(ip)) {
+        if (isEmptyOrUnknown(ip)) {
+            ip = request.getHeader("HTTP_CLIENT_IP");
+        }
+        if (isEmptyOrUnknown(ip)) {
+            ip = request.getHeader("HTTP_X_FORWARDED_FOR");
+        }
+        if (isEmptyOrUnknown(ip)) {
             ip = request.getHeader("X-Real-IP");
         }
-        if (ip == null || ip.length() == 0 || "unknown".equalsIgnoreCase(ip)) {
+        if (isEmptyOrUnknown(ip)) {
             ip = request.getRemoteAddr();
         }
 
@@ -34,11 +43,16 @@ public class ServletUtils {
             ip = ip.substring(0, ip.indexOf(",")).trim();
         }
 
+        // IPv6 回环地址处理
         if ("0:0:0:0:0:0:0:1".equals(ip) || "::1".equals(ip)) {
             ip = "127.0.0.1";
         }
 
         return ip;
+    }
+
+    private static boolean isEmptyOrUnknown(String ip) {
+        return ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip);
     }
 
     /**

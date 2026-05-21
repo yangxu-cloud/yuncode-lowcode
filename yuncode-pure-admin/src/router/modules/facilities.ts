@@ -7,7 +7,7 @@ const facilitiesRoutes: RouteRecordRaw = {
   component: Layout,
   redirect: "/facilities/navigation",
   meta: {
-    icon: "ep:management",
+    icon: "ep/management",
     title: "routes.facilities",
     i18nKey: "routes.facilities",
     rank: 3,
@@ -19,7 +19,7 @@ const facilitiesRoutes: RouteRecordRaw = {
       name: "Org",
       component: () => import("@/views/facilities/org/index.vue"),
       meta: {
-        icon: "ep:office-building",
+        icon: "ep/office-building",
         title: "routes.org",
         i18nKey: "routes.org",
         showParent: true,
@@ -31,7 +31,7 @@ const facilitiesRoutes: RouteRecordRaw = {
       name: "Navigation",
       component: () => import("@/views/facilities/navigation/index.vue"),
       meta: {
-        icon: "ep:menu",
+        icon: "ep/menu",
         title: "routes.navigation",
         i18nKey: "routes.navigation",
         showParent: true,
@@ -43,13 +43,13 @@ const facilitiesRoutes: RouteRecordRaw = {
       name: "Role",
       component: () => import("@/views/facilities/role/index.vue"),
       meta: {
-        icon: "ep:user",
+        icon: "ep/user",
         title: "routes.role",
         i18nKey: "routes.role",
         showParent: true,
         showLink: true
       }
-    }
+    },
   ]
 } satisfies RouteConfigsTable;
 

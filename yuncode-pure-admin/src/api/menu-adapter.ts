@@ -110,8 +110,8 @@ export const moveDownMenu = (id: number) => {
  */
 export const setMenuVisible = (id: number, visible: number) => {
   return adapterPut(
-    `${API_BASE_PREFIX}/visible/${id}`,
-    { visible },
+    `${API_BASE_PREFIX}/visible`,
+    { menuId: id, visible },
     async () => {
       return { code: 200, message: visible ? '显示成功' : '隐藏成功' };
     }
@@ -121,12 +121,13 @@ export const setMenuVisible = (id: number, visible: number) => {
 /**
  * 移除菜单权限
  */
-export const removeMenuPermission = (menuId: number, permissionId: number) => {
+export const removeMenuPermission = (menuId: number, targetType: number, targetId: number) => {
   return adapterDelete(
-    `${API_BASE_PREFIX}/menu/permissions/${menuId}/${permissionId}`,
+    `${API_BASE_PREFIX}/permissions`,
     async () => {
       return { code: 200, message: '移除成功' };
-    }
+    },
+    { params: { menuId, targetType, targetId } }
   );
 };
 
@@ -135,7 +136,7 @@ export const removeMenuPermission = (menuId: number, permissionId: number) => {
  */
 export const copyPermissionsToChildren = (menuId: number) => {
   return adapterPost(
-    `${API_BASE_PREFIX}/menu/copy-permissions/${menuId}`,
+    `${API_BASE_PREFIX}/permissions/copy-to-children/${menuId}`,
     {},
     async () => {
       return { code: 200, message: '复制成功' };
@@ -146,10 +147,10 @@ export const copyPermissionsToChildren = (menuId: number) => {
 /**
  * 添加菜单权限
  */
-export const addMenuPermissionsAdapter = (menuId: number, permissions: any) => {
+export const addMenuPermissionsAdapter = (menuId: number, targetType: number, targetIds: number[]) => {
   return adapterPost(
-    `${API_BASE_PREFIX}/menu/permissions`,
-    { menuId, permissions },
+    `${API_BASE_PREFIX}/permissions`,
+    { menuId, targetType, targetIds },
     async () => {
       return { code: 200, message: '添加成功' };
     }

@@ -4,6 +4,7 @@ import cn.dev33.satoken.stp.StpUtil;
 import cn.hutool.crypto.digest.BCrypt;
 import com.yuncode.auth.dto.LoginDTO;
 import com.yuncode.auth.properties.SaTokenProperties;
+import com.yuncode.common.utils.web.ServletUtils;
 import com.yuncode.auth.vo.LoginVO;
 import com.yuncode.common.exception.BusinessException;
 import com.yuncode.common.exception.ErrorCode;
@@ -17,35 +18,22 @@ import com.yuncode.system.service.UserCacheService;
 import com.yuncode.tenant.entity.SysTenant;
 import com.yuncode.tenant.mapper.SysTenantMapper;
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * 登录策略抽象基类
  */
 @Slf4j
+@RequiredArgsConstructor
 public abstract class AbstractLoginStrategy implements LoginStrategy {
 
-    @Autowired
-    protected SaTokenProperties saTokenProperties;
-
+    protected final SaTokenProperties saTokenProperties;
     protected final SysTenantMapper sysTenantMapper;
     protected final SysUserMapper sysUserMapper;
     protected final SysLoginLogService sysLoginLogService;
     protected final OnlineUserService onlineUserService;
     protected final UserCacheService userCacheService;
-
-    protected AbstractLoginStrategy(SysTenantMapper sysTenantMapper,
-                                   SysUserMapper sysUserMapper,
-                                   SysLoginLogService sysLoginLogService,
-                                   OnlineUserService onlineUserService,
-                                   UserCacheService userCacheService) {
-        this.sysTenantMapper = sysTenantMapper;
-        this.sysUserMapper = sysUserMapper;
-        this.sysLoginLogService = sysLoginLogService;
-        this.onlineUserService = onlineUserService;
-        this.userCacheService = userCacheService;
-    }
 
     @Override
     public LoginVO login(LoginDTO loginDTO, HttpServletRequest request) {
@@ -91,14 +79,14 @@ public abstract class AbstractLoginStrategy implements LoginStrategy {
             log.info("用户登录成功: userId={}, username={}, tenantId={}, loginType={}",
                     user.getId(), username, tenantId, getLoginType());
 
-            // 将用户信息存入 Session
-            StpUtil.getSession().set("userId", user.getId());
-            StpUtil.getSession().set("username", user.getUsername());
-            StpUtil.getSession().set("nickname", user.getNickname() != null ? user.getNickname() : "");
-            StpUtil.getSession().set("avatar", user.getAvatar() != null ? user.getAvatar() : "");
-            StpUtil.getSession().set("tenantId", tenantId);
-            StpUtil.getSession().set("roleCode", user.getRoleCode() != null ? user.getRoleCode() : "NORMAL");
-            StpUtil.getSession().set("loginType", getLoginType());
+            // 将用户信息存入 Session（使用 getTokenSession 确保一致性）
+            StpUtil.getTokenSession().set("userId", user.getId());
+            StpUtil.getTokenSession().set("username", user.getUsername());
+            StpUtil.getTokenSession().set("nickname", user.getNickname() != null ? user.getNickname() : "");
+            StpUtil.getTokenSession().set("avatar", user.getAvatar() != null ? user.getAvatar() : "");
+            StpUtil.getTokenSession().set("tenantId", tenantId);
+            StpUtil.getTokenSession().set("roleCode", user.getRoleCode() != null ? user.getRoleCode() : "NORMAL");
+            StpUtil.getTokenSession().set("loginType", getLoginType());
 
             // 6. 缓存用户信息到 Redis（30分钟）
             userCacheService.cacheUser(user.getId(), user, 1800);
@@ -111,7 +99,7 @@ public abstract class AbstractLoginStrategy implements LoginStrategy {
             onlineUser.setAvatar(user.getAvatar());
             onlineUser.setTenantId(tenantId);
             onlineUser.setTenantName(tenant.getTenantName());
-            onlineUser.setIp(getClientIP(request));
+            onlineUser.setIp(ServletUtils.getClientIP(request));
             onlineUser.setLocation("");
             onlineUser.setUserAgent(request.getHeader("User-Agent"));
 
@@ -165,29 +153,4 @@ public abstract class AbstractLoginStrategy implements LoginStrategy {
      */
     protected abstract SysTenant validateAndGetTenant(LoginDTO loginDTO);
 
-    /**
-     * 获取客户端IP地址
-     */
-    protected String getClientIP(HttpServletRequest request) {
-        String ip = request.getHeader("X-Forwarded-For");
-        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
-            ip = request.getHeader("Proxy-Client-IP");
-        }
-        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
-            ip = request.getHeader("WL-Proxy-Client-IP");
-        }
-        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
-            ip = request.getHeader("HTTP_CLIENT_IP");
-        }
-        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
-            ip = request.getHeader("HTTP_X_FORWARDED_FOR");
-        }
-        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
-            ip = request.getRemoteAddr();
-        }
-        if (ip != null && ip.contains(",")) {
-            ip = ip.split(",")[0].trim();
-        }
-        return ip;
-    }
 }

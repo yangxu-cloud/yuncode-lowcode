@@ -54,7 +54,7 @@ export function getPluginsList(
       compiler: "vue3",
       scale: 1
     }),
-    VITE_CDN ? cdn : null,
+    ...(VITE_CDN ? [cdn()] : []),
     configCompressPlugin(VITE_COMPRESSION),
     // 线上环境删除console
     removeConsole({ external: ["src/assets/iconfont/iconfont.js"] }),

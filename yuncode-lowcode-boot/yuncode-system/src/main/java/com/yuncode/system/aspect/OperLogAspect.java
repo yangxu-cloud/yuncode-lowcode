@@ -5,8 +5,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.yuncode.system.annotation.OperLog;
 import com.yuncode.system.entity.SysOperationLog;
 import com.yuncode.system.service.SysOperationLogService;
+import com.yuncode.common.utils.web.ServletUtils;
 import com.yuncode.common.utils.web.TraceIdContext;
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.RequiredArgsConstructor;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
@@ -14,7 +16,6 @@ import org.aspectj.lang.annotation.Pointcut;
 import org.aspectj.lang.reflect.MethodSignature;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
@@ -26,17 +27,15 @@ import java.time.LocalDateTime;
  * 操作日志切面
  * 自动记录带有 @OperLog 注解的方法调用
  */
+@RequiredArgsConstructor
 @Aspect
 @Component
 public class OperLogAspect {
 
     private static final Logger logger = LoggerFactory.getLogger(OperLogAspect.class);
 
-    @Autowired
-    private SysOperationLogService operationLogService;
-
-    @Autowired
-    private ObjectMapper objectMapper;
+    private final SysOperationLogService operationLogService;
+    private final ObjectMapper objectMapper;
 
     /**
      * 配置织入点
@@ -75,7 +74,7 @@ public class OperLogAspect {
             String requestUri = request.getRequestURI();
             String javaMethod = signature.getDeclaringType().getSimpleName() + "." + method.getName();
             operationLog.setMethod(requestMethod + " " + requestUri + " -> " + javaMethod);
-            operationLog.setIp(getIpAddr(request));
+            operationLog.setIp(ServletUtils.getClientIP(request));
             operationLog.setUserAgent(request.getHeader("User-Agent"));  // 浏览器和操作系统信息
         } else {
             operationLog.setMethod(signature.getDeclaringType().getSimpleName() + "." + method.getName());
@@ -160,39 +159,6 @@ public class OperLogAspect {
         }
 
         return result;
-    }
-
-    /**
-     * 获取客户端IP地址
-     */
-    private String getIpAddr(HttpServletRequest request) {
-        if (request == null) {
-            return "unknown";
-        }
-
-        String ip = request.getHeader("x-forwarded-for");
-        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
-            ip = request.getHeader("Proxy-Client-IP");
-        }
-        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
-            ip = request.getHeader("X-Forwarded-For");
-        }
-        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
-            ip = request.getHeader("WL-Proxy-Client-IP");
-        }
-        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
-            ip = request.getHeader("X-Real-IP");
-        }
-        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
-            ip = request.getRemoteAddr();
-        }
-
-        // 处理多个IP的情况，取第一个
-        if (ip != null && ip.contains(",")) {
-            ip = ip.split(",")[0].trim();
-        }
-
-        return "0:0:0:0:0:0:0:1".equals(ip) ? "127.0.0.1" : ip;
     }
 
     /**

@@ -7,6 +7,7 @@ import com.yuncode.auth.properties.SaTokenProperties;
 import com.yuncode.auth.vo.LoginVO;
 import com.yuncode.common.exception.BusinessException;
 import com.yuncode.common.exception.ErrorCode;
+import com.yuncode.common.utils.web.ServletUtils;
 import com.yuncode.system.annotation.LoginLog;
 import com.yuncode.system.entity.OnlineUser;
 import com.yuncode.system.entity.SysUser;
@@ -18,8 +19,8 @@ import com.yuncode.system.service.UserCacheService;
 import com.yuncode.tenant.entity.SysTenant;
 import com.yuncode.tenant.mapper.SysTenantMapper;
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -29,30 +30,16 @@ import java.time.LocalDateTime;
  * 租户管理员登录，需要租户编码
  */
 @Slf4j
+@RequiredArgsConstructor
 @Service
 public class TenantLoginService {
 
-    @Autowired
-    private SaTokenProperties saTokenProperties;
-
+    private final SaTokenProperties saTokenProperties;
     private final SysTenantMapper sysTenantMapper;
     private final SysUserMapper sysUserMapper;
     private final SysLoginLogService sysLoginLogService;
     private final OnlineUserService onlineUserService;
     private final UserCacheService userCacheService;
-
-    public TenantLoginService(
-            SysTenantMapper sysTenantMapper,
-            SysUserMapper sysUserMapper,
-            SysLoginLogService sysLoginLogService,
-            OnlineUserService onlineUserService,
-            UserCacheService userCacheService) {
-        this.sysTenantMapper = sysTenantMapper;
-        this.sysUserMapper = sysUserMapper;
-        this.sysLoginLogService = sysLoginLogService;
-        this.onlineUserService = onlineUserService;
-        this.userCacheService = userCacheService;
-    }
 
     /**
      * 租户登录
@@ -149,7 +136,7 @@ public class TenantLoginService {
             onlineUser.setAvatar(user.getAvatar());
             onlineUser.setTenantId(tenantId);
             onlineUser.setTenantName(tenant.getTenantName());
-            onlineUser.setIp(getClientIP(request));
+            onlineUser.setIp(ServletUtils.getClientIP(request));
             onlineUser.setLocation("");
             onlineUser.setUserAgent(request.getHeader("User-Agent"));
 
@@ -179,29 +166,4 @@ public class TenantLoginService {
         }
     }
 
-    /**
-     * 获取客户端IP地址
-     */
-    private String getClientIP(HttpServletRequest request) {
-        String ip = request.getHeader("X-Forwarded-For");
-        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
-            ip = request.getHeader("Proxy-Client-IP");
-        }
-        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
-            ip = request.getHeader("WL-Proxy-Client-IP");
-        }
-        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
-            ip = request.getHeader("HTTP_CLIENT_IP");
-        }
-        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
-            ip = request.getHeader("HTTP_X_FORWARDED_FOR");
-        }
-        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
-            ip = request.getRemoteAddr();
-        }
-        if (ip != null && ip.contains(",")) {
-            ip = ip.split(",")[0].trim();
-        }
-        return ip;
-    }
 }

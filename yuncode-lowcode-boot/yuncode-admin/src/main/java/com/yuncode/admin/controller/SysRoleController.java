@@ -1,12 +1,14 @@
 package com.yuncode.admin.controller;
 
+import com.baomidou.mybatisplus.core.toolkit.PluginUtils;
 import com.yuncode.common.model.util.response.Result;
 import com.yuncode.system.entity.SysRole;
+import com.yuncode.system.service.RoleAssignmentService;
 import com.yuncode.system.service.SysRoleService;
 import com.yuncode.system.vo.RoleDetailVO;
 import com.yuncode.system.vo.RoleNodeVO;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -15,19 +17,31 @@ import java.util.List;
  * 角色管理控制器
  */
 @Slf4j
+@RequiredArgsConstructor
 @RestController
 @RequestMapping("/system/role")
 public class SysRoleController {
 
-    @Autowired
-    private SysRoleService roleService;
+    private final SysRoleService roleService;
+    private final RoleAssignmentService roleAssignmentService;
 
     /**
      * 获取角色树
+     * 平台管理员需要查看所有租户的角色，忽略租户拦截器
      */
     @GetMapping("/tree")
     public Result<List<RoleNodeVO>> getRoleTree() {
+        // 打印当前用户信息
+        try {
+            String loginType = cn.dev33.satoken.stp.StpUtil.getSession().get("loginType", "");
+            Long tenantId = cn.dev33.satoken.stp.StpUtil.getSession().get("tenantId", null);
+            log.info("获取角色树 - 当前用户信息: loginType={}, tenantId={}", loginType, tenantId);
+        } catch (Exception e) {
+            log.error("获取用户信息失败", e);
+        }
+
         List<RoleNodeVO> tree = roleService.getRoleTree();
+        log.info("角色树节点数量: {}", tree.size());
         return Result.success(tree);
     }
 
@@ -72,7 +86,7 @@ public class SysRoleController {
      */
     @PostMapping("/{roleId}/users")
     public Result<Void> addUsers(@PathVariable Long roleId, @RequestBody List<Long> userIds) {
-        roleService.addUsersToRole(roleId, userIds);
+        roleAssignmentService.addUsersToRole(roleId, userIds);
         return Result.success();
     }
 
@@ -81,7 +95,7 @@ public class SysRoleController {
      */
     @DeleteMapping("/{roleId}/users/{userId}")
     public Result<Void> removeUser(@PathVariable Long roleId, @PathVariable Long userId) {
-        roleService.removeUserFromRole(roleId, userId);
+        roleAssignmentService.removeUserFromRole(roleId, userId);
         return Result.success();
     }
 
@@ -90,7 +104,7 @@ public class SysRoleController {
      */
     @PostMapping("/{roleId}/depts")
     public Result<Void> addDepts(@PathVariable Long roleId, @RequestBody List<Long> deptIds) {
-        roleService.addDeptsToRole(roleId, deptIds);
+        roleAssignmentService.addDeptsToRole(roleId, deptIds);
         return Result.success();
     }
 
@@ -99,7 +113,7 @@ public class SysRoleController {
      */
     @DeleteMapping("/{roleId}/depts/{deptId}")
     public Result<Void> removeDept(@PathVariable Long roleId, @PathVariable Long deptId) {
-        roleService.removeDeptFromRole(roleId, deptId);
+        roleAssignmentService.removeDeptFromRole(roleId, deptId);
         return Result.success();
     }
 
@@ -108,7 +122,7 @@ public class SysRoleController {
      */
     @PostMapping("/{roleId}/permissions")
     public Result<Void> addPermissions(@PathVariable Long roleId, @RequestBody List<Long> permissionIds) {
-        roleService.addPermissionsToRole(roleId, permissionIds);
+        roleAssignmentService.addPermissionsToRole(roleId, permissionIds);
         return Result.success();
     }
 
@@ -117,7 +131,7 @@ public class SysRoleController {
      */
     @DeleteMapping("/{roleId}/permissions/{permissionId}")
     public Result<Void> removePermission(@PathVariable Long roleId, @PathVariable Long permissionId) {
-        roleService.removePermissionFromRole(roleId, permissionId);
+        roleAssignmentService.removePermissionFromRole(roleId, permissionId);
         return Result.success();
     }
 }

@@ -7,6 +7,7 @@ import com.yuncode.auth.properties.SaTokenProperties;
 import com.yuncode.auth.vo.LoginVO;
 import com.yuncode.common.exception.BusinessException;
 import com.yuncode.common.exception.ErrorCode;
+import com.yuncode.common.utils.web.ServletUtils;
 import com.yuncode.system.annotation.LoginLog;
 import com.yuncode.system.entity.OnlineUser;
 import com.yuncode.system.entity.SysUser;
@@ -18,8 +19,8 @@ import com.yuncode.system.service.UserCacheService;
 import com.yuncode.tenant.entity.SysTenant;
 import com.yuncode.tenant.mapper.SysTenantMapper;
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 /**
@@ -27,32 +28,18 @@ import org.springframework.stereotype.Service;
  * 平台超级管理员登录，使用系统内置租户，不需要租户编码
  */
 @Slf4j
+@RequiredArgsConstructor
 @Service
 public class AdminLoginService {
 
     private static final String SYSTEM_TENANT_CODE = "system";
 
-    @Autowired
-    private SaTokenProperties saTokenProperties;
-
+    private final SaTokenProperties saTokenProperties;
     private final SysTenantMapper sysTenantMapper;
     private final SysUserMapper sysUserMapper;
     private final SysLoginLogService sysLoginLogService;
     private final OnlineUserService onlineUserService;
     private final UserCacheService userCacheService;
-
-    public AdminLoginService(
-            SysTenantMapper sysTenantMapper,
-            SysUserMapper sysUserMapper,
-            SysLoginLogService sysLoginLogService,
-            OnlineUserService onlineUserService,
-            UserCacheService userCacheService) {
-        this.sysTenantMapper = sysTenantMapper;
-        this.sysUserMapper = sysUserMapper;
-        this.sysLoginLogService = sysLoginLogService;
-        this.onlineUserService = onlineUserService;
-        this.userCacheService = userCacheService;
-    }
 
     /**
      * 管理员登录
@@ -94,32 +81,32 @@ public class AdminLoginService {
             // 6. 使用 Sa-Token 进行登录
             StpUtil.login(user.getId());
 
-            // 将用户类型、系统租户ID、角色编码等信息存入 Token Extra
+            // 将用户类型、系统租户ID、角色编码等信息存入 Token Session（统一存储位置）
             StpUtil.getTokenSession().set("loginType", "admin");
             StpUtil.getTokenSession().set("tenantId", systemTenantId);
+            StpUtil.getTokenSession().set("userId", user.getId());
             StpUtil.getTokenSession().set("username", user.getUsername());
             StpUtil.getTokenSession().set("nickname", user.getNickname() != null ? user.getNickname() : "");
+            StpUtil.getTokenSession().set("avatar", user.getAvatar() != null ? user.getAvatar() : "");
             StpUtil.getTokenSession().set("roleCode", user.getRoleCode() != null ? user.getRoleCode() : "PLATFORM_ADMIN");
 
-            // 将用户信息存入 Session（使用系统租户ID）
-            StpUtil.getSession().set("userId", user.getId());
-            StpUtil.getSession().set("tenantId", systemTenantId);
-            StpUtil.getSession().set("username", user.getUsername());
-            StpUtil.getSession().set("nickname", user.getNickname() != null ? user.getNickname() : "");
-            StpUtil.getSession().set("avatar", user.getAvatar() != null ? user.getAvatar() : "");
-            StpUtil.getSession().set("loginType", "admin");
-            StpUtil.getSession().set("roleCode", user.getRoleCode() != null ? user.getRoleCode() : "PLATFORM_ADMIN");
-
-            // 7. 缓存用户信息到 Redis（30分钟）
-            userCacheService.cacheUser(user.getId(), user, 1800);
+            // 7. 缓存用户信息到 Redis（30分钟）- 注意：如果 Redis 未连接会抛出异常
+            try {
+                userCacheService.cacheUser(user.getId(), user, 1800);
+                log.info("用户信息缓存成功: userId={}", user.getId());
+            } catch (Exception cacheEx) {
+                log.error("用户信息缓存失败（Redis未连接或配置错误）: userId={}, error={}", user.getId(), cacheEx.getMessage());
+                // 缓存失败不影响登录，仅影响在线用户同步等功能
+                // 继续执行后续步骤
+            }
 
             // 8. 生成业务会话ID（UUID，用于 Redis key 和前端 Cookie）
             String sessionId = java.util.UUID.randomUUID().toString().replace("-", "");
             log.info("生成业务会话ID: userId={}, sessionId={}", user.getId(), sessionId);
 
             // 将 sessionId 存入 Sa-Token session，供退出时使用
-            StpUtil.getSession().set("sessionId", sessionId);
-            log.info("sessionId 已存入 Sa-Token session，验证: {}", StpUtil.getSession().get("sessionId"));
+            StpUtil.getTokenSession().set("sessionId", sessionId);
+            log.info("sessionId 已存入 Sa-Token session，验证: {}", StpUtil.getTokenSession().get("sessionId"));
 
             // 9. 获取 Sa-Token 的 JWT Token
             String token = StpUtil.getTokenValue();
@@ -135,11 +122,17 @@ public class AdminLoginService {
             onlineUser.setAvatar(user.getAvatar());
             onlineUser.setTenantId(systemTenantId);  // 使用系统租户ID
             onlineUser.setTenantName(systemTenant.getTenantName());
-            onlineUser.setIp(getClientIP(request));
+            onlineUser.setIp(ServletUtils.getClientIP(request));
             onlineUser.setLocation("");
             onlineUser.setUserAgent(request.getHeader("User-Agent"));
 
-            onlineUserService.addOnlineUser(sessionId, onlineUser);
+            try {
+                onlineUserService.addOnlineUser(sessionId, onlineUser);
+                log.info("在线用户记录添加成功: sessionId={}", sessionId);
+            } catch (Exception onlineEx) {
+                log.error("在线用户记录添加失败（Redis未连接）: sessionId={}, error={}", sessionId, onlineEx.getMessage());
+                // 在线用户记录失败不影响登录返回
+            }
 
             // 11. 构建返回结果
             LoginVO loginVO = new LoginVO();
@@ -156,35 +149,12 @@ public class AdminLoginService {
             return loginVO;
 
         } catch (BusinessException e) {
+            log.error("登录业务异常: {}", e.getMessage());
             throw e;
         } catch (Exception e) {
-            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "登录失败，请稍后重试");
+            log.error("登录系统异常: {}", e.getMessage(), e);
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "登录失败：" + e.getMessage());
         }
     }
 
-    /**
-     * 获取客户端IP地址
-     */
-    private String getClientIP(HttpServletRequest request) {
-        String ip = request.getHeader("X-Forwarded-For");
-        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
-            ip = request.getHeader("Proxy-Client-IP");
-        }
-        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
-            ip = request.getHeader("WL-Proxy-Client-IP");
-        }
-        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
-            ip = request.getHeader("HTTP_CLIENT_IP");
-        }
-        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
-            ip = request.getHeader("HTTP_X_FORWARDED_FOR");
-        }
-        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
-            ip = request.getRemoteAddr();
-        }
-        if (ip != null && ip.contains(",")) {
-            ip = ip.split(",")[0].trim();
-        }
-        return ip;
-    }
 }

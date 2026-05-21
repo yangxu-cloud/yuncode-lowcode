@@ -18,6 +18,26 @@
         />
       </div>
 
+      <!-- 颜色选择区 -->
+      <div class="color-selector-area">
+        <span class="color-label">图标颜色：</span>
+        <div class="color-options">
+          <div
+            v-for="color in colorOptions"
+            :key="color.value"
+            class="color-option"
+            :class="{ 'is-selected': selectedColor === color.value }"
+            :style="{ backgroundColor: color.value === '' ? 'transparent' : color.value }"
+            :title="color.label"
+            @click="handleSelectColor(color.value)"
+          >
+            <el-icon v-if="selectedColor === color.value" class="color-check-icon">
+              <CircleCheck />
+            </el-icon>
+          </div>
+        </div>
+      </div>
+
       <!-- 标签页 -->
       <el-tabs v-model="activeTab" class="icon-tabs">
         <el-tab-pane label="Element Plus 图标" name="element">
@@ -28,6 +48,7 @@
                 :key="icon"
                 class="icon-item"
                 :class="{ 'is-selected': selectedIcon === icon }"
+                :style="{ color: selectedColor || '' }"
                 @click="handleSelectIcon(icon)"
               >
                 <el-icon :size="24">
@@ -48,23 +69,38 @@
         </el-tab-pane>
 
         <el-tab-pane label="常用图标" name="common">
-          <div class="icon-grid">
+          <div class="common-icons-container">
             <div
               v-for="icon in filteredCommonIcons"
               :key="icon.name"
-              class="icon-item"
-              :class="{ 'is-selected': selectedIcon === icon.name }"
-              @click="handleSelectIcon(icon.name)"
+              class="common-icon-group"
             >
-              <el-icon :size="24">
-                <component :is="icon.component" />
-              </el-icon>
-              <div class="icon-name">{{ icon.label }}</div>
-              <el-icon v-if="selectedIcon === icon.name" class="check-icon" color="#67c23a">
-                <CircleCheck />
-              </el-icon>
+              <div class="common-icon-label">{{ icon.label }}</div>
+              <div class="common-icon-variants">
+                <div
+                  v-for="color in colorOptions"
+                  :key="`${icon.name}-${color.value}`"
+                  class="icon-item icon-variant"
+                  :class="{ 'is-selected': selectedIcon === icon.name && selectedColor === color.value }"
+                  :style="{ color: color.value || '' }"
+                  @click="handleSelectIconWithColor(icon.name, color.value)"
+                  :title="color.label"
+                >
+                  <el-icon :size="24">
+                    <component :is="icon.component" />
+                  </el-icon>
+                  <el-icon v-if="selectedIcon === icon.name && selectedColor === color.value" class="check-icon" color="#67c23a">
+                    <CircleCheck />
+                  </el-icon>
+                </div>
+              </div>
             </div>
           </div>
+          <el-empty
+            v-if="filteredCommonIcons.length === 0"
+            description="未找到匹配的图标"
+            :image-size="60"
+          />
         </el-tab-pane>
       </el-tabs>
 
@@ -89,13 +125,18 @@ import { CircleCheck } from "@element-plus/icons-vue";
  * 支持常用图标快捷选择
  */
 
+interface IconValue {
+  icon: string;
+  color?: string;
+}
+
 interface Props {
-  modelValue?: string;
+  modelValue?: string | IconValue;
 }
 
 interface Emits {
-  (e: "update:modelValue", value: string | undefined): void;
-  (e: "change", value: string | undefined): void;
+  (e: "update:modelValue", value: string | IconValue | undefined): void;
+  (e: "change", value: string | IconValue | undefined): void;
 }
 
 const props = defineProps<Props>();
@@ -105,7 +146,20 @@ const emit = defineEmits<Emits>();
 const dialogVisible = ref(false);
 
 // 选中的图标
-const selectedIcon = ref<string>(props.modelValue || "");
+const selectedIcon = ref<string>("");
+
+// 选中的颜色
+const selectedColor = ref<string>("");
+
+// 颜色选项
+const colorOptions = [
+  { value: "", label: "默认" },
+  { value: "#409eff", label: "蓝色" },
+  { value: "#67c23a", label: "绿色" },
+  { value: "#e6a23c", label: "黄色" },
+  { value: "#f56c6c", label: "红色" },
+  { value: "#909399", label: "灰色" }
+];
 
 // 搜索关键词
 const searchKeyword = ref("");
@@ -219,8 +273,26 @@ const filteredCommonIcons = computed(() => {
  */
 const open = () => {
   dialogVisible.value = true;
-  selectedIcon.value = props.modelValue || "";
   searchKeyword.value = "";
+
+  // 解析 modelValue 获取图标和颜色
+  if (typeof props.modelValue === "string") {
+    selectedIcon.value = props.modelValue;
+    selectedColor.value = "";
+  } else if (props.modelValue && typeof props.modelValue === "object") {
+    selectedIcon.value = props.modelValue.icon;
+    selectedColor.value = props.modelValue.color || "";
+  } else {
+    selectedIcon.value = "";
+    selectedColor.value = "";
+  }
+};
+
+/**
+ * 选择颜色
+ */
+const handleSelectColor = (color: string) => {
+  selectedColor.value = color;
 };
 
 /**
@@ -231,18 +303,41 @@ const handleSelectIcon = (iconName: string) => {
 };
 
 /**
+ * 选择图标和颜色（用于常用图标）
+ */
+const handleSelectIconWithColor = (iconName: string, color: string) => {
+  selectedIcon.value = iconName;
+  selectedColor.value = color;
+};
+
+/**
  * 清空选择
  */
 const handleClear = () => {
   selectedIcon.value = "";
+  selectedColor.value = "";
 };
 
 /**
  * 确定
  */
 const handleConfirm = () => {
-  emit("update:modelValue", selectedIcon.value || undefined);
-  emit("change", selectedIcon.value || undefined);
+  if (selectedIcon.value && selectedColor.value) {
+    // 如果选择了颜色，返回对象格式
+    const result: IconValue = {
+      icon: selectedIcon.value,
+      color: selectedColor.value
+    };
+    emit("update:modelValue", result);
+    emit("change", result);
+  } else if (selectedIcon.value) {
+    // 如果只选择了图标，返回字符串（向后兼容）
+    emit("update:modelValue", selectedIcon.value);
+    emit("change", selectedIcon.value);
+  } else {
+    emit("update:modelValue", undefined);
+    emit("change", undefined);
+  }
   handleClose();
 };
 
@@ -261,9 +356,99 @@ defineExpose({
 </script>
 
 <style scoped lang="scss">
+@keyframes checkIn {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.2);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
 .icon-selector {
   .search-area {
     margin-bottom: 16px;
+  }
+
+  .color-selector-area {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    background-color: #f5f7fa;
+    border-radius: 4px;
+    margin-bottom: 16px;
+
+    .color-label {
+      font-size: 14px;
+      color: #606266;
+      white-space: nowrap;
+    }
+
+    .color-options {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .color-option {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border: 2px solid #dcdfe6;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+
+      &:hover {
+        transform: scale(1.15) translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+      }
+
+      &.is-selected {
+        border-color: #409eff;
+        transform: scale(1.2) translateY(-2px);
+        box-shadow: 0 4px 16px rgba(64, 158, 255, 0.4);
+      }
+
+      &[style*="transparent"] {
+        background-image: linear-gradient(
+          45deg,
+          #e0e0e0 25%,
+          transparent 25%,
+          transparent 75%,
+          #e0e0e0 75%,
+          #e0e0e0
+        ),
+        linear-gradient(
+          45deg,
+          #e0e0e0 25%,
+          transparent 25%,
+          transparent 75%,
+          #e0e0e0 75%,
+          #e0e0e0
+        );
+        background-size: 10px 10px;
+        background-position: 0 0, 5px 5px;
+        background-color: #fafafa;
+      }
+
+      .color-check-icon {
+        color: #fff;
+        font-size: 18px;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
+        animation: checkIn 0.2s ease-out;
+      }
+    }
   }
 
   :deep(.el-dialog__body) {
@@ -282,7 +467,7 @@ defineExpose({
     :deep(.el-tabs__content) {
       flex: 1;
       overflow-y: auto;
-      max-height: calc(100vh - 320px);
+      max-height: calc(100vh - 400px);
     }
   }
 
@@ -319,6 +504,12 @@ defineExpose({
       background-color: #f0f9ff;
     }
 
+    &.icon-variant {
+      min-width: 60px;
+      padding: 12px 8px;
+      border-radius: 6px;
+    }
+
     .icon-name {
       font-size: 12px;
       color: #606266;
@@ -339,6 +530,37 @@ defineExpose({
       right: 4px;
       font-size: 16px;
     }
+  }
+
+  .common-icons-container {
+    padding: 12px 0;
+  }
+
+  .common-icon-group {
+    margin-bottom: 24px;
+    border: 1px solid #e4e7ed;
+    border-radius: 6px;
+    padding: 16px;
+    background-color: #fafafa;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+
+  .common-icon-label {
+    font-size: 14px;
+    font-weight: 500;
+    color: #303133;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #e4e7ed;
+  }
+
+  .common-icon-variants {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
   }
 
   :deep(.el-empty) {

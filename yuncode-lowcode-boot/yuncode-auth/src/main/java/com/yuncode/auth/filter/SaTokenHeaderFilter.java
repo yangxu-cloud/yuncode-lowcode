@@ -6,7 +6,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletRequestWrapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
@@ -21,6 +21,7 @@ import java.util.Vector;
  * Sa-Token 请求头处理过滤器
  * 将 Authorization header 中的 Bearer Token 转换为 Sa-Token 可以识别的格式
  */
+@RequiredArgsConstructor
 @Component
 @Order(Ordered.HIGHEST_PRECEDENCE + 2)
 public class SaTokenHeaderFilter implements Filter {
@@ -30,8 +31,7 @@ public class SaTokenHeaderFilter implements Filter {
     private static final String AUTHORIZATION_HEADER = "Authorization";
     private static final String BEARER_PREFIX = "Bearer ";
 
-    @Autowired
-    private SaTokenProperties saTokenProperties;
+    private final SaTokenProperties saTokenProperties;
 
     @Override
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)

@@ -2,7 +2,7 @@ package com.yuncode.system.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -13,13 +13,13 @@ import java.util.Set;
 /**
  * 临时工具控制器 - 用于清除 Redis 缓存
  */
+@RequiredArgsConstructor
 @RestController
 @RequestMapping("/util")
 @Tag(name = "工具接口", description = "临时工具接口")
 public class UtilController {
 
-    @Autowired
-    private RedisTemplate<String, Object> redisTemplate;
+    private final RedisTemplate<String, Object> redisTemplate;
 
     /**
      * 清除所有在线用户缓存

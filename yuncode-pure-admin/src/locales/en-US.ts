@@ -35,7 +35,13 @@ export default {
     errorPages: "Error Pages",
     facilities: "Common Facilities",
     org: "Organization Management",
-    navigation: "Navigation Management"
+    navigation: "Navigation Management",
+    role: "Role Management",
+    application: "Application Management",
+    appDev: "App Development",
+    modeling: "Business Modeling",
+    schedule: "Scheduled Tasks",
+    systemService: "System Services"
   },
   login: {
     title: "Yuncode LowCode",

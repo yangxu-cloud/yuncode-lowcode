@@ -37,34 +37,10 @@
             <version>1.0.0</version>
         </dependency>
 
-        <!-- Sa-Token 权限认证 -->
-        <dependency>
-            <groupId>cn.dev33</groupId>
-            <artifactId>sa-token-spring-boot3-starter</artifactId>
-        </dependency>
-
         <!-- Sa-Token 整合 Redis -->
         <dependency>
             <groupId>cn.dev33</groupId>
             <artifactId>sa-token-redis-jackson</artifactId>
-        </dependency>
-
-        <!-- Sa-Token 整合 JWT (无状态模式) -->
-        <dependency>
-            <groupId>cn.dev33</groupId>
-            <artifactId>sa-token-jwt</artifactId>
-        </dependency>
-
-        <!-- Hutool 工具类 (包含密码加密功能) -->
-        <dependency>
-            <groupId>cn.hutool</groupId>
-            <artifactId>hutool-all</artifactId>
-        </dependency>
-
-        <!-- MyBatis Plus -->
-        <dependency>
-            <groupId>com.baomidou</groupId>
-            <artifactId>mybatis-plus-boot-starter</artifactId>
         </dependency>
     </dependencies>
 </project>

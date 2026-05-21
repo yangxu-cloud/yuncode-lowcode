@@ -5,7 +5,6 @@ import com.yuncode.system.dto.TenantConfigDTO;
 import com.yuncode.system.entity.SysOrg;
 import com.yuncode.system.vo.OrgTreeNode;
 import com.yuncode.system.vo.OrgVO;
-import com.yuncode.system.vo.UserOrgVO;
 
 import java.util.List;
 
@@ -91,38 +90,4 @@ public interface OrgService {
      */
     boolean checkOrgCodeExists(String orgCode, Long excludeId);
 
-    /**
-     * 添加人员到组织
-     *
-     * @param orgId 组织ID
-     * @param userId 用户ID
-     * @param isLeader 是否负责人
-     * @param isMainDept 是否主部门
-     */
-    void addUserToOrg(Long orgId, Long userId, Integer isLeader, Integer isMainDept);
-
-    /**
-     * 从组织移除人员
-     *
-     * @param orgId 组织ID
-     * @param userId 用户ID
-     */
-    void removeUserFromOrg(Long orgId, Long userId);
-
-    /**
-     * 设置用户为负责人
-     *
-     * @param orgId 组织ID
-     * @param userId 用户ID
-     * @param isLeader 是否负责人
-     */
-    void setUserAsLeader(Long orgId, Long userId, Integer isLeader);
-
-    /**
-     * 获取用户的所有组织关系（包括主部门和兼职部门）
-     *
-     * @param userId 用户ID
-     * @return 用户组织关系列表
-     */
-    List<UserOrgVO> getUserOrgs(Long userId);
 }

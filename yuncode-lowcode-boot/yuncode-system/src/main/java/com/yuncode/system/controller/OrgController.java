@@ -1,12 +1,13 @@
 package com.yuncode.system.controller;
 
 import com.yuncode.common.model.util.response.Result;
-import com.yuncode.common.util.security.SecurityUtil;
+import com.yuncode.common.utils.SecurityUtil;
 import com.yuncode.system.annotation.OperLog;
 import com.yuncode.system.dto.OrgCreateDTO;
 import com.yuncode.system.dto.OrgQueryDTO;
 import com.yuncode.system.entity.SysOrg;
 import com.yuncode.system.service.OrgService;
+import com.yuncode.system.service.OrgUserService;
 import com.yuncode.system.vo.OrgTreeNode;
 import com.yuncode.system.vo.OrgVO;
 import io.swagger.v3.oas.annotations.Operation;
@@ -32,6 +33,7 @@ import java.util.List;
 public class OrgController {
 
     private final OrgService orgService;
+    private final OrgUserService orgUserService;
 
     /**
      * 获取组织树（包含人员）
@@ -203,7 +205,7 @@ public class OrgController {
                 orgId, userId, isLeader, isMainDept);
         try {
             // 多租户插件会自动添加 tenant_id 条件进行校验
-            orgService.addUserToOrg(orgId, userId, isLeader, isMainDept);
+            orgUserService.addUserToOrg(orgId, userId, isLeader, isMainDept);
             return Result.success();
         } catch (RuntimeException e) {
             log.error("添加人员到组织失败", e);
@@ -227,7 +229,7 @@ public class OrgController {
         log.info("从组织移除人员, orgId={}, userId={}", orgId, userId);
         try {
             // 多租户插件会自动添加 tenant_id 条件进行校验
-            orgService.removeUserFromOrg(orgId, userId);
+            orgUserService.removeUserFromOrg(orgId, userId);
             return Result.success();
         } catch (RuntimeException e) {
             log.error("从组织移除人员失败", e);
@@ -253,7 +255,7 @@ public class OrgController {
         log.info("设置用户为负责人, orgId={}, userId={}, isLeader={}", orgId, userId, isLeader);
         try {
             // 多租户插件会自动添加 tenant_id 条件进行校验
-            orgService.setUserAsLeader(orgId, userId, isLeader);
+            orgUserService.setUserAsLeader(orgId, userId, isLeader);
             return Result.success();
         } catch (RuntimeException e) {
             log.error("设置用户为负责人失败", e);
@@ -273,7 +275,7 @@ public class OrgController {
             @Parameter(description = "用户ID") @PathVariable Long userId) {
         log.info("获取用户组织关系, userId={}", userId);
         try {
-            List<com.yuncode.system.vo.UserOrgVO> userOrgs = orgService.getUserOrgs(userId);
+            List<com.yuncode.system.vo.UserOrgVO> userOrgs = orgUserService.getUserOrgs(userId);
             return Result.success(userOrgs);
         } catch (RuntimeException e) {
             log.error("获取用户组织关系失败", e);

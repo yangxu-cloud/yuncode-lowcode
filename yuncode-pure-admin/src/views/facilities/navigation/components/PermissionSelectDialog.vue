@@ -7,16 +7,16 @@
     @close="handleClose"
   >
     <!-- 目标类型选择 -->
-    <el-radio-group v-model="targetType" size="default" style="margin-bottom: 16px">
-      <el-radio-button :label="0">
-        <el-icon><User /></el-icon>
+    <el-radio-group v-model="targetType" size="default" style="margin-bottom: 16px" @change="handleTypeChange">
+      <el-radio-button :value="0">
+        <el-icon><Stamp /></el-icon>
         <span style="margin-left: 4px">角色</span>
       </el-radio-button>
-      <el-radio-button :label="1">
-        <el-icon><Avatar /></el-icon>
-        <span style="margin-left: 4px">用户</span>
+      <el-radio-button :value="1">
+        <el-icon><User /></el-icon>
+        <span style="margin-left: 4px">人员</span>
       </el-radio-button>
-      <el-radio-button :label="2">
+      <el-radio-button :value="2">
         <el-icon><OfficeBuilding /></el-icon>
         <span style="margin-left: 4px">部门</span>
       </el-radio-button>
@@ -44,16 +44,17 @@
     </div>
 
     <!-- 选择区域 -->
-    <div class="select-area">
+    <div v-loading="listLoading" class="select-area">
       <!-- 角色列表 -->
       <div v-if="targetType === 0" class="item-list">
         <el-table
           ref="roleTableRef"
           :data="roleList"
+          row-key="id"
           @selection-change="handleSelectionChange"
           height="300"
         >
-          <el-table-column type="selection" width="50" />
+          <el-table-column type="selection" width="50" reserve-selection />
           <el-table-column prop="roleName" label="角色名称" />
           <el-table-column prop="roleCode" label="角色编码" />
           <el-table-column prop="remark" label="备注" show-overflow-tooltip />
@@ -66,18 +67,22 @@
           <el-input
             v-model="userSearchKeyword"
             placeholder="搜索用户名、姓名..."
-            prefix-icon="Search"
             clearable
             size="small"
-          />
+          >
+            <template #prefix>
+              <el-icon><Search /></el-icon>
+            </template>
+          </el-input>
         </div>
         <el-table
           ref="userTableRef"
           :data="filteredUserList"
+          row-key="id"
           @selection-change="handleSelectionChange"
           height="270"
         >
-          <el-table-column type="selection" width="50" />
+          <el-table-column type="selection" width="50" reserve-selection />
           <el-table-column label="头像" width="60">
             <template #default="{ row }">
               <el-avatar :src="row.avatar" :size="32">
@@ -97,18 +102,22 @@
           <el-input
             v-model="deptSearchKeyword"
             placeholder="搜索部门..."
-            prefix-icon="Search"
             clearable
             size="small"
-          />
+          >
+            <template #prefix>
+              <el-icon><Search /></el-icon>
+            </template>
+          </el-input>
         </div>
         <el-table
           ref="deptTableRef"
           :data="filteredDeptList"
+          row-key="id"
           @selection-change="handleSelectionChange"
           height="270"
         >
-          <el-table-column type="selection" width="50" />
+          <el-table-column type="selection" width="50" reserve-selection />
           <el-table-column label="名称" width="200">
             <template #default="{ row }">
               <div style="display: flex; align-items: center; gap: 6px">
@@ -145,15 +154,17 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from "vue";
+import { ref, computed, nextTick } from "vue";
 import { ElMessage } from "element-plus";
-import { User, Avatar, OfficeBuilding, Folder } from "@element-plus/icons-vue";
+import { User, Stamp, OfficeBuilding, Search } from "@element-plus/icons-vue";
 import { addMenuPermissionsAdapter } from "@/api/menu-adapter";
-import { getOrgTreeAdapter } from "@/api/org-adapter";
+import { getRoleTree } from "@/api/role";
+import { getOrgTree } from "@/api/org-adapter";
 
 /**
  * 权限选择对话框组件
  * 支持选择角色、用户、部门
+ * 角色数据来源于角色管理，人员和组织来源于组织管理
  */
 
 const emit = defineEmits<{
@@ -172,6 +183,9 @@ const targetType = ref<number>(0);
 // 提交中状态
 const submitting = ref(false);
 
+// 列表加载状态
+const listLoading = ref(false);
+
 // 搜索关键词
 const userSearchKeyword = ref("");
 const deptSearchKeyword = ref("");
@@ -179,41 +193,15 @@ const deptSearchKeyword = ref("");
 // 已选择的权限
 const selectedPermissions = ref<any[]>([]);
 
-// 角色列表（模拟数据）
-const roleList = ref([
-  { id: 1, roleName: "超级管理员", roleCode: "admin", remark: "系统最高权限" },
-  { id: 2, roleName: "租户管理员", roleCode: "tenant_admin", remark: "租户管理权限" },
-  { id: 3, roleName: "普通用户", roleCode: "user", remark: "普通用户权限" },
-  { id: 4, roleName: "访客", roleCode: "guest", remark: "只读权限" }
-]);
-
-// 用户列表（模拟数据）
-const userList = ref([
-  {
-    id: 1,
-    username: "admin",
-    realName: "管理员",
-    nickname: "超级管理员",
-    avatar: ""
-  },
-  {
-    id: 2,
-    username: "user1",
-    realName: "张三",
-    nickname: "张三",
-    avatar: ""
-  },
-  {
-    id: 3,
-    username: "user2",
-    realName: "李四",
-    nickname: "李四",
-    avatar: ""
-  }
-]);
-
-// 部门列表
+// 原始数据列表
+const roleList = ref<any[]>([]);
+const userList = ref<any[]>([]);
 const deptList = ref<any[]>([]);
+
+// 表格引用
+const roleTableRef = ref();
+const userTableRef = ref();
+const deptTableRef = ref();
 
 // 过滤后的用户列表
 const filteredUserList = computed(() => {
@@ -232,34 +220,15 @@ const filteredUserList = computed(() => {
 // 过滤后的部门列表
 const filteredDeptList = computed(() => {
   if (!deptSearchKeyword.value) {
-    return flattenDeptList(deptList.value);
+    return deptList.value;
   }
   const keyword = deptSearchKeyword.value.toLowerCase();
-  return flattenDeptList(deptList.value).filter(
+  return deptList.value.filter(
     dept =>
       dept.label?.toLowerCase().includes(keyword) ||
       dept.orgCode?.toLowerCase().includes(keyword)
   );
 });
-
-/**
- * 展平部门列表
- */
-const flattenDeptList = (list: any[]): any[] => {
-  const result: any[] = [];
-  const flatten = (nodes: any[]) => {
-    for (const node of nodes) {
-      if (node.nodeType === "org") {
-        result.push(node);
-      }
-      if (node.children && node.children.length > 0) {
-        flatten(node.children);
-      }
-    }
-  };
-  flatten(list);
-  return result;
-};
 
 /**
  * 打开对话框
@@ -272,27 +241,131 @@ const open = async (menuId: number) => {
   userSearchKeyword.value = "";
   deptSearchKeyword.value = "";
 
-  // 加载部门树
-  await loadDeptTree();
+  // 同时加载角色、用户、部门数据
+  await Promise.all([loadRoles(), loadOrgData()]);
 };
 
 /**
- * 加载部门树
+ * 加载角色列表（从角色管理）
  */
-const loadDeptTree = async () => {
+const loadRoles = async () => {
   try {
-    const { data } = await getOrgTreeAdapter();
-    deptList.value = data || [];
+    const response = await getRoleTree();
+    const treeData = response.data || [];
+    // 从角色树中提取所有 roleType === 2 的具体角色
+    roleList.value = extractRolesFromTree(treeData);
   } catch (error: any) {
-    ElMessage.error(error.message || "加载部门树失败");
+    ElMessage.error(error.message || "加载角色列表失败");
   }
+};
+
+/**
+ * 从角色树中提取具体角色节点
+ */
+const extractRolesFromTree = (nodes: any[]): any[] => {
+  const result: any[] = [];
+  const walk = (list: any[]) => {
+    for (const node of list) {
+      if (node.roleType === 2) {
+        result.push({
+          id: node.id,
+          roleName: node.roleName || node.label,
+          roleCode: node.roleCode,
+          remark: node.description || "-"
+        });
+      }
+      if (node.children && node.children.length > 0) {
+        walk(node.children);
+      }
+    }
+  };
+  walk(nodes);
+  return result;
+};
+
+/**
+ * 加载组织数据（从组织管理）
+ */
+const loadOrgData = async () => {
+  try {
+    listLoading.value = true;
+    const treeData = await getOrgTree();
+    // 从组织树中提取用户和部门
+    userList.value = extractUsersFromTree(treeData);
+    deptList.value = extractDeptsFromTree(treeData);
+  } catch (error: any) {
+    ElMessage.error(error.message || "加载组织数据失败");
+  } finally {
+    listLoading.value = false;
+  }
+};
+
+/**
+ * 从组织树中提取用户节点
+ */
+const extractUsersFromTree = (nodes: any[]): any[] => {
+  const result: any[] = [];
+  const walk = (list: any[]) => {
+    for (const node of list) {
+      if (node.nodeType === "user") {
+        result.push({
+          id: node.id,
+          username: node.username,
+          realName: node.realName,
+          nickname: node.nickname,
+          avatar: node.avatar
+        });
+      }
+      if (node.children && node.children.length > 0) {
+        walk(node.children);
+      }
+    }
+  };
+  walk(nodes);
+  return result;
+};
+
+/**
+ * 从组织树中提取部门/组织节点（排除根节点）
+ */
+const extractDeptsFromTree = (nodes: any[]): any[] => {
+  const result: any[] = [];
+  const walk = (list: any[]) => {
+    for (const node of list) {
+      if (node.nodeType === "org" && node.orgType !== 0) {
+        result.push({
+          id: node.id,
+          label: node.label,
+          orgCode: node.orgCode,
+          orgType: node.orgType
+        });
+      }
+      if (node.children && node.children.length > 0) {
+        walk(node.children);
+      }
+    }
+  };
+  walk(nodes);
+  return result;
+};
+
+/**
+ * 目标类型变化
+ */
+const handleTypeChange = () => {
+  selectedPermissions.value = [];
+  // 清空所有表格的选中状态
+  nextTick(() => {
+    roleTableRef.value?.clearSelection();
+    userTableRef.value?.clearSelection();
+    deptTableRef.value?.clearSelection();
+  });
 };
 
 /**
  * 选择变化
  */
 const handleSelectionChange = (selection: any[]) => {
-  // 根据目标类型设置标签
   selectedPermissions.value = selection.map(item => ({
     id: item.id,
     label: item.roleName || item.realName || item.username || item.label,
@@ -307,7 +380,35 @@ const handleRemove = (item: any) => {
   const index = selectedPermissions.value.findIndex(p => p.id === item.id);
   if (index > -1) {
     selectedPermissions.value.splice(index, 1);
+    // 同步取消表格中的选中状态
+    const row = findRowById(item.id);
+    if (row) {
+      const tableRef = getCurrentTableRef();
+      tableRef?.toggleRowSelection(row, false);
+    }
   }
+};
+
+/**
+ * 根据ID查找行数据
+ */
+const findRowById = (id: number) => {
+  const list =
+    targetType.value === 0
+      ? roleList.value
+      : targetType.value === 1
+        ? userList.value
+        : deptList.value;
+  return list.find(item => item.id === id);
+};
+
+/**
+ * 获取当前类型的表格引用
+ */
+const getCurrentTableRef = () => {
+  if (targetType.value === 0) return roleTableRef.value;
+  if (targetType.value === 1) return userTableRef.value;
+  return deptTableRef.value;
 };
 
 /**
@@ -315,6 +416,9 @@ const handleRemove = (item: any) => {
  */
 const handleClearAll = () => {
   selectedPermissions.value = [];
+  roleTableRef.value?.clearSelection();
+  userTableRef.value?.clearSelection();
+  deptTableRef.value?.clearSelection();
 };
 
 /**
@@ -356,6 +460,9 @@ const handleClose = () => {
   selectedPermissions.value = [];
   userSearchKeyword.value = "";
   deptSearchKeyword.value = "";
+  roleList.value = [];
+  userList.value = [];
+  deptList.value = [];
 };
 
 // 暴露方法

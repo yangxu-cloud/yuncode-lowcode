@@ -5,8 +5,19 @@ server:
 
 spring:
   application:
-    name: yuncode-lowcode-admin
-
+    name: yuncode-admin
+  autoconfigure:
+    exclude:
+      - com.alibaba.cloud.nacos.NacosServiceAutoConfiguration
+      - com.alibaba.cloud.nacos.discovery.NacosDiscoveryAutoConfiguration
+      - com.alibaba.cloud.nacos.config.NacosConfigAutoConfiguration
+  cloud:
+    # Nacos 配置
+    nacos:
+      discovery:
+        enabled: false
+      config:
+        enabled: false
   # 数据源配置
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
@@ -24,7 +35,6 @@ spring:
       test-while-idle: true
       test-on-borrow: false
       test-on-return: false
-
   # Redis 配置
   data:
     redis:
@@ -94,6 +104,16 @@ sa-token:
 system:
   # 用户默认密码
   default-password: "123456"
+
+# 云码低代码平台配置
+yuncode:
+  # 应用目录配置
+  apps:
+    # 应用存储路径（相对于项目根目录或绝对路径）
+    path: ./apps
+    # 应用安装目录（HotAppDeployer 热加载扫描路径）
+    # 系统会扫描 {install-dir}/com.yuncode.user.apps.*/lib/*.jar
+    install-dir: ../apps/install
 
 # 日志配置
 logging:

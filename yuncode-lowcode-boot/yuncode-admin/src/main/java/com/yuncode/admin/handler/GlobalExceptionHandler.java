@@ -5,7 +5,7 @@ import cn.dev33.satoken.exception.NotPermissionException;
 import cn.dev33.satoken.exception.NotRoleException;
 import com.yuncode.common.exception.*;
 import com.yuncode.common.model.util.response.Result;
-import com.yuncode.common.util.ExceptionLogUtil;
+import com.yuncode.common.utils.ExceptionLogUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
