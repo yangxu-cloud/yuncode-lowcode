@@ -52,3 +52,6 @@ Thumbs.db
 *.bak
 *.swp
 *~.nib
+
+# Claude Code local settings
+.claude/settings.local.json

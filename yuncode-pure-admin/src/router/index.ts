@@ -123,17 +123,8 @@ const whiteList = ["/login", "/console/login"];
 
 const { VITE_HIDE_HOME } = import.meta.env;
 
-router.beforeEach((to: ToRouteType, _from, next) => {
+router.beforeEach(async (to: ToRouteType, _from, next) => {
   to.meta.loaded = loadedPaths.has(to.path);
-
-  // 初始化菜单（只执行一次）
-  if (to.path !== "/login" && to.path !== "/console/login") {
-    const permissionStore = usePermissionStoreHook();
-    if (permissionStore.wholeMenus.length === 0) {
-      // 静态路由不需要动态加载，直接初始化菜单为空数组（所有路由都是静态的，constantMenus 已经包含了所有菜单）
-      permissionStore.handleWholeMenus([]);
-    }
-  }
 
   if (!to.meta.loaded) {
     NProgress.start();
@@ -164,6 +155,16 @@ router.beforeEach((to: ToRouteType, _from, next) => {
     whiteList.includes(to.fullPath) ? next(_from.fullPath) : next();
   }
   if (Cookies.get(MULTIPLE_TABS_KEY) && userInfo) {
+    // 初始化动态路由（只执行一次）：从后端获取菜单树并注册为路由
+    if (to.path !== "/login" && to.path !== "/console/login") {
+      const permissionStore = usePermissionStoreHook();
+      if (permissionStore.wholeMenus.length === 0) {
+        await initRouter();
+        // 动态路由已注册，重新进入当前路由使导航生效
+        next({ ...to, replace: true });
+        return;
+      }
+    }
     // 无权限跳转403页面
     if (to.meta?.roles && !isOneOfArray(to.meta?.roles, userInfo?.roles)) {
       next({ path: "/error/403" });

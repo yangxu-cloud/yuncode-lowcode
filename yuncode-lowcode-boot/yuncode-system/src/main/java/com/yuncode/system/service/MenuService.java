@@ -5,6 +5,7 @@ import com.yuncode.system.entity.SysMenu;
 import com.yuncode.system.entity.SysMenuPermission;
 import com.yuncode.system.vo.MenuTreeNode;
 import com.yuncode.system.vo.MenuPermissionVO;
+import com.yuncode.system.vo.RouteVO;
 
 import java.util.List;
 
@@ -141,6 +142,16 @@ public interface MenuService {
      * @return 追加的权限数量
      */
     int copyPermissionsToChildren(Long menuId);
+
+    /**
+     * 获取前端动态路由树
+     * <p>
+     * 将菜单树（MenuTreeNode）转换为前端 easy-route 格式（RouteVO），
+     * 包含角色权限映射、按钮过滤、组件路径等处理。
+     *
+     * @return 前端动态路由树
+     */
+    List<RouteVO> getAsyncRoutes();
 
     /**
      * 初始化默认菜单

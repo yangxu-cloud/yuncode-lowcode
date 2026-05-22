@@ -1,198 +1,117 @@
-# Yuncode LowCode - 文档中心
+# 文档索引
 
-## 📖 最新文档
+> docs/ 目录结构总览，按分类索引所有文档。
 
-### 核心功能文档
-
-1. **[平台日志处理方案](./功能文档/平台日志处理方案.md)** ⭐ 新增
-
-   - 登录日志、操作日志、系统日志完整架构
-   - AOP 切面自动记录机制
-   - 链路追踪集成方案
-   - 性能优化和监控告警策略
-
-2. **[国际化语言切换方案](./功能文档/国际化语言切换方案.md)** ⭐ 新增
-
-   - Vue I18n v11 完整配置
-   - 中英文双语支持实现
-   - 路由、菜单、表单国际化
-   - 组件内翻译最佳实践
-
-3. **[组织服务功能实现总结](./功能文档/组织服务功能实现总结.md)** ⭐ 新增
-
-   - 组织架构树形管理
-   - 组织和人员混合显示
-   - 完整的增删改查功能
-   - 多租户支持
-
-4. **[组织管理菜单实现](./功能文档/组织管理菜单实现.md)** ⭐ 新增
-
-   - 菜单结构设计
-   - 路由配置说明
-   - 国际化配置
-   - 访问路径说明
-
-5. **[组织架构树数据接口](./功能文档/组织架构树数据接口.md)** ⭐ 新增
-
-   - 节点类型定义（company/department/user）
-   - 数据结构和字段说明
-   - 操作权限矩阵
-   - 前端使用规范
-
-6. **[MDC 链路追踪实现](./MDC_TRACE_IMPLEMENTATION_COPY.md)**
-
-   - TraceId 生成与传递机制
-   - SpanId 和 ParentSpanId 管理
-   - 与 SkyWalking Agent 集成准备
-   - 完整的配置和使用示例
-
-7. **[接口实现总结](./INTERFACE_IMPLEMENTATION_SUMMARY.md)**
-
-   - 系统日志接口 (`/log/system/*`)
-   - 在线用户接口 (`/system/online-users/*`)
-   - 操作日志接口
-   - API 测试集合和使用说明
-
-8. **[用户缓存实现](./USER_CACHE_IMPLEMENTATION.md)**
-
-   - Redis 缓存策略设计
-   - Cache-Aside 缓存模式
-   - 性能优化效果分析
-   - 缓存失效和监控建议
-
-### 配置和集成文档
-
-1. **[Sa-Token JWT 集成](./SATOKEN_JWT_INTEGRATION.md)**
-
-   - JWT 模式配置详解
-   - 前后端分离集成
-   - Token 生成和验证流程
-   - 常见问题和解决方案
-
-2. **[数据库设计](./DATABASE.md)**
-
-   - 表结构设计
-   - 索引优化
-   - 多租户数据隔离
-   - 初始化脚本说明
-
-### 快速开始
-
-1. **[项目概览](./PROJECT_SUMMARY.md)**
-
-   - 项目架构说明
-   - 技术栈介绍
-   - 模块划分
-   - 开发规范
-
-2. **[快速启动指南](./QUICKSTART.md)**
-
-   - 环境准备
-   - 数据库初始化
-   - 后端启动步骤
-   - 前端启动步骤
-   - 默认账号信息
-
-### SkyWalking 集成
-
-1. **[SkyWalking 配置指南](./SKYWALKING_SETUP.md)**
-
-   - Agent 下载和安装
-   - 配置文件说明
-   - 应用监控设置
-   - 链路追踪配置
-
-### 数据库脚本
-
-1. **[SQL脚本使用指南](./SQL脚本使用指南.md)** ⭐ 新增
-
-   - 所有SQL脚本按功能分类
-   - 首次安装完整流程
-   - 脚本执行顺序说明
-   - 维护脚本使用说明
-
-## 🚀 快速导航
-
-### 我想了解...
-
-**如何快速启动项目？**
-
-→ 查看 [快速启动指南](./QUICKSTART.md)
-
-**如何实现国际化语言切换？**
-
-→ 查看 [国际化语言切换方案](./功能文档/国际化语言切换方案.md)
-
-**如何使用 MDC 链路追踪？**
-
-→ 查看 [MDC 链路追踪实现](./MDC_TRACE_IMPLEMENTATION_COPY.md)
-
-**如何调用后端接口？**
-
-→ 查看 [接口实现总结](./INTERFACE_IMPLEMENTATION_SUMMARY.md)
-
-**如何优化用户查询性能？**
-
-→ 查看 [用户缓存实现](./USER_CACHE_IMPLEMENTATION.md)
-
-**如何集成 SkyWalking？**
-
-→ 查看 [SkyWalking 配置指南](./SKYWALKING_SETUP.md)
-
-**如何配置 JWT 认证？**
-
-→ 查看 [Sa-Token JWT 集成](./SATOKEN_JWT_INTEGRATION.md)
-
-**如何使用 SQL 脚本？**
-
-→ 查看 [SQL脚本使用指南](./SQL脚本使用指南.md)
-
-## 📊 文档统计
-
-- 核心功能文档：7 篇
-- 配置指南文档：2 篇
-- 快速开始文档：2 篇
-- 数据库脚本文档：1 篇
-- 总文档数：13+ 篇
-
-## 🔍 搜索关键词
-
-- **日志、AOP、切面、记录** → [平台日志处理方案](./功能文档/平台日志处理方案.md)
-- **国际化、i18n、多语言、中英文** → [国际化语言切换方案](./功能文档/国际化语言切换方案.md)
-- **组织、组织架构、部门管理、人员** → [组织服务功能实现总结](./功能文档/组织服务功能实现总结.md)
-- **菜单、路由、组织管理、公共设施** → [组织管理菜单实现](./功能文档/组织管理菜单实现.md)
-- **MDC、TraceId、链路追踪** → [MDC 链路追踪实现](./MDC_TRACE_IMPLEMENTATION_COPY.md)
-- **API、接口、日志管理** → [接口实现总结](./INTERFACE_IMPLEMENTATION_SUMMARY.md)
-- **缓存、Redis、性能优化** → [用户缓存实现](./USER_CACHE_IMPLEMENTATION.md)
-- **JWT、认证、登录** → [Sa-Token JWT 集成](./SATOKEN_JWT_INTEGRATION.md)
-- **数据库、表结构** → [数据库设计](./DATABASE.md)
-- **SQL、脚本、安装、初始化** → [SQL脚本使用指南](./SQL脚本使用指南.md)
-- **SkyWalking、监控** → [SkyWalking 配置指南](./SKYWALKING_SETUP.md)
-
-## 📝 更新记录
-
-### 2025-01-22
-
-- ✅ 添加国际化语言切换方案文档
-- ✅ 更新系统运维为运维管理
-- ✅ 添加组织服务功能实现总结
-- ✅ 整理 SQL 脚本并添加使用指南
-- ✅ 添加组织管理菜单实现文档
-- ✅ 在系统管理下实现公共设施子菜单
-
-### 2025-01-18
-
-- ✅ 添加用户缓存实现文档
-- ✅ 添加接口实现总结文档
-- ✅ 整合所有文档到 docs 目录
-
-### 2025-01-17
-
-- ✅ 添加 MDC 链路追踪文档
-- ✅ 添加 Sa-Token JWT 集成文档
-- ✅ 添加数据库设计文档
+```
+docs/
+├── INDEX.md            ← 本文件，文档索引
+├── requirements/       ← 需求文档（原始需求，源自 skills/）
+├── design/             ← 架构设计（why + how）
+├── spec/               ← 实现总结（what）
+├── guide/              ← 操作指南（how to）
+└── sql/                ← 数据库脚本
+```
 
 ---
 
-**文档维护者：** Yuncode LowCode 开发团队
-**最后更新：** 2025-01-22
+## requirements/ — 需求文档
+
+各功能模块的原始需求定义。供开发时对照。
+
+| 文档 | 说明 |
+|------|------|
+| [平台架构要求.md](requirements/平台架构要求.md) | 平台架构要求：技术选型、安全规范、监控要求 |
+| [用户登录.md](requirements/用户登录.md) | 用户登录：多账号体系、登录日志 |
+| [导航管理.md](requirements/导航管理.md) | 导航管理：左右面板、菜单树、权限分配、组件选择器 |
+| [角色管理.md](requirements/角色管理.md) | 角色管理：角色树、分类、人员关联、权限分配 |
+| [组织服务.md](requirements/组织服务.md) | 组织服务：组织树、公司/部门/人员、兼职管理、租户关联 |
+| [界面样式.md](requirements/界面样式.md) | 界面样式：主题配置、PureAdmin 组件需求 |
+| [应用开发.md](requirements/应用开发.md) | 应用开发：应用创建、安装升级、目录结构 |
+
+---
+
+## design/ — 架构设计
+
+系统架构、技术选型和设计决策。适合新成员了解系统全貌。
+
+| 文档 | 说明 |
+|------|------|
+| [app-hot-reload.md](design/app-hot-reload.md) | App 热插拔原理：WatchService、ClassLoader、Bean 注册/卸载 |
+| [app-plugin-architecture.md](design/app-plugin-architecture.md) | App 插件系统架构设计：双模式加载、SPI 接口、未来规划 |
+| [auth.md](design/auth.md) | 认证授权架构：Sa-Token + JWT + Redis + 多账号体系 |
+| [database.md](design/database.md) | 数据库设计：表结构、字段说明 |
+| [event-system.md](design/event-system.md) | 事件系统：EventPublisher/Consumer、使用说明 |
+| [exception-handling.md](design/exception-handling.md) | 异常处理方案：全局异常、业务异常、错误码 |
+| [gateway.md](design/gateway.md) | 网关方案设计：路由、鉴权、限流 |
+| [i18n.md](design/i18n.md) | 国际化方案：Vue I18n 集成、语言切换 |
+| [logging.md](design/logging.md) | 日志体系：三类日志、AOP 切面、链路追踪 |
+| [multi-account-login.md](design/multi-account-login.md) | 多账户登录：用户踢出、SSE 消息机制 |
+| [multi-tenancy.md](design/multi-tenancy.md) | 多租户设计：数据隔离、租户上下文 |
+| [multi-user-online.md](design/multi-user-online.md) | 多用户在线管理：会话管理、在线列表 |
+| [org-data-api.md](design/org-data-api.md) | 组织架构树数据接口 |
+| [user-cache.md](design/user-cache.md) | 用户缓存设计：Redis 缓存、缓存策略 |
+
+---
+
+## spec/ — 实现总结
+
+各功能模块的实现说明、接口定义和技术总结。
+
+| 文档 | 说明 |
+|------|------|
+| [application-management.md](spec/application-management.md) | 应用管理功能实现总结 |
+| [system-management.md](spec/system-management.md) | 系统管理功能实现总结 |
+| [menu-structure.md](spec/menu-structure.md) | 菜单结构调整记录 |
+| [app-dev-menu.md](spec/app-dev-menu.md) | 应用开发菜单设置 |
+| [menu-diagnosis.md](spec/menu-diagnosis.md) | PureAdmin 公共设施菜单诊断 |
+| [org-management.md](spec/org-management.md) | 组织服务功能实现 |
+| [org-menu.md](spec/org-menu.md) | 组织管理菜单实现 |
+| [company-management.md](spec/company-management.md) | 公司管理功能实现 |
+| [interface-summary.md](spec/interface-summary.md) | 接口实现总结 |
+| [gateway-summary.md](spec/gateway-summary.md) | 网关方案实现总结 |
+| [frontend-integration.md](spec/frontend-integration.md) | 前端集成完整说明 |
+| [multi-tenant-summary.md](spec/multi-tenant-summary.md) | 多租户用户管理系统实现 |
+| [exception-summary.md](spec/exception-summary.md) | 异常处理改造总结 |
+| [kickout-summary.md](spec/kickout-summary.md) | 踢出通知功能完整实现总结 |
+| [multi-tab-login-test.md](spec/multi-tab-login-test.md) | 多标签页登录测试 |
+| [multi-account-test-steps.md](spec/multi-account-test-steps.md) | 多账号测试步骤 |
+
+---
+
+## guide/ — 操作指南
+
+环境配置、构建部署、故障排查。适合开发者日常查阅。
+
+| 文档 | 说明 |
+|------|------|
+| [quickstart.md](guide/quickstart.md) | 快速启动指南（数据库初始化 → 后端 → 前端） |
+| [build.md](guide/build.md) | 构建说明 |
+| [compilation-issue.md](guide/compilation-issue.md) | 编译问题排查 |
+| [reload-dependencies.md](guide/reload-dependencies.md) | 依赖重载说明 |
+| [troubleshooting.md](guide/troubleshooting.md) | 通用故障排查 |
+| [nacos.md](guide/nacos.md) | Nacos 切换指南 |
+| [skywalking.md](guide/skywalking.md) | Skywalking 集成配置 |
+| [skywalking-agent.md](guide/skywalking-agent.md) | Skywalking Agent 集成说明 |
+| [maven-fix.md](guide/maven-fix.md) | Maven 依赖问题修复 |
+| [sql-guide.md](guide/sql-guide.md) | SQL 脚本使用指南 |
+| [jdk17-setup.md](guide/jdk17-setup.md) | JDK 17 环境配置 |
+| [sse-debug.md](guide/sse-debug.md) | SSE 调试指南 |
+| [clear-token.md](guide/clear-token.md) | Token 清理说明 |
+| [mdc-trace.md](guide/mdc-trace.md) | MDC 链路追踪实现 |
+| [kickout-guide.md](guide/kickout-guide.md) | 踢出通知前端集成指南 |
+| [facility-menu-guide.md](guide/facility-menu-guide.md) | 公共设施菜单启动指南 |
+
+---
+
+## sql/ — 数据库脚本
+
+| 脚本 | 说明 |
+|------|------|
+| `init_database.sql` | 数据库初始化（完整建表） |
+| `init_system_role.sql` | 系统角色初始化 |
+| `role_management.sql` | 角色管理相关 |
+| `create_login_log_table.sql` | 登录日志表 |
+| `create_oper_log_table.sql` | 操作日志表 |
+| `create_system_log_table.sql` | 系统日志表 |
+| `create_sys_settings.sql` | 系统设置表 |
+| 其余迁移/修复脚本 | 按功能命名，按需执行 |

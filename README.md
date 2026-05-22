@@ -64,25 +64,18 @@
 ### 1. 模块化设计
 ```
 yuncode-lowcode/
-├── yuncode-lowcode-boot/      # 后端
-│   ├── yuncode-common/        # 公共
-│   ├── yuncode-auth/          # 认证
-│   ├── yuncode-system/        # 系统
-│   ├── yuncode-tenant/        # 租户
-│   ├── yuncode-business/      # 业务
-│   └── yuncode-admin/         # 启动
+├── docs/                      # 文档（design/spec/guide/sql）
+├── yuncode-lowcode-boot/      # 后端 Maven 多模块
+│   ├── yuncode-common/        # 公共工具
+│   ├── yuncode-auth/          # 认证授权（Sa-Token）
+│   ├── yuncode-system/        # 系统管理
+│   ├── yuncode-tenant/        # 租户管理
+│   ├── yuncode-business/      # 业务（预留）
+│   ├── yuncode-admin/         # 启动入口（含 HotAppDeployer）
+│   ├── yuncode-gateway/       # Spring Cloud Gateway
+│   └── apps/install/          # App 插件（热加载）
 │
-├── yuncode-lowcode-admin/     # 前端
-│   ├── src/
-│   │   ├── api/
-│   │   ├── views/
-│   │   ├── components/
-│   │   ├── router/
-│   │   ├── store/
-│   │   └── utils/
-│   └── package.json
-│
-└── docs/                      # 文档
+└── yuncode-pure-admin/        # 前端（Vue 3 + Element Plus）
 ```
 
 ### 2. 技术栈
@@ -144,7 +137,7 @@ npm run dev
 - API文档：http://localhost:8080/api/doc.html
 - 默认账号：admin / admin123
 
-详细步骤请参考：[docs/QUICKSTART.md](docs/QUICKSTART.md)
+详细步骤请参考：[docs/guide/quickstart.md](docs/guide/quickstart.md)
 
 ## 📝 开发路线图
 
@@ -221,12 +214,18 @@ npm run dev
    - 导航权限控制
    - 动态导航渲染
 
-## 📚 重要文档
+## 📚 文档
 
-1. **[项目介绍](docs/README.md)** - 了解项目整体情况
-2. **[数据库设计](docs/DATABASE.md)** - 查看完整的表结构
-3. **[项目总结](docs/PROJECT_SUMMARY.md)** - 了解已完成的工作
-4. **[快速启动](docs/QUICKSTART.md)** - 按步骤启动项目
+文档按类型组织在 `docs/` 下：
+
+| 目录 | 内容 |
+|------|------|
+| [design/](docs/design/) | 架构设计 — 认证、数据库、插件系统、网关、多租户、日志体系等 |
+| [spec/](docs/spec/) | 实现总结 — 各功能模块的实现说明和接口总结 |
+| [guide/](docs/guide/) | 操作指南 — 快速启动、构建、环境配置、故障排查等 |
+| [sql/](docs/sql/) | 数据库脚本 — 建表、初始化、迁移脚本 |
+
+快速开始：[docs/guide/quickstart.md](docs/guide/quickstart.md)
 
 ## 🤝 让我们开始吧！
 

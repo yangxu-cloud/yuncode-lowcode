@@ -1,0 +1,7 @@
+# 应用目录
+apps/install/*
+apps/uninstall/*
+apps/history/*
+!apps/install/.gitkeep
+!apps/uninstall/.gitkeep
+!apps/history/.gitkeep

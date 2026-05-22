@@ -1,8 +1,5 @@
 import { http } from "@/utils/http";
 
-// API 基础路径前缀（从环境变量读取，默认为 /api）
-const API_BASE_PREFIX = import.meta.env.VITE_API_BASE_PREFIX || "/api";
-
 export interface OnlineUser {
   sessionId: string;
   username: string;
@@ -32,7 +29,7 @@ export interface PageResult<T> {
 export const getOnlineUsers = async (params?: any) => {
   const response = await http.request<{ code: number; message: string; data: PageResult<OnlineUser> }>(
     "get",
-    `${API_BASE_PREFIX}/system/online-users`,
+    `/system/online-users`,
     { params }
   );
   return response.data;
@@ -42,7 +39,7 @@ export const getOnlineUsers = async (params?: any) => {
 export const getOnlineUserStats = async () => {
   const response = await http.request<{ code: number; message: string; data: OnlineUserStats }>(
     "get",
-    `${API_BASE_PREFIX}/system/online-users/stats`
+    `/system/online-users/stats`
   );
   return response.data;
 };
@@ -51,7 +48,7 @@ export const getOnlineUserStats = async () => {
 export const kickOutUser = (sessionId: string) => {
   return http.request<void>(
     "post",
-    `${API_BASE_PREFIX}/system/online-users/${sessionId}/kick`
+    `/system/online-users/${sessionId}/kick`
   );
 };
 
@@ -59,7 +56,7 @@ export const kickOutUser = (sessionId: string) => {
 export const batchKickOutUsers = (sessionIds: string[]) => {
   return http.request<void>(
     "post",
-    `${API_BASE_PREFIX}/system/online-users/batch-kick`,
+    `/system/online-users/batch-kick`,
     { data: sessionIds }
   );
 };

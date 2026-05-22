@@ -217,10 +217,16 @@ function initRouter() {
     }
   } else {
     return new Promise(resolve => {
-      getAsyncRoutes().then(({ data }) => {
-        handleAsyncRoutes(cloneDeep(data));
-        resolve(router);
-      });
+      getAsyncRoutes()
+        .then(({ data }) => {
+          handleAsyncRoutes(cloneDeep(data));
+          resolve(router);
+        })
+        .catch(() => {
+          console.warn("获取动态路由失败，使用静态路由继续");
+          handleAsyncRoutes([]);
+          resolve(router);
+        });
     });
   }
 }

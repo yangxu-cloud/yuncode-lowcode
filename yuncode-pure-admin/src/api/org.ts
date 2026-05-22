@@ -101,7 +101,7 @@ export interface OrgForm {
  * 获取组织树（包含人员）
  */
 export const getOrgTree = async () => {
-  const response = await http.request<{ code: number; message: string; data: OrgTreeNode[] }>("get", "/api/org/tree");
+  const response = await http.request<{ code: number; message: string; data: OrgTreeNode[] }>("get", "/org/tree");
 
   // 检查响应格式
   if (response && typeof response === 'object' && 'code' in response) {
@@ -124,7 +124,7 @@ export const getOrgTree = async () => {
  * 获取组织列表
  */
 export const getOrgList = async (data: OrgQueryDTO) => {
-  const response = await http.request<{ code: number; message: string; data: OrgVO[] }>("post", "/api/org/list", { data });
+  const response = await http.request<{ code: number; message: string; data: OrgVO[] }>("post", "/org/list", { data });
   return response.data;
 };
 
@@ -132,7 +132,7 @@ export const getOrgList = async (data: OrgQueryDTO) => {
  * 获取组织详情
  */
 export const getOrgById = async (id: number) => {
-  const response = await http.request<{ code: number; message: string; data: OrgVO }>("get", `/api/org/${id}`);
+  const response = await http.request<{ code: number; message: string; data: OrgVO }>("get", `/org/${id}`);
   return response.data;
 };
 
@@ -140,7 +140,7 @@ export const getOrgById = async (id: number) => {
  * 添加组织
  */
 export const addOrg = async (data: OrgForm) => {
-  const response = await http.request<{ code: number; message: string; data: void }>("post", "/api/org", { data });
+  const response = await http.request<{ code: number; message: string; data: void }>("post", "/org", { data });
   return response.data;
 };
 
@@ -148,7 +148,7 @@ export const addOrg = async (data: OrgForm) => {
  * 更新组织
  */
 export const updateOrg = async (data: OrgForm) => {
-  const response = await http.request<{ code: number; message: string; data: void }>("put", "/api/org", { data });
+  const response = await http.request<{ code: number; message: string; data: void }>("put", "/org", { data });
   return response.data;
 };
 
@@ -156,7 +156,7 @@ export const updateOrg = async (data: OrgForm) => {
  * 删除组织
  */
 export const deleteOrg = async (id: number) => {
-  const response = await http.request<{ code: number; message: string; data: void }>("delete", `/api/org/${id}`);
+  const response = await http.request<{ code: number; message: string; data: void }>("delete", `/org/${id}`);
   return response.data;
 };
 
@@ -164,7 +164,7 @@ export const deleteOrg = async (id: number) => {
  * 搜索组织
  */
 export const searchOrgs = async (keyword: string) => {
-  const response = await http.request<{ code: number; message: string; data: OrgVO[] }>("get", "/api/org/search", { params: { keyword } });
+  const response = await http.request<{ code: number; message: string; data: OrgVO[] }>("get", "/org/search", { params: { keyword } });
   return response.data;
 };
 
@@ -172,7 +172,7 @@ export const searchOrgs = async (keyword: string) => {
  * 检查组织编码是否存在
  */
 export const checkOrgCodeExists = async (orgCode: string, excludeId?: number) => {
-  const response = await http.request<{ code: number; message: string; data: boolean }>("get", "/api/org/check-code", {
+  const response = await http.request<{ code: number; message: string; data: boolean }>("get", "/org/check-code", {
     params: { orgCode, excludeId }
   });
   return response.data;
@@ -187,7 +187,7 @@ export const addUserToOrg = async (data: {
   isLeader?: number;
   isMainDept?: number;
 }) => {
-  const response = await http.request<{ code: number; message: string; data: void }>("post", "/api/org/add-user", {
+  const response = await http.request<{ code: number; message: string; data: void }>("post", "/org/add-user", {
     params: data
   });
   return response.data;
@@ -197,7 +197,7 @@ export const addUserToOrg = async (data: {
  * 从组织移除人员
  */
 export const removeUserFromOrg = async (orgId: number, userId: number) => {
-  const response = await http.request<{ code: number; message: string; data: void }>("delete", "/api/org/remove-user", {
+  const response = await http.request<{ code: number; message: string; data: void }>("delete", "/org/remove-user", {
     params: { orgId, userId }
   });
   return response.data;
@@ -207,7 +207,7 @@ export const removeUserFromOrg = async (orgId: number, userId: number) => {
  * 设置用户为主部门负责人
  */
 export const setUserAsLeader = async (orgId: number, userId: number, isLeader: number) => {
-  const response = await http.request<{ code: number; message: string; data: void }>("put", "/api/org/set-leader", {
+  const response = await http.request<{ code: number; message: string; data: void }>("put", "/org/set-leader", {
     params: { orgId, userId, isLeader }
   });
   return response.data;
@@ -236,6 +236,6 @@ export interface UserOrgVO {
  * 获取用户的所有组织关系（包括主部门和兼职部门）
  */
 export const getUserOrgs = async (userId: number) => {
-  const response = await http.request<{ code: number; message: string; data: UserOrgVO[] }>("get", `/api/org/user-orgs/${userId}`);
+  const response = await http.request<{ code: number; message: string; data: UserOrgVO[] }>("get", `/org/user-orgs/${userId}`);
   return response.data;
 };

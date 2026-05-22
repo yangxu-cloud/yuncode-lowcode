@@ -1,8 +1,5 @@
 import { http } from "@/utils/http";
 
-// API 基础路径前缀
-const API_BASE_PREFIX = import.meta.env.VITE_API_BASE_PREFIX || "/api";
-
 /**
  * 应用实体
  */
@@ -73,7 +70,7 @@ export const getApplicationList = async (params: {
 }) => {
   const response = await http.request<{ code: number; message: string; data: PageResult<Application> }>(
     "get",
-    `${API_BASE_PREFIX}/system/application/list`,
+    `/system/application/list`,
     { params }
   );
   return response;
@@ -85,7 +82,7 @@ export const getApplicationList = async (params: {
 export const getApplicationDetail = async (id: number) => {
   const response = await http.request<{ code: number; message: string; data: Application }>(
     "get",
-    `${API_BASE_PREFIX}/system/application/${id}`
+    `/system/application/${id}`
   );
   return response;
 };
@@ -96,7 +93,7 @@ export const getApplicationDetail = async (id: number) => {
 export const createApplication = async (data: ApplicationForm) => {
   const response = await http.request<{ code: number; message: string; data: void }>(
     "post",
-    `${API_BASE_PREFIX}/system/application/create`,
+    `/system/application/create`,
     { data }
   );
   return response.data;
@@ -108,7 +105,7 @@ export const createApplication = async (data: ApplicationForm) => {
 export const updateApplication = async (data: ApplicationForm) => {
   const response = await http.request<{ code: number; message: string; data: void }>(
     "put",
-    `${API_BASE_PREFIX}/system/application/update`,
+    `/system/application/update`,
     { data }
   );
   return response.data;
@@ -120,7 +117,7 @@ export const updateApplication = async (data: ApplicationForm) => {
 export const deleteApplication = async (id: number) => {
   const response = await http.request<{ code: number; message: string; data: void }>(
     "delete",
-    `${API_BASE_PREFIX}/system/application/delete/${id}`
+    `/system/application/delete/${id}`
   );
   return response.data;
 };
@@ -131,7 +128,7 @@ export const deleteApplication = async (id: number) => {
 export const startApplication = async (id: number) => {
   const response = await http.request<{ code: number; message: string; data: void }>(
     "post",
-    `${API_BASE_PREFIX}/system/application/start/${id}`
+    `/system/application/start/${id}`
   );
   return response.data;
 };
@@ -142,7 +139,7 @@ export const startApplication = async (id: number) => {
 export const stopApplication = async (id: number) => {
   const response = await http.request<{ code: number; message: string; data: void }>(
     "post",
-    `${API_BASE_PREFIX}/system/application/stop/${id}`
+    `/system/application/stop/${id}`
   );
   return response.data;
 };
@@ -153,7 +150,7 @@ export const stopApplication = async (id: number) => {
 export const installApplication = async (id: number) => {
   const response = await http.request<{ code: number; message: string; data: void }>(
     "post",
-    `${API_BASE_PREFIX}/system/application/install/${id}`
+    `/system/application/install/${id}`
   );
   return response.data;
 };
@@ -164,7 +161,7 @@ export const installApplication = async (id: number) => {
 export const uninstallApplication = async (id: number) => {
   const response = await http.request<{ code: number; message: string; data: void }>(
     "post",
-    `${API_BASE_PREFIX}/system/application/uninstall/${id}`
+    `/system/application/uninstall/${id}`
   );
   return response.data;
 };
@@ -175,7 +172,7 @@ export const uninstallApplication = async (id: number) => {
 export const upgradeApplication = async (id: number) => {
   const response = await http.request<{ code: number; message: string; data: void }>(
     "post",
-    `${API_BASE_PREFIX}/system/application/upgrade/${id}`
+    `/system/application/upgrade/${id}`
   );
   return response.data;
 };
@@ -191,7 +188,7 @@ export const getApplicationLogs = async (params: {
 }) => {
   const response = await http.request<{ code: number; message: string; data: PageResult<ApplicationLog> }>(
     "get",
-    `${API_BASE_PREFIX}/system/application/logs`,
+    `/system/application/logs`,
     { params }
   );
   return response;

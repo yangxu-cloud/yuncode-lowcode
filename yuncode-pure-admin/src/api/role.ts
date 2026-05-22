@@ -1,8 +1,5 @@
 import { http } from "@/utils/http";
 
-// API 基础路径前缀
-const API_BASE_PREFIX = import.meta.env.VITE_API_BASE_PREFIX || "/api";
-
 /**
  * 角色节点
  */
@@ -83,7 +80,7 @@ export interface RoleForm {
 export function getRoleTree() {
   return http.request<{ code: number; message: string; data: RoleNode[] }>(
     "get",
-    `${API_BASE_PREFIX}/system/role/tree`
+    `/system/role/tree`
   );
 }
 
@@ -93,7 +90,7 @@ export function getRoleTree() {
 export function getRoleDetail(id: number) {
   return http.request<{ code: number; message: string; data: RoleDetail }>(
     "get",
-    `${API_BASE_PREFIX}/system/role/${id}`
+    `/system/role/${id}`
   );
 }
 
@@ -103,7 +100,7 @@ export function getRoleDetail(id: number) {
 export function createRole(data: RoleForm) {
   return http.request<{ code: number; message: string; data: number }>(
     "post",
-    `${API_BASE_PREFIX}/system/role`,
+    `/system/role`,
     { data }
   );
 }
@@ -114,7 +111,7 @@ export function createRole(data: RoleForm) {
 export function updateRole(id: number, data: RoleForm) {
   return http.request<{ code: number; message: string; data: void }>(
     "put",
-    `${API_BASE_PREFIX}/system/role/${id}`,
+    `/system/role/${id}`,
     { data }
   );
 }
@@ -125,7 +122,7 @@ export function updateRole(id: number, data: RoleForm) {
 export function deleteRole(id: number) {
   return http.request<{ code: number; message: string; data: void }>(
     "delete",
-    `${API_BASE_PREFIX}/system/role/${id}`
+    `/system/role/${id}`
   );
 }
 
@@ -135,7 +132,7 @@ export function deleteRole(id: number) {
 export function addUsersToRole(roleId: number, userIds: number[]) {
   return http.request<{ code: number; message: string; data: void }>(
     "post",
-    `${API_BASE_PREFIX}/system/role/${roleId}/users`,
+    `/system/role/${roleId}/users`,
     { data: userIds }
   );
 }
@@ -146,7 +143,7 @@ export function addUsersToRole(roleId: number, userIds: number[]) {
 export function removeUserFromRole(roleId: number, userId: number) {
   return http.request<{ code: number; message: string; data: void }>(
     "delete",
-    `${API_BASE_PREFIX}/system/role/${roleId}/users/${userId}`
+    `/system/role/${roleId}/users/${userId}`
   );
 }
 
@@ -156,7 +153,7 @@ export function removeUserFromRole(roleId: number, userId: number) {
 export function addDeptsToRole(roleId: number, deptIds: number[]) {
   return http.request<{ code: number; message: string; data: void }>(
     "post",
-    `${API_BASE_PREFIX}/system/role/${roleId}/depts`,
+    `/system/role/${roleId}/depts`,
     { data: deptIds }
   );
 }
@@ -167,7 +164,7 @@ export function addDeptsToRole(roleId: number, deptIds: number[]) {
 export function removeDeptFromRole(roleId: number, deptId: number) {
   return http.request<{ code: number; message: string; data: void }>(
     "delete",
-    `${API_BASE_PREFIX}/system/role/${roleId}/depts/${deptId}`
+    `/system/role/${roleId}/depts/${deptId}`
   );
 }
 
@@ -177,7 +174,7 @@ export function removeDeptFromRole(roleId: number, deptId: number) {
 export function addPermissionsToRole(roleId: number, permissionIds: number[]) {
   return http.request<{ code: number; message: string; data: void }>(
     "post",
-    `${API_BASE_PREFIX}/system/role/${roleId}/permissions`,
+    `/system/role/${roleId}/permissions`,
     { data: permissionIds }
   );
 }
@@ -188,6 +185,6 @@ export function addPermissionsToRole(roleId: number, permissionIds: number[]) {
 export function removePermissionFromRole(roleId: number, permissionId: number) {
   return http.request<{ code: number; message: string; data: void }>(
     "delete",
-    `${API_BASE_PREFIX}/system/role/${roleId}/permissions/${permissionId}`
+    `/system/role/${roleId}/permissions/${permissionId}`
   );
 }

@@ -1,7 +1,5 @@
 import { http } from "@/utils/http";
 
-// API 基础路径前缀
-const API_BASE_PREFIX = import.meta.env.VITE_API_BASE_PREFIX || "/api";
 
 /**
  * 菜单树节点
@@ -59,7 +57,7 @@ export interface MenuPermissionVO {
 export const getMenuTree = () => {
   return http.request<{ code: number; message: string; data: MenuTreeNode[] }>(
     "get",
-    `${API_BASE_PREFIX}/menu/tree`
+    `/menu/tree`
   );
 };
 
@@ -69,7 +67,7 @@ export const getMenuTree = () => {
 export const getUserMenuTree = () => {
   return http.request<{ code: number; message: string; data: MenuTreeNode[] }>(
     "get",
-    `${API_BASE_PREFIX}/menu/user/tree`
+    `/menu/user/tree`
   );
 };
 
@@ -79,7 +77,7 @@ export const getUserMenuTree = () => {
 export const getMenuById = (id: number) => {
   return http.request<{ code: number; message: string; data: any }>(
     "get",
-    `${API_BASE_PREFIX}/menu/${id}`
+    `/menu/${id}`
   );
 };
 
@@ -89,7 +87,7 @@ export const getMenuById = (id: number) => {
 export const addMenu = async (data: MenuForm) => {
   const response = await http.request<{ code: number; message: string; data: void }>(
     "post",
-    `${API_BASE_PREFIX}/menu`,
+    `/menu`,
     { data }
   );
   if (response.code !== 200) {
@@ -104,7 +102,7 @@ export const addMenu = async (data: MenuForm) => {
 export const updateMenu = async (data: MenuForm) => {
   const response = await http.request<{ code: number; message: string; data: void }>(
     "put",
-    `${API_BASE_PREFIX}/menu`,
+    `/menu`,
     { data }
   );
   if (response.code !== 200) {
@@ -119,7 +117,7 @@ export const updateMenu = async (data: MenuForm) => {
 export const deleteMenu = async (id: number) => {
   const response = await http.request<{ code: number; message: number; data: void }>(
     "delete",
-    `${API_BASE_PREFIX}/menu/${id}`
+    `/menu/${id}`
   );
   if (response.code !== 200) {
     throw new Error(response.message || "删除菜单失败");
@@ -133,7 +131,7 @@ export const deleteMenu = async (id: number) => {
 export const moveUpMenu = async (menuId: number) => {
   const response = await http.request<{ code: number; message: string; data: void }>(
     "put",
-    `${API_BASE_PREFIX}/menu/move-up/${menuId}`
+    `/menu/move-up/${menuId}`
   );
   if (response.code !== 200) {
     throw new Error(response.message || "上移菜单失败");
@@ -147,7 +145,7 @@ export const moveUpMenu = async (menuId: number) => {
 export const moveDownMenu = async (menuId: number) => {
   const response = await http.request<{ code: number; message: string; data: void }>(
     "put",
-    `${API_BASE_PREFIX}/menu/move-down/${menuId}`
+    `/menu/move-down/${menuId}`
   );
   if (response.code !== 200) {
     throw new Error(response.message || "下移菜单失败");
@@ -161,7 +159,7 @@ export const moveDownMenu = async (menuId: number) => {
 export const setMenuVisible = async (menuId: number, visible: number) => {
   const response = await http.request<{ code: number; message: string; data: void }>(
     "put",
-    `${API_BASE_PREFIX}/menu/visible`,
+    `/menu/visible`,
     {
       params: { menuId, visible }
     }
@@ -178,7 +176,7 @@ export const setMenuVisible = async (menuId: number, visible: number) => {
 export const searchMenus = (keyword: string) => {
   return http.request<{ code: number; message: string; data: any[] }>(
     "get",
-    `${API_BASE_PREFIX}/menu/search`,
+    `/menu/search`,
     {
       params: { keyword }
     }
@@ -191,7 +189,7 @@ export const searchMenus = (keyword: string) => {
 export const getMenuPermissions = (menuId: number) => {
   return http.request<{ code: number; message: string; data: MenuPermissionVO[] }>(
     "get",
-    `${API_BASE_PREFIX}/menu/permissions/${menuId}`
+    `/menu/permissions/${menuId}`
   );
 };
 
@@ -201,7 +199,7 @@ export const getMenuPermissions = (menuId: number) => {
 export const addMenuPermissions = async (menuId: number, targetType: number, targetIds: number[]) => {
   const response = await http.request<{ code: number; message: string; data: void }>(
     "post",
-    `${API_BASE_PREFIX}/menu/permissions`,
+    `/menu/permissions`,
     {
       params: { menuId, targetType, targetIds }
     }
@@ -218,7 +216,7 @@ export const addMenuPermissions = async (menuId: number, targetType: number, tar
 export const removeMenuPermission = async (menuId: number, targetType: number, targetId: number) => {
   const response = await http.request<{ code: number; message: string; data: void }>(
     "delete",
-    `${API_BASE_PREFIX}/menu/permissions`,
+    `/menu/permissions`,
     {
       params: { menuId, targetType, targetId }
     }
@@ -235,7 +233,7 @@ export const removeMenuPermission = async (menuId: number, targetType: number, t
 export const copyPermissionsToChildren = async (menuId: number) => {
   const response = await http.request<{ code: number; message: string; data: number }>(
     "post",
-    `${API_BASE_PREFIX}/menu/permissions/copy-to-children/${menuId}`
+    `/menu/permissions/copy-to-children/${menuId}`
   );
   if (response.code !== 200) {
     throw new Error(response.message || "权限追加失败");
@@ -249,7 +247,7 @@ export const copyPermissionsToChildren = async (menuId: number) => {
 export const initDefaultMenus = async () => {
   const response = await http.request<{ code: number; message: string; data: void }>(
     "post",
-    `${API_BASE_PREFIX}/menu/init`
+    `/menu/init`
   );
   if (response.code !== 200) {
     throw new Error(response.message || "初始化菜单失败");

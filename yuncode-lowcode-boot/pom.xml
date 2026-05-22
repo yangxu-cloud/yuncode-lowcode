@@ -27,6 +27,7 @@
         <module>yuncode-tenant</module>
         <module>yuncode-admin</module>
         <module>yuncode-gateway</module>
+        <!-- 应用模块：Maven 编译仅供 IDE 支持，运行时由 HotAppDeployer 热加载 -->
         <module>apps/install/com.yuncode.user.apps.qms0205</module>
         <module>apps/install/com.yuncode.user.apps.yun20260520106609</module>
         <module>apps/install/com.yuncode.user.apps.yun20260521401922</module>

@@ -1,8 +1,5 @@
 import { http } from "@/utils/http";
 
-// API 基础路径前缀（从环境变量读取，默认为 /api）
-const API_BASE_PREFIX = import.meta.env.VITE_API_BASE_PREFIX || "/api";
-
 export type UserResult = {
   code: number;
   message: string;
@@ -48,7 +45,7 @@ export const getAdminLogin = (data?: object) => {
     ...data,
     loginType: "admin"
   };
-  return http.request<UserResult>("post", `${API_BASE_PREFIX}/auth/admin/login`, { data: requestData });
+  return http.request<UserResult>("post", `/auth/admin/login`, { data: requestData });
 };
 
 /** 普通用户登录 */
@@ -57,7 +54,7 @@ export const getUserLogin = (data?: object) => {
     ...data,
     loginType: "user"
   };
-  return http.request<UserResult>("post", `${API_BASE_PREFIX}/auth/user/login`, { data: requestData });
+  return http.request<UserResult>("post", `/auth/user/login`, { data: requestData });
 };
 
 /** 租户登录 */
@@ -66,7 +63,7 @@ export const getTenantLogin = (data?: object) => {
     ...data,
     loginType: "tenant"
   };
-  return http.request<UserResult>("post", `${API_BASE_PREFIX}/auth/tenant/login`, { data: requestData });
+  return http.request<UserResult>("post", `/auth/tenant/login`, { data: requestData });
 };
 
 /** 统一登录接口 - 根据 loginType 调用不同接口 */
@@ -93,7 +90,7 @@ export const refreshTokenApi = (data?: object) => {
  * 创建用户
  */
 export const createUser = async (data: any) => {
-  const response = await http.request<{ code: number; message: string; data: number }>("post", `${API_BASE_PREFIX}/user/create`, { data });
+  const response = await http.request<{ code: number; message: string; data: number }>("post", `/user/create`, { data });
   // 检查响应码
   if (response.code !== 200) {
     throw new Error(response.message || "创建用户失败");
@@ -105,7 +102,7 @@ export const createUser = async (data: any) => {
  * 更新用户信息
  */
 export const updateUser = async (data: any) => {
-  const response = await http.request<{ code: number; message: string; data: void }>("put", `${API_BASE_PREFIX}/user/update`, { data });
+  const response = await http.request<{ code: number; message: string; data: void }>("put", `/user/update`, { data });
   // 检查响应码
   if (response.code !== 200) {
     throw new Error(response.message || "更新用户失败");
@@ -117,7 +114,7 @@ export const updateUser = async (data: any) => {
  * 更新用户状态
  */
 export const updateUserStatus = async (userId: number, status: number) => {
-  const response = await http.request<{ code: number; message: string; data: void }>("put", `${API_BASE_PREFIX}/user/status`, {
+  const response = await http.request<{ code: number; message: string; data: void }>("put", `/user/status`, {
     params: { userId, status }
   });
   // 检查响应码
@@ -131,5 +128,5 @@ export const updateUserStatus = async (userId: number, status: number) => {
  * 获取用户列表
  */
 export const getUserList = async (params?: any) => {
-  return http.request<any>("get", `${API_BASE_PREFIX}/user/list`, { params });
+  return http.request<any>("get", `/user/list`, { params });
 };

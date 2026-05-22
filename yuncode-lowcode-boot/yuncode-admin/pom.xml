@@ -93,18 +93,22 @@
             <artifactId>spring-cloud-starter-alibaba-nacos-discovery</artifactId>
             <optional>true</optional>
         </dependency>
+        <!-- 应用通过 HotAppDeployer 热加载，Maven 依赖仅用于 IDE 编译支持 -->
+
         <!-- App Module: qms0205 -->
-        <dependency>
-            <groupId>com.yuncode</groupId>
-            <artifactId>qms0205</artifactId>
-            <version>1.0.0</version>
-        </dependency>
+    <dependency>
+        <groupId>com.yuncode</groupId>
+        <artifactId>qms0205</artifactId>
+        <version>1.0.0</version>
+    </dependency>
+
         <!-- App Module: yun20260520106609 -->
-        <dependency>
-            <groupId>com.yuncode</groupId>
-            <artifactId>yun20260520106609</artifactId>
-            <version>1.0.0</version>
-        </dependency>
+    <dependency>
+        <groupId>com.yuncode</groupId>
+        <artifactId>yun20260520106609</artifactId>
+        <version>1.0.0</version>
+    </dependency>
+
         <!-- App Module: yun20260521401922 -->
     <dependency>
         <groupId>com.yuncode</groupId>

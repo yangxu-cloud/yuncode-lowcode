@@ -96,8 +96,11 @@ public class UserLoginService {
             // 将用户类型、租户ID等信息存入 Token Extra
             StpUtil.getTokenSession().set("loginType", "user");
             StpUtil.getTokenSession().set("tenantId", tenantId);
+            StpUtil.getTokenSession().set("userId", user.getId());
             StpUtil.getTokenSession().set("username", user.getUsername());
             StpUtil.getTokenSession().set("nickname", user.getNickname() != null ? user.getNickname() : "");
+            StpUtil.getTokenSession().set("avatar", user.getAvatar() != null ? user.getAvatar() : "");
+            StpUtil.getTokenSession().set("roleCode", user.getRoleCode() != null ? user.getRoleCode() : "");
 
             // 将用户信息存入 Session
             StpUtil.getSession().set("userId", user.getId());

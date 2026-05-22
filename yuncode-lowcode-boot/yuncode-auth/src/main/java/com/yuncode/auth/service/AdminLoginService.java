@@ -90,6 +90,15 @@ public class AdminLoginService {
             StpUtil.getTokenSession().set("avatar", user.getAvatar() != null ? user.getAvatar() : "");
             StpUtil.getTokenSession().set("roleCode", user.getRoleCode() != null ? user.getRoleCode() : "PLATFORM_ADMIN");
 
+            // 将用户信息存入 Session（统一存储位置，供日志切面等组件读取）
+            StpUtil.getSession().set("loginType", "admin");
+            StpUtil.getSession().set("tenantId", systemTenantId);
+            StpUtil.getSession().set("userId", user.getId());
+            StpUtil.getSession().set("username", user.getUsername());
+            StpUtil.getSession().set("nickname", user.getNickname() != null ? user.getNickname() : "");
+            StpUtil.getSession().set("avatar", user.getAvatar() != null ? user.getAvatar() : "");
+            StpUtil.getSession().set("roleCode", user.getRoleCode() != null ? user.getRoleCode() : "PLATFORM_ADMIN");
+
             // 7. 缓存用户信息到 Redis（30分钟）- 注意：如果 Redis 未连接会抛出异常
             try {
                 userCacheService.cacheUser(user.getId(), user, 1800);
@@ -106,6 +115,7 @@ public class AdminLoginService {
 
             // 将 sessionId 存入 Sa-Token session，供退出时使用
             StpUtil.getTokenSession().set("sessionId", sessionId);
+            StpUtil.getSession().set("sessionId", sessionId);
             log.info("sessionId 已存入 Sa-Token session，验证: {}", StpUtil.getTokenSession().get("sessionId"));
 
             // 9. 获取 Sa-Token 的 JWT Token

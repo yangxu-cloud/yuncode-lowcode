@@ -16,6 +16,7 @@ import com.yuncode.system.mapper.SysUserMapper;
 import com.yuncode.system.service.MenuService;
 import com.yuncode.system.vo.MenuPermissionVO;
 import com.yuncode.system.vo.MenuTreeNode;
+import com.yuncode.system.vo.RouteVO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
@@ -24,8 +25,10 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -311,6 +314,142 @@ public class MenuServiceImpl implements MenuService {
     @Transactional(rollbackFor = Exception.class)
     public int copyPermissionsToChildren(Long menuId) {
         return menuPermissionMapper.copyPermissionsToChildren(menuId);
+    }
+
+    @Override
+    public List<RouteVO> getAsyncRoutes() {
+        // 1. 获取菜单树（已内置租户过滤和排序）
+        List<MenuTreeNode> menuTree = getMenuTree();
+
+        // 2. 构建菜单 → 角色编码 映射
+        List<SysMenuPermission> allPermissions;
+        try {
+            allPermissions = menuPermissionMapper.selectList(null);
+        } catch (Exception e) {
+            log.warn("查询菜单权限失败", e);
+            allPermissions = new ArrayList<>();
+        }
+
+        // 收集所有角色权限的目标 ID
+        Set<Long> roleIds = allPermissions.stream()
+                .filter(p -> p.getTargetType() != null && p.getTargetType() == 0)
+                .map(SysMenuPermission::getTargetId)
+                .collect(Collectors.toSet());
+
+        Map<Long, String> roleIdToCodeMap = new HashMap<>();
+        if (!roleIds.isEmpty()) {
+            try {
+                List<SysRole> roles = roleMapper.selectBatchIds(roleIds);
+                roleIdToCodeMap = roles.stream()
+                        .collect(Collectors.toMap(SysRole::getId, SysRole::getRoleCode));
+            } catch (Exception e) {
+                log.warn("查询角色编码失败", e);
+            }
+        }
+
+        Map<Long, List<String>> menuRolesMap = new HashMap<>();
+        for (SysMenuPermission perm : allPermissions) {
+            if (perm.getTargetType() != null && perm.getTargetType() == 0) {
+                String roleCode = roleIdToCodeMap.get(perm.getTargetId());
+                if (roleCode != null) {
+                    menuRolesMap.computeIfAbsent(perm.getMenuId(), k -> new ArrayList<>()).add(roleCode);
+                }
+            }
+        }
+
+        // 3. 转换为路由树
+        return convertMenuTreeToRoutes(menuTree, menuRolesMap);
+    }
+
+    /**
+     * 将菜单树节点列表转换为前端路由树
+     */
+    private List<RouteVO> convertMenuTreeToRoutes(List<MenuTreeNode> nodes, Map<Long, List<String>> menuRolesMap) {
+        List<RouteVO> routes = new ArrayList<>();
+        for (MenuTreeNode node : nodes) {
+            // 跳过按钮类型（menuType=2）
+            if (node.getMenuType() != null && node.getMenuType() == 2) {
+                continue;
+            }
+
+            // 跳过禁用的菜单
+            if (node.getStatus() != null && node.getStatus() != 0) {
+                continue;
+            }
+
+            RouteVO route = new RouteVO();
+
+            // path
+            route.setPath(node.getPath());
+
+            // name — 对叶子菜单从路径派生唯一名称
+            if (node.getMenuType() != null && node.getMenuType() == 1) {
+                route.setName(deriveRouteName(node.getPath(), node.getComponent()));
+            }
+
+            // component — 仅菜单类型需要
+            if (node.getMenuType() != null && node.getMenuType() == 1) {
+                route.setComponent(node.getComponent());
+            }
+
+            // meta
+            RouteVO.RouteMeta meta = new RouteVO.RouteMeta();
+            meta.setTitle(node.getMenuName());
+            meta.setIcon(node.getIcon());
+            meta.setRank(node.getSortOrder());
+            meta.setShowLink(node.getVisible() == null || node.getVisible() == 0);
+
+            // roles
+            List<String> roleCodes = menuRolesMap.get(node.getId());
+            if (roleCodes != null && !roleCodes.isEmpty()) {
+                meta.setRoles(roleCodes);
+            }
+
+            route.setMeta(meta);
+
+            // children
+            if (node.getChildren() != null && !node.getChildren().isEmpty()) {
+                List<RouteVO> childRoutes = convertMenuTreeToRoutes(node.getChildren(), menuRolesMap);
+                route.setChildren(childRoutes);
+
+                // 目录类型自动以第一个子路由作为重定向
+                if (!childRoutes.isEmpty() && node.getMenuType() == 0) {
+                    route.setRedirect(childRoutes.get(0).getPath());
+                }
+            }
+
+            routes.add(route);
+        }
+        return routes;
+    }
+
+    /**
+     * 从路径/组件路径派生出路由名称（PascalCase）供 keep-alive 使用
+     * <p>
+     * 例："/system/user/index" → "SystemUserIndex", "/workflow" → "Workflow"
+     */
+    private String deriveRouteName(String path, String component) {
+        String source = component != null ? component : path;
+        if (source == null || source.isEmpty()) return null;
+
+        // 移除前导斜杠并按 / 分割
+        String trimmed = source.startsWith("/") ? source.substring(1) : source;
+        String[] segments = trimmed.split("/");
+
+        StringBuilder sb = new StringBuilder();
+        for (String seg : segments) {
+            if (seg.isEmpty()) continue;
+            // 将 kebab-case 转换为 PascalCase
+            String[] parts = seg.split("[-_]");
+            for (String part : parts) {
+                if (part.isEmpty()) continue;
+                sb.append(Character.toUpperCase(part.charAt(0)));
+                if (part.length() > 1) {
+                    sb.append(part.substring(1));
+                }
+            }
+        }
+        return sb.length() > 0 ? sb.toString() : null;
     }
 
     @Override
