@@ -1,5 +1,5 @@
 @echo off
-REM 构建并安装应用 JAR 到 apps/lib/
+REM 构建并安装应用 JAR 到 apps/install/{appId}/lib/
 REM 用法: deploy-app.bat qms0205
 
 if "%1"=="" (
@@ -9,12 +9,13 @@ if "%1"=="" (
 )
 
 set APP=%1
+set APP_ID=com.yuncode.user.apps.%APP%
 set PROJECT_DIR=%~dp0..
 
 echo === Building app: %APP% ===
 
 cd /d "%PROJECT_DIR%\yuncode-lowcode-boot"
-call mvn package -pl "apps/install/com.yuncode.user.apps.%APP%" -am -DskipTests -q
+call mvn package -pl "apps\install\%APP_ID%" -am -DskipTests -q
 
 if %ERRORLEVEL% neq 0 (
     echo ERROR: Build failed
@@ -22,18 +23,17 @@ if %ERRORLEVEL% neq 0 (
 )
 
 REM Find the JAR file (not sources, not original)
-set APP_DIR=apps\install\com.yuncode.user.apps.%APP%
-set APP_LIB=%PROJECT_DIR%\%APP_DIR%\lib
-if not exist "%APP_LIB%" mkdir "%APP_LIB%"
+set INSTALL_DIR=%PROJECT_DIR%\yuncode-lowcode-boot\apps\install\%APP_ID%\lib
+if not exist "%INSTALL_DIR%" mkdir "%INSTALL_DIR%"
 
-for /r "%APP_DIR%\target" %%f in (*.jar) do (
+for /r "apps\install\%APP_ID%\target" %%f in (*.jar) do (
     echo %%f | findstr /v /i "sources javadoc original" >nul
     if not errorlevel 1 (
-        copy /y "%%f" "%APP_LIB%\"
-        echo === Deployed %%f --^> %APP_DIR%\lib\ ===
+        copy /y "%%f" "%INSTALL_DIR%\"
+        echo === Deployed %%f --^> apps\install\%APP_ID%\lib\ ===
         goto :done
     )
 )
 
 :done
-echo The platform will hot-load the JAR automatically (no restart needed).
+echo HotAppDeployer will hot-load the JAR automatically.
