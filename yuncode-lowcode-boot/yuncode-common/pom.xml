@@ -16,6 +16,13 @@
     <description>Common utilities and base classes for all modules</description>
 
     <dependencies>
+        <!-- Yuncode App SDK -->
+        <dependency>
+            <groupId>com.yuncode</groupId>
+            <artifactId>yuncode-platform-sdk</artifactId>
+            <version>1.0.0</version>
+        </dependency>
+
         <!-- Sa-Token 权限认证 -->
         <dependency>
             <groupId>cn.dev33</groupId>

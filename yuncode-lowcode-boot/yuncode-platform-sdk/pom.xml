@@ -11,23 +11,16 @@
         <version>1.0.0</version>
     </parent>
 
-    <artifactId>yuncode-tenant</artifactId>
-    <name>Yuncode Tenant Module</name>
-    <description>Tenant Management for Multi-Tenant SaaS</description>
+    <artifactId>yuncode-platform-sdk</artifactId>
+    <name>Yuncode Platform SDK</name>
+    <description>SDK for secondary developers — pure Java, no framework dependency</description>
 
     <dependencies>
-        <!-- Common Module -->
+        <!-- Lombok (only dependency) -->
         <dependency>
-            <groupId>com.yuncode</groupId>
-            <artifactId>yuncode-common</artifactId>
-            <version>1.0.0</version>
-        </dependency>
-
-        <!-- Yuncode App SDK -->
-        <dependency>
-            <groupId>com.yuncode</groupId>
-            <artifactId>yuncode-platform-sdk</artifactId>
-            <version>1.0.0</version>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <optional>true</optional>
         </dependency>
     </dependencies>
 </project>

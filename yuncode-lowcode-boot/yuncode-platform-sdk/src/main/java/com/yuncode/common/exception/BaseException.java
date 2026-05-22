@@ -1,7 +1,6 @@
 package com.yuncode.common.exception;
 
 import lombok.Getter;
-import org.springframework.util.StringUtils;
 
 /**
  * 基础异常类
@@ -126,7 +125,7 @@ public class BaseException extends RuntimeException {
      * 获取完整的错误消息（包含详情）
      */
     public String getFullMessage() {
-        if (StringUtils.hasText(detail)) {
+        if (detail != null && !detail.isBlank()) {
             return message + ": " + detail;
         }
         return message;

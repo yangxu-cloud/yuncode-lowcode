@@ -1,7 +1,9 @@
-# 应用目录
+# 应用目录（忽略 JAR 和编译产物，保留 POM 和源码）
 apps/install/*
 apps/uninstall/*
 apps/history/*
 !apps/install/.gitkeep
 !apps/uninstall/.gitkeep
 !apps/history/.gitkeep
+!apps/install/*/pom.xml
+!apps/install/*/src/

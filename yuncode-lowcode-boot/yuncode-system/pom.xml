@@ -23,6 +23,13 @@
             <version>1.0.0</version>
         </dependency>
 
+        <!-- Yuncode App SDK -->
+        <dependency>
+            <groupId>com.yuncode</groupId>
+            <artifactId>yuncode-platform-sdk</artifactId>
+            <version>1.0.0</version>
+        </dependency>
+
         <!-- Tenant Module -->
         <dependency>
             <groupId>com.yuncode</groupId>
