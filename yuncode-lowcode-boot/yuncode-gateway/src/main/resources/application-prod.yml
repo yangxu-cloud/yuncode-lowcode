@@ -1,0 +1,5 @@
+# 生产环境配置 - 使用独立 Nacos 集群
+nacos:
+  embedded:
+    enabled: false
+  server-addr: localhost:8848  # 替换为实际的 Nacos 集群地址

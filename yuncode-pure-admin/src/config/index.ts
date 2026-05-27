@@ -57,7 +57,7 @@ const responsiveStorageNameSpace = () => getConfig().ResponsiveStorageNameSpace;
  */
 export const yuncodeConfig = {
   // Token 名称（与后端 sa-token.token-name 一致）
-  tokenName: import.meta.env.VITE_TOKEN_NAME || 'yuncode-token',
+  tokenName: import.meta.env.VITE_TOKEN_NAME || 'token',
   // API 基础路径
   apiBasePath: import.meta.env.VITE_API_BASE_PREFIX || '/api',
   // 是否启用多用户登录

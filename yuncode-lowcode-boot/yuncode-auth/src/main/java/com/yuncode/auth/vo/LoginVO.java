@@ -59,4 +59,14 @@ public class LoginVO implements Serializable {
      * 角色编码
      */
     private String roleCode;
+
+    /**
+     * 权限标识列表
+     */
+    private java.util.List<String> permissions;
+
+    /**
+     * 是否需要修改密码（首次登录使用默认密码时为 true）
+     */
+    private Boolean requireChange;
 }

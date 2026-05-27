@@ -1,0 +1,9 @@
+# 开发环境配置
+nacos:
+  discovery:
+    # 开发环境默认不启用 Nacos
+    enabled: false
+
+gateway:
+  backend:
+    admin-url: http://localhost:8080

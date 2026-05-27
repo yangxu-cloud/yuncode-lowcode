@@ -22,7 +22,8 @@ const appDevRoutes: RouteRecordRaw = {
         icon: "ep/monitor",
         title: "routes.application",
         i18nKey: "routes.application",
-        showLink: true
+        showLink: true,
+        keepAlive: true
       }
     },
     {
@@ -55,6 +56,16 @@ const appDevRoutes: RouteRecordRaw = {
         icon: "ep/tools",
         title: "routes.systemService",
         i18nKey: "routes.systemService",
+        showLink: true
+      }
+    },
+    {
+      path: "/appDev/form-designer-test",
+      name: "FormDesignerTest",
+      component: () => import("@/views/app-dev/form-designer-test/index.vue"),
+      meta: {
+        icon: "ep/magic-stick",
+        title: "表单设计器测试",
         showLink: true
       }
     }

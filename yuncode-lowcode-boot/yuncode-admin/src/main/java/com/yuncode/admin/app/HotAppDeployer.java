@@ -143,6 +143,13 @@ public class HotAppDeployer implements ApplicationContextAware {
     // ==================== 公开方法 ====================
 
     /**
+     * 获取当前解析后的应用安装目录路径
+     */
+    public String getAppInstallDir() {
+        return this.appInstallDir;
+    }
+
+    /**
      * 安装一个 App 目录（加载其 lib/ 下所有 JAR，注册所有 Spring Bean）
      */
     public synchronized void installApp(File appDir) {

@@ -1,5 +1,6 @@
 import { getPluginsList } from "./build/plugins";
 import { include, exclude } from "./build/optimize";
+import { resolve } from "path";
 import { type UserConfigExport, type ConfigEnv, loadEnv } from "vite";
 import {
   root,
@@ -15,14 +16,22 @@ export default ({ mode }: ConfigEnv): UserConfigExport => {
   return {
     base: VITE_PUBLIC_PATH,
     root,
+    esbuild: {
+      exclude: /\.(jsx|tsx)$/
+    },
     resolve: {
-      alias
+      alias,
+      modules: [root + "/node_modules", "node_modules"]
     },
     // 服务端渲染
     server: {
       // 端口号
       port: VITE_PORT,
       host: "0.0.0.0",
+      // 允许访问项目根目录外的文件（form-create 源码在项目外）
+      fs: {
+        allow: [root, resolve(root, "../form-create")]
+      },
       // 本地跨域代理 https://cn.vitejs.dev/config/server-options.html#server-proxy
       proxy: {
         "/api": {

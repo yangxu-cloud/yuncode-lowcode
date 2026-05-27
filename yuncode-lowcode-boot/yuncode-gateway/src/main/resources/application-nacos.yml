@@ -1,0 +1,31 @@
+# 启用 Nacos 的配置示例
+# 使用方式：设置 spring.profiles.active=nacos
+# 或在 application.yml 中设置 nacos.discovery.enabled=true
+
+nacos:
+  discovery:
+    # 启用 Nacos 服务发现
+    enabled: true
+    server-addr: localhost:8848
+    namespace: public
+    group: YUNCODE_GROUP
+    heart-beat-interval: 5000
+    heart-beat-timeout: 15000
+    ip-delete-timeout: 30000
+
+spring:
+  cloud:
+    gateway:
+      discovery:
+        locator:
+          # 启用从 Nacos 动态创建路由
+          enabled: true
+          lower-case-service-id: true
+      routes:
+        # 使用服务发现的路由
+        - id: yuncode-admin
+          uri: lb://yuncode-admin
+          predicates:
+            - Path=/api/**
+          filters:
+            - StripPrefix=0

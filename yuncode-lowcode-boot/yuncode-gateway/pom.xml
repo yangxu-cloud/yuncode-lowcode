@@ -16,11 +16,6 @@
     <name>Yuncode Gateway</name>
     <description>Yuncode LowCode Platform Gateway</description>
 
-    <properties>
-        <spring-cloud.version>2022.0.4</spring-cloud.version>
-        <spring-cloud-alibaba.version>2022.0.0.0</spring-cloud-alibaba.version>
-    </properties>
-
     <dependencies>
         <!-- Spring Cloud Gateway (基于 WebFlux/Netty) -->
         <dependency>
@@ -41,15 +36,19 @@
             <optional>true</optional>
         </dependency>
 
-        <!-- Yuncode Common (排除 spring-boot-starter-web 避免 WebMvc 与 WebFlux 冲突) -->
+        <!-- Yuncode Common (排除 Sa-Token，Gateway 使用 JJWT 自行验证) -->
         <dependency>
             <groupId>com.yuncode</groupId>
             <artifactId>yuncode-common</artifactId>
             <version>1.0.0</version>
             <exclusions>
                 <exclusion>
-                    <groupId>org.springframework.boot</groupId>
-                    <artifactId>spring-boot-starter-web</artifactId>
+                    <groupId>cn.dev33</groupId>
+                    <artifactId>sa-token-spring-boot3-starter</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>cn.dev33</groupId>
+                    <artifactId>sa-token-jwt</artifactId>
                 </exclusion>
             </exclusions>
         </dependency>
@@ -59,6 +58,25 @@
             <groupId>com.yuncode</groupId>
             <artifactId>yuncode-platform-sdk</artifactId>
             <version>1.0.0</version>
+        </dependency>
+
+        <!-- JWT 解析 (用于 Gateway 层 token 验证) -->
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-api</artifactId>
+            <version>0.11.5</version>
+        </dependency>
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-impl</artifactId>
+            <version>0.11.5</version>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-jackson</artifactId>
+            <version>0.11.5</version>
+            <scope>runtime</scope>
         </dependency>
 
         <!-- Lombok -->
@@ -76,30 +94,14 @@
         </dependency>
     </dependencies>
 
-    <dependencyManagement>
-        <dependencies>
-            <dependency>
-                <groupId>org.springframework.cloud</groupId>
-                <artifactId>spring-cloud-dependencies</artifactId>
-                <version>${spring-cloud.version}</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-            <dependency>
-                <groupId>com.alibaba.cloud</groupId>
-                <artifactId>spring-cloud-alibaba-dependencies</artifactId>
-                <version>${spring-cloud-alibaba.version}</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-        </dependencies>
-    </dependencyManagement>
-
     <build>
         <plugins>
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
+                <configuration>
+                    <skip>false</skip>
+                </configuration>
             </plugin>
         </plugins>
     </build>

@@ -1,5 +1,6 @@
 package com.yuncode.auth.controller;
 
+import cn.dev33.satoken.stp.StpLogic;
 import cn.dev33.satoken.stp.StpUtil;
 import com.yuncode.auth.dto.LoginDTO;
 import com.yuncode.auth.service.AdminLoginService;
@@ -16,6 +17,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 /**
  * 认证控制器
  */
@@ -30,6 +33,7 @@ public class AuthController {
     private final AdminLoginService adminLoginService;
     private final UserLoginService userLoginService;
     private final TenantLoginService tenantLoginService;
+    private final List<StpLogic> stpLogics;
 
     /**
      * 管理员登录
@@ -126,5 +130,41 @@ public class AuthController {
     public Result<LoginVO> getCurrentUserInfo() {
         LoginVO userInfo = authService.getCurrentUserInfo();
         return Result.success("获取用户信息成功", userInfo);
+    }
+
+    /**
+     * 刷新 Token
+     * 验证当前 token 并重新签发（延长有效期）
+     */
+    @Operation(summary = "刷新 Token")
+    @PostMapping("/refresh")
+    public Result<LoginVO> refresh(HttpServletRequest request) {
+        String tokenValue = request.getHeader("token");
+        if (tokenValue == null || tokenValue.isEmpty()) {
+            return Result.error(401, "缺少 token");
+        }
+
+        for (StpLogic stp : stpLogics) {
+            try {
+                // 尝试验证 token 是否属于此 StpLogic
+                Object loginId = stp.getLoginIdByToken(tokenValue);
+                if (loginId != null) {
+                    // 重新登录以延长 token 有效期
+                    stp.logoutByTokenValue(tokenValue);
+                    stp.login(loginId);
+
+                    LoginVO loginVO = new LoginVO();
+                    loginVO.setToken(stp.getTokenValue());
+                    loginVO.setTokenName(stp.getTokenName());
+                    loginVO.setUserId(stp.getLoginIdAsLong());
+                    log.info("Token 刷新成功: userId={}, loginType={}", loginId, stp.getLoginType());
+                    return Result.success("Token 刷新成功", loginVO);
+                }
+            } catch (Exception e) {
+                // 当前 StpLogic 不认领此 token，继续尝试下一个
+                log.debug("StpLogic[{}] 不认领此 token: {}", stp.getLoginType(), e.getMessage());
+            }
+        }
+        return Result.error(401, "token 无效或已过期");
     }
 }

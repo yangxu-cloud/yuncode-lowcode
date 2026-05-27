@@ -3,6 +3,7 @@ package com.yuncode.auth.controller;
 import cn.dev33.satoken.stp.StpUtil;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.context.annotation.Profile;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -11,7 +12,8 @@ import org.springframework.web.bind.annotation.RestController;
 /**
  * Token 调试控制器
  */
-@Tag(name = "Token调试", description = "Token调试相关接口")
+@Profile("dev")
+@Tag(name = "Token调试", description = "Token调试相关接口（仅 dev 环境）")
 @RestController
 @RequestMapping("/auth/debug")
 public class TokenDebugController {

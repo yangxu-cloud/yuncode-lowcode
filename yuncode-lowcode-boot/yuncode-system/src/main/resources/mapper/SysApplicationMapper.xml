@@ -39,4 +39,22 @@
           AND deleted = 0
     </select>
 
+    <!--
+        根据 appId 和租户ID查询应用
+    -->
+    <select id="selectByAppId" resultType="com.yuncode.system.entity.SysApplication">
+        SELECT *
+        FROM sys_application
+        WHERE app_id = #{appId}
+          AND tenant_id = #{tenantId}
+          AND deleted = 0
+    </select>
+
+    <!--
+        物理删除（彻底删除）
+    -->
+    <delete id="physicalDeleteById">
+        DELETE FROM sys_application WHERE id = #{id}
+    </delete>
+
 </mapper>

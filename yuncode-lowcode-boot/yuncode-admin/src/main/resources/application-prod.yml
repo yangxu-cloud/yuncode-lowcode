@@ -13,7 +13,7 @@ spring:
 
 mybatis-plus:
   configuration:
-    log-impl: org.apache.ibatis.logging.log4j2.Log4j2Impl
+    log-impl: org.apache.ibatis.logging.slf4j.Slf4jImpl
 
 knife4j:
   production: true

@@ -1,6 +1,7 @@
 package com.yuncode.system.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.yuncode.common.utils.SecurityUtil;
 import com.yuncode.system.entity.SysRole;
 import com.yuncode.system.entity.SysRoleUser;
 import com.yuncode.system.entity.SysUser;
@@ -139,6 +140,7 @@ public class SysRoleServiceImpl implements SysRoleService {
         if (role == null) {
             throw new RuntimeException("角色不存在");
         }
+        checkTenantAccess(role);
 
         RoleDetailVO detail = new RoleDetailVO();
         BeanUtils.copyProperties(role, detail);
@@ -230,6 +232,7 @@ public class SysRoleServiceImpl implements SysRoleService {
         if (existing == null) {
             throw new RuntimeException("角色不存在");
         }
+        checkTenantAccess(existing);
 
         role.setId(id);
         role.setUpdateTime(LocalDateTime.now());
@@ -244,6 +247,12 @@ public class SysRoleServiceImpl implements SysRoleService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void deleteRole(Long id) {
+        SysRole role = roleMapper.selectById(id);
+        if (role == null) {
+            throw new RuntimeException("角色不存在");
+        }
+        checkTenantAccess(role);
+
         // 检查是否有子角色
         Long count = roleMapper.selectCount(
             new LambdaQueryWrapper<SysRole>()
@@ -276,5 +285,19 @@ public class SysRoleServiceImpl implements SysRoleService {
         node.setSortOrder(role.getSortOrder());
         node.setStatus(role.getStatus());
         return node;
+    }
+
+    /**
+     * 校验租户访问权限：非管理员只能操作自己租户的数据
+     */
+    private void checkTenantAccess(SysRole role) {
+        if (!SecurityUtil.isPlatformAdmin()) {
+            Long tenantId = SecurityUtil.getTenantIdOrNull();
+            if (tenantId != null && !tenantId.equals(role.getTenantId())) {
+                log.warn("跨租户访问角色被拦截: roleId={}, roleTenantId={}, userTenantId={}",
+                        role.getId(), role.getTenantId(), tenantId);
+                throw new RuntimeException("角色不存在");
+            }
+        }
     }
 }

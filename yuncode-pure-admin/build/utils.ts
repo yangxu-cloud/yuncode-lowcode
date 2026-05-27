@@ -39,7 +39,26 @@ const pathResolve = (dir = ".", metaUrl = import.meta.url) => {
 const alias: Record<string, string> = {
   "@": pathResolve("../src"),
   "@build": pathResolve(),
-  "@mock": pathResolve("../mock")
+  "@mock": pathResolve("../mock"),
+  "@form-create/core": pathResolve("../../form-create/packages/core"),
+  "@form-create/element-ui": pathResolve("../../form-create/packages/element-ui"),
+  "@form-create/designer": pathResolve("../../form-create/packages/designer"),
+  "@form-create/utils": pathResolve("../../form-create/packages/utils"),
+  "@form-create/component-wangeditor": resolve(root, "node_modules/@form-create/component-wangeditor"),
+  "@form-create/component-elm-checkbox": resolve(root, "node_modules/@form-create/component-elm-checkbox"),
+  "@form-create/component-elm-frame": resolve(root, "node_modules/@form-create/component-elm-frame"),
+  "@form-create/component-elm-group": resolve(root, "node_modules/@form-create/component-elm-group"),
+  "@form-create/component-elm-radio": resolve(root, "node_modules/@form-create/component-elm-radio"),
+  "@form-create/component-elm-select": resolve(root, "node_modules/@form-create/component-elm-select"),
+  "@form-create/component-elm-tree": resolve(root, "node_modules/@form-create/component-elm-tree"),
+  "@form-create/component-elm-upload": resolve(root, "node_modules/@form-create/component-elm-upload"),
+  "@form-create/component-subform": resolve(root, "node_modules/@form-create/component-subform"),
+  "vuedraggable/src/vuedraggable": resolve(root, "node_modules/vuedraggable/src/vuedraggable"),
+  "codemirror": resolve(root, "node_modules/codemirror"),
+  "js-beautify": resolve(root, "node_modules/js-beautify"),
+  "marked": resolve(root, "node_modules/marked"),
+  "signature_pad": resolve(root, "node_modules/signature_pad"),
+  "element-plus": resolve(root, "node_modules/element-plus")
 };
 
 /** 平台的名称、版本、运行所需的`node`和`pnpm`版本、依赖、最后构建时间的类型提示 */

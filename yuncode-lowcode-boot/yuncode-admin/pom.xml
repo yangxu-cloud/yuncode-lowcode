@@ -37,13 +37,6 @@
             <version>1.0.0</version>
         </dependency>
 
-        <!-- Tenant Module -->
-        <dependency>
-            <groupId>com.yuncode</groupId>
-            <artifactId>yuncode-tenant</artifactId>
-            <version>1.0.0</version>
-        </dependency>
-
         <!-- Auth Module -->
         <dependency>
             <groupId>com.yuncode</groupId>
@@ -100,6 +93,34 @@
             <artifactId>spring-cloud-starter-alibaba-nacos-discovery</artifactId>
             <optional>true</optional>
         </dependency>
+
+
+
+
+
+
+
+
+
+
+
+
+
+        <!-- App Module: yun20260523451140 -->
+    <dependency>
+        <groupId>com.yuncode</groupId>
+        <artifactId>yun20260523451140</artifactId>
+        <version>1.0.0</version>
+    </dependency>
+
+        <!-- App Module: yun20260523774785 -->
+    <dependency>
+        <groupId>com.yuncode</groupId>
+        <artifactId>yun20260523774785</artifactId>
+        <version>1.0.0</version>
+    </dependency>
+
+
     </dependencies>
 
     <build>

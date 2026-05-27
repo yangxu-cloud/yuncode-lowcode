@@ -46,4 +46,15 @@ public interface SysApplicationMapper extends BaseMapper<SysApplication> {
      */
     @InterceptorIgnore(tenantLine = "true")
     boolean existsByAppId(@Param("appId") String appId, @Param("tenantId") Long tenantId);
+
+    /**
+     * 根据 appId（应用标识）和租户ID查询应用
+     */
+    @InterceptorIgnore(tenantLine = "true")
+    SysApplication selectByAppId(@Param("appId") String appId, @Param("tenantId") Long tenantId);
+
+    /**
+     * 物理删除（彻底删除，不经过逻辑删除）
+     */
+    int physicalDeleteById(@Param("id") Long id);
 }

@@ -1,0 +1,1164 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>业务对象配置 - 纠正措施子表</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #eef2f6 100%);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", "Noto Sans", system-ui, sans-serif;
+            color: #1a1a2e;
+            line-height: 1.5;
+            min-height: 100vh;
+        }
+
+        .navbar {
+            background: rgba(255, 255, 255, 0.92);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(226, 232, 240, 0.6);
+            padding: 0 32px;
+            height: 64px;
+            display: flex;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .back-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #475569;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            padding: 8px 14px;
+            border-radius: 40px;
+            transition: all 0.2s ease;
+        }
+
+        .back-btn:hover {
+            background: #f1f5f9;
+            color: #3b82f6;
+            transform: translateX(-2px);
+        }
+
+        .page-title {
+            font-size: 20px;
+            font-weight: 600;
+            margin-left: 12px;
+            padding-left: 16px;
+            border-left: 2px solid #e2e8f0;
+            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .page-sub {
+            margin-left: 12px;
+            font-size: 12px;
+            font-weight: 500;
+            color: #3b82f6;
+            background: rgba(59, 130, 246, 0.1);
+            padding: 4px 12px;
+            border-radius: 40px;
+        }
+
+        .container {
+            max-width: 1440px;
+            margin: 28px auto;
+            padding: 0 28px;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.98);
+            border-radius: 24px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02);
+            margin-bottom: 24px;
+            overflow: hidden;
+            border: 1px solid rgba(226, 232, 240, 0.4);
+        }
+
+        .card-header {
+            padding: 18px 24px;
+            border-bottom: 1px solid rgba(226, 232, 240, 0.6);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(248, 250, 252, 0.6);
+        }
+
+        .card-header h3 {
+            font-size: 15px;
+            font-weight: 600;
+            color: #1e293b;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .card-body {
+            padding: 24px;
+        }
+
+        .info-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px 48px;
+        }
+        .info-item {
+            display: flex;
+            align-items: baseline;
+            gap: 16px;
+            background: #f8fafc;
+            padding: 8px 20px 8px 16px;
+            border-radius: 16px;
+            border: 1px solid #eef2ff;
+        }
+        .info-label {
+            font-size: 12px;
+            font-weight: 500;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .info-value {
+            font-size: 14px;
+            color: #1e293b;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .info-value code {
+            background: #fff;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-family: 'SF Mono', 'Fira Code', monospace;
+            font-size: 12px;
+            color: #3b82f6;
+            border: 1px solid #e2e8f0;
+        }
+        .copy-btn {
+            background: none;
+            border: none;
+            color: #3b82f6;
+            cursor: pointer;
+            font-size: 12px;
+            padding: 4px 10px;
+            border-radius: 20px;
+            transition: all 0.2s;
+            font-weight: 500;
+        }
+        .copy-btn:hover {
+            background: #eff6ff;
+        }
+        .edit-hint {
+            font-size: 11px;
+            color: #94a3b8;
+            margin-left: 8px;
+            font-weight: normal;
+        }
+
+        .toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        .toolbar-left {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex: 1;
+        }
+        .search-box {
+            display: flex;
+            align-items: center;
+            background: #fff;
+            border-radius: 48px;
+            padding: 6px 16px;
+            border: 1px solid #e2e8f0;
+            width: 280px;
+            transition: all 0.2s;
+        }
+        .search-box:focus-within {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+        .search-box input {
+            border: none;
+            background: none;
+            padding: 8px 10px;
+            font-size: 13px;
+            outline: none;
+            width: 100%;
+        }
+        .tool-btn {
+            padding: 8px 18px;
+            border-radius: 40px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            color: #475569;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .tool-btn:hover {
+            background: #f8fafc;
+            transform: translateY(-1px);
+        }
+        .delete-tool-btn {
+            color: #ef4444;
+            border-color: #fecaca;
+        }
+        .delete-tool-btn:hover {
+            background: #fef2f2;
+            color: #dc2626;
+        }
+        .add-btn {
+            background: linear-gradient(105deg, #3b82f6 0%, #2563eb 100%);
+            color: #fff;
+            border: none;
+            box-shadow: 0 2px 6px rgba(37, 99, 235, 0.2);
+        }
+        .add-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+            border-radius: 20px;
+        }
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+        .data-table th {
+            text-align: left;
+            padding: 14px 12px;
+            background: #f8fafc;
+            color: #475569;
+            font-weight: 600;
+            font-size: 12px;
+            border-bottom: 1.5px solid #e2e8f0;
+        }
+        .data-table td {
+            padding: 14px 12px;
+            border-bottom: 1px solid #f1f5f9;
+            color: #334155;
+        }
+        .data-table tr:hover {
+            background: #fafcff;
+        }
+        .data-table tr.selected {
+            background: linear-gradient(90deg, #eff6ff 0%, #f0f9ff 100%);
+        }
+        .drag-handle {
+            cursor: grab;
+            color: #cbd5e1;
+        }
+        .inline-select, .inline-input {
+            padding: 6px 12px;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 12px;
+            background: #fff;
+            transition: all 0.2s;
+        }
+        .inline-select:focus, .inline-input:focus {
+            outline: none;
+            border-color: #3b82f6;
+        }
+        /* 名称输入框 - 可编辑样式 */
+        .name-input {
+            padding: 6px 10px;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 12px;
+            font-family: 'SF Mono', monospace;
+            background: #fff;
+            width: 100px;
+        }
+        .name-input:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+        }
+        /* 已保存后不可编辑的样式 */
+        .name-display {
+            font-family: 'SF Mono', monospace;
+            font-size: 12px;
+            color: #1e293b;
+            background: #f8fafc;
+            padding: 4px 8px;
+            border-radius: 8px;
+            display: inline-block;
+        }
+        .checkbox-col {
+            text-align: center;
+            width: 40px;
+        }
+        .checkbox-col input {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+            accent-color: #3b82f6;
+        }
+        .row-checkbox {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+            accent-color: #3b82f6;
+        }
+
+        .index-section {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+        .index-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            flex: 1;
+        }
+        .index-tag {
+            background: linear-gradient(135deg, #eff6ff 0%, #eef2ff 100%);
+            color: #2563eb;
+            padding: 6px 16px;
+            border-radius: 40px;
+            font-size: 12px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border: 1px solid rgba(59, 130, 246, 0.15);
+        }
+        .index-tag .remove {
+            cursor: pointer;
+            font-size: 16px;
+            color: #64748b;
+        }
+        .index-tag .remove:hover {
+            color: #ef4444;
+        }
+        .add-index-btn {
+            background: none;
+            border: 1px dashed #cbd5e1;
+            padding: 6px 18px;
+            border-radius: 40px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 500;
+            color: #64748b;
+            transition: all 0.2s;
+        }
+        .add-index-btn:hover {
+            border-color: #3b82f6;
+            color: #3b82f6;
+            background: #eff6ff;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            visibility: hidden;
+            opacity: 0;
+            transition: all 0.2s ease;
+        }
+        .modal-overlay.active {
+            visibility: visible;
+            opacity: 1;
+        }
+        .modal {
+            background: #fff;
+            border-radius: 24px;
+            width: 500px;
+            max-width: 90%;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            overflow: hidden;
+            transform: scale(0.95);
+            transition: transform 0.2s ease;
+        }
+        .modal-overlay.active .modal {
+            transform: scale(1);
+        }
+        .modal-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .modal-header h3 {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1e293b;
+        }
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #94a3b8;
+        }
+        .modal-body {
+            padding: 24px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 8px;
+        }
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 14px;
+            outline: none;
+            transition: all 0.2s;
+        }
+        .form-group input:focus, .form-group select:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+        .remark-hint {
+            font-size: 12px;
+            color: #94a3b8;
+            margin-top: 8px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        .remark-hint span {
+            background: #f1f5f9;
+            padding: 2px 8px;
+            border-radius: 16px;
+        }
+        .modal-footer {
+            padding: 16px 24px 24px;
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            border-top: 1px solid #e2e8f0;
+        }
+        .modal-btn {
+            padding: 8px 20px;
+            border-radius: 40px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            border: none;
+        }
+        .modal-btn-cancel {
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            color: #475569;
+        }
+        .modal-btn-confirm {
+            background: #3b82f6;
+            color: #fff;
+        }
+
+        .action-buttons {
+            display: flex;
+            justify-content: flex-end;
+            gap: 16px;
+            margin-top: 24px;
+        }
+        .btn {
+            padding: 10px 32px;
+            border-radius: 48px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+        }
+        .btn-primary {
+            background: linear-gradient(105deg, #3b82f6 0%, #2563eb 100%);
+            color: #fff;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+        }
+        .btn-default {
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            color: #475569;
+        }
+        .btn-default:hover {
+            background: #f8fafc;
+        }
+    </style>
+</head>
+<body>
+
+<div class="navbar">
+    <div class="back-btn" id="backBtn">
+        <span>←</span>
+        <span>返回</span>
+    </div>
+    <div class="page-title">纠正措施子表</div>
+    <div class="page-sub">JZCS</div>
+</div>
+
+<div class="container">
+    <!-- 基本信息卡片 -->
+    <div class="card">
+        <div class="card-header">
+            <h3>📋 基本信息</h3>
+        </div>
+        <div class="card-body">
+            <div class="info-grid">
+                <div class="info-item">
+                    <span class="info-label">标题名称</span>
+                    <div class="info-value">
+                        纠正措施子表
+                        <span class="edit-hint">（从台账编辑）</span>
+                    </div>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">存储名称</span>
+                    <div class="info-value">
+                        <code>BO_EU_QMS_P_JJJZCS_FK_JZCS</code>
+                        <button class="copy-btn" onclick="copyToClipboard('BO_EU_QMS_P_JJJZCS_FK_JZCS')">📋 复制</button>
+                    </div>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">业务编码</span>
+                    <div class="info-value">
+                        <code>JZCS</code>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 字段列表卡片 -->
+    <div class="card">
+        <div class="card-header">
+            <h3>📊 字段列表</h3>
+        </div>
+        <div class="card-body">
+            <div class="toolbar">
+                <div class="toolbar-left">
+                    <div class="search-box">
+                        <span>🔍</span>
+                        <input type="text" placeholder="搜索字段名称、标题..." id="searchInput">
+                    </div>
+                    <button class="tool-btn" id="referenceBtn">📎 引用</button>
+                    <button class="tool-btn delete-tool-btn" id="batchDeleteBtn">🗑️ 删除</button>
+                </div>
+                <button class="tool-btn add-btn" id="addFieldBtn">+ 添加字段</button>
+            </div>
+
+            <div class="table-wrapper">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th class="checkbox-col"><input type="checkbox" id="selectAllCheckbox"></th>
+                            <th style="width: 30px;"></th>
+                            <th>名称</th>
+                            <th>标题</th>
+                            <th style="width: 100px;">类型</th>
+                            <th>长度</th>
+                            <th>组件</th>
+                            <th>默认值</th>
+                            <th class="checkbox-col">必填</th>
+                            <th class="checkbox-col">可见</th>
+                            <th class="checkbox-col">只读</th>
+                        </tr>
+                    </thead>
+                    <tbody id="fieldsTableBody">
+                        <tr data-field="JZCS" data-saved="true">
+                            <td class="checkbox-col"><input type="checkbox" class="row-checkbox"></td>
+                            <td class="drag-handle">⋮⋮</td>
+                            <td><span class="name-display">JZCS</span></td>
+                            <td>纠正措施</td>
+                            <td><select class="inline-select type-select"><option>文本</option><option>数字</option><option>日期</option><option selected>大文本</option></select></td>
+                            <td><input class="inline-input" value="2000" style="width:60px"></td>
+                            <td><select class="inline-select"><option>多行文本</option><option>富文本</option></select></td>
+                            <td><input class="inline-input" placeholder="默认值"></td>
+                            <td class="checkbox-col"><input type="checkbox" class="required-checkbox"></td>
+                            <td class="checkbox-col"><input type="checkbox" class="visible-checkbox" checked></td>
+                            <td class="checkbox-col"><input type="checkbox" class="readonly-checkbox"></td>
+                        </tr>
+                        <tr data-field="FZDW" data-saved="true">
+                            <td class="checkbox-col"><input type="checkbox" class="row-checkbox"></td>
+                            <td class="drag-handle">⋮⋮</td>
+                            <td><span class="name-display">FZDW</span></td>
+                            <td>负责单位</td>
+                            <td><select class="inline-select type-select"><option selected>文本</option><option>数字</option><option>日期</option><option>大文本</option></select></td>
+                            <td><input class="inline-input" value="128" style="width:60px"></td>
+                            <td><select class="inline-select"><option>下拉选择</option><option>单行文本</option></select></td>
+                            <td><input class="inline-input" value="@departmentName"></td>
+                            <td class="checkbox-col"><input type="checkbox" class="required-checkbox"></td>
+                            <td class="checkbox-col"><input type="checkbox" class="visible-checkbox" checked></td>
+                            <td class="checkbox-col"><input type="checkbox" class="readonly-checkbox"></td>
+                        </tr>
+                        <tr data-field="FZDWID" data-saved="true">
+                            <td class="checkbox-col"><input type="checkbox" class="row-checkbox"></td>
+                            <td class="drag-handle">⋮⋮</td>
+                            <td><span class="name-display">FZDWID</span></td>
+                            <td>负责单位ID</td>
+                            <td><select class="inline-select type-select"><option selected>文本</option><option>数字</option><option>日期</option><option>大文本</option></select></td>
+                            <td><input class="inline-input" value="128" style="width:60px"></td>
+                            <td><select class="inline-select"><option>隐藏</option><option>单行文本</option></select></td>
+                            <td><input class="inline-input" value="@departmentId"></td>
+                            <td class="checkbox-col"><input type="checkbox" class="required-checkbox"></td>
+                            <td class="checkbox-col"><input type="checkbox" class="visible-checkbox"></td>
+                            <td class="checkbox-col"><input type="checkbox" class="readonly-checkbox" checked></td>
+                        </tr>
+                        <tr data-field="FZR" data-saved="true">
+                            <td class="checkbox-col"><input type="checkbox" class="row-checkbox"></td>
+                            <td class="drag-handle">⋮⋮</td>
+                            <td><span class="name-display">FZR</span></td>
+                            <td>制定者</td>
+                            <td><select class="inline-select type-select"><option selected>文本</option><option>数字</option><option>日期</option><option>大文本</option></select></td>
+                            <td><input class="inline-input" value="128" style="width:60px"></td>
+                            <td><select class="inline-select"><option>下拉选择</option><option>人员选择</option></select></td>
+                            <td><input class="inline-input" value="@userName()"></td>
+                            <td class="checkbox-col"><input type="checkbox" class="required-checkbox"></td>
+                            <td class="checkbox-col"><input type="checkbox" class="visible-checkbox" checked></td>
+                            <td class="checkbox-col"><input type="checkbox" class="readonly-checkbox"></td>
+                        </tr>
+                        <tr data-field="FZRID" data-saved="true">
+                            <td class="checkbox-col"><input type="checkbox" class="row-checkbox"></td>
+                            <td class="drag-handle">⋮⋮</td>
+                            <td><span class="name-display">FZRID</span></td>
+                            <td>制定者ID</td>
+                            <td><select class="inline-select type-select"><option selected>文本</option><option>数字</option><option>日期</option><option>大文本</option></select></td>
+                            <td><input class="inline-input" value="128" style="width:60px"></td>
+                            <td><select class="inline-select"><option>隐藏</option><option>单行文本</option></select></td>
+                            <td><input class="inline-input" value="@uid()"></td>
+                            <td class="checkbox-col"><input type="checkbox" class="required-checkbox"></td>
+                            <td class="checkbox-col"><input type="checkbox" class="visible-checkbox"></td>
+                            <td class="checkbox-col"><input type="checkbox" class="readonly-checkbox" checked></td>
+                        </tr>
+                        <tr data-field="JHWCSJ" data-saved="true">
+                            <td class="checkbox-col"><input type="checkbox" class="row-checkbox"></td>
+                            <td class="drag-handle">⋮⋮</td>
+                            <td><span class="name-display">JHWCSJ</span></td>
+                            <td>计划完成时间</td>
+                            <td><select class="inline-select type-select"><option>文本</option><option>数字</option><option selected>日期</option><option>大文本</option></select></td>
+                            <td><input class="inline-input" value="128" style="width:60px"></td>
+                            <td><select class="inline-select"><option>日期选择</option><option>日期时间</option></select></td>
+                            <td><input class="inline-input" placeholder="默认值"></td>
+                            <td class="checkbox-col"><input type="checkbox" class="required-checkbox"></td>
+                            <td class="checkbox-col"><input type="checkbox" class="visible-checkbox" checked></td>
+                            <td class="checkbox-col"><input type="checkbox" class="readonly-checkbox"></td>
+                        </tr>
+                        <tr data-field="WCQK" data-saved="true">
+                            <td class="checkbox-col"><input type="checkbox" class="row-checkbox"></td>
+                            <td class="drag-handle">⋮⋮</td>
+                            <td><span class="name-display">WCQK</span></td>
+                            <td>完成情况</td>
+                            <td><select class="inline-select type-select"><option>文本</option><option>数字</option><option>日期</option><option selected>大文本</option></select></td>
+                            <td><input class="inline-input" value="2000" style="width:60px"></td>
+                            <td><select class="inline-select"><option>多行文本</option><option>富文本</option></select></td>
+                            <td><input class="inline-input" placeholder="默认值"></td>
+                            <td class="checkbox-col"><input type="checkbox" class="required-checkbox"></td>
+                            <td class="checkbox-col"><input type="checkbox" class="visible-checkbox" checked></td>
+                            <td class="checkbox-col"><input type="checkbox" class="readonly-checkbox"></td>
+                        </tr>
+                        <tr data-field="WCSJ" data-saved="true">
+                            <td class="checkbox-col"><input type="checkbox" class="row-checkbox"></td>
+                            <td class="drag-handle">⋮⋮</td>
+                            <td><span class="name-display">WCSJ</span></td>
+                            <td>完成时间</td>
+                            <td><select class="inline-select type-select"><option>文本</option><option>数字</option><option selected>日期</option><option>大文本</option></select></td>
+                            <td><input class="inline-input" value="128" style="width:60px"></td>
+                            <td><select class="inline-select"><option>日期选择</option><option>日期时间</option></select></td>
+                            <td><input class="inline-input" placeholder="默认值"></td>
+                            <td class="checkbox-col"><input type="checkbox" class="required-checkbox"></td>
+                            <td class="checkbox-col"><input type="checkbox" class="visible-checkbox" checked></td>
+                            <td class="checkbox-col"><input type="checkbox" class="readonly-checkbox"></td>
+                        </tr>
+                        <tr data-field="FJ" data-saved="true">
+                            <td class="checkbox-col"><input type="checkbox" class="row-checkbox"></td>
+                            <td class="drag-handle">⋮⋮</td>
+                            <td><span class="name-display">FJ</span></td>
+                            <td>证据附件</td>
+                            <td><select class="inline-select type-select"><option>文本</option><option>数字</option><option>日期</option><option selected>大文本</option></select></td>
+                            <td><input class="inline-input" value="2000" style="width:60px"></td>
+                            <td><select class="inline-select"><option>附件上传</option><option>图片上传</option></select></td>
+                            <td><input class="inline-input" placeholder="默认值"></td>
+                            <td class="checkbox-col"><input type="checkbox" class="required-checkbox"></td>
+                            <td class="checkbox-col"><input type="checkbox" class="visible-checkbox" checked></td>
+                            <td class="checkbox-col"><input type="checkbox" class="readonly-checkbox"></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- 索引卡片 -->
+    <div class="card">
+        <div class="card-header">
+            <h3>🏷️ 索引</h3>
+        </div>
+        <div class="card-body">
+            <div class="index-section">
+                <div class="index-tags" id="indexTags">
+                    <div class="index-tag">🔹 JZCS <span class="remove">✕</span></div>
+                    <div class="index-tag">🔷 JHWCSJ <span class="remove">✕</span></div>
+                </div>
+                <button class="add-index-btn" id="showAddIndexBtn">+ 添加索引</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 底部按钮 -->
+    <div class="action-buttons">
+        <button class="btn btn-default" id="cancelBtn">取消</button>
+        <button class="btn btn-primary" id="saveBtn">保存</button>
+    </div>
+</div>
+
+<!-- 新建索引弹窗 -->
+<div class="modal-overlay" id="indexModal">
+    <div class="modal">
+        <div class="modal-header">
+            <h3>新建索引</h3>
+            <button class="modal-close" id="closeModalBtn">×</button>
+        </div>
+        <div class="modal-body">
+            <div class="form-group">
+                <label>索引类型</label>
+                <select id="indexType">
+                    <option value="普通索引">普通索引</option>
+                    <option value="唯一索引">唯一索引</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>索引字段</label>
+                <select id="indexField">
+                    <option value="">请选择</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>索引备注</label>
+                <input type="text" id="indexRemark" placeholder="请输入索引备注">
+                <div class="remark-hint">
+                    <span>*创建日期</span>
+                    <span>*创建人</span>
+                    <span>*更新日期</span>
+                    <span>*更新人</span>
+                    <span>*组织ID</span>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="modal-btn modal-btn-cancel" id="cancelModalBtn">取消</button>
+            <button class="modal-btn modal-btn-confirm" id="confirmModalBtn">确定</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // 复制功能
+    function copyToClipboard(text) {
+        navigator.clipboard.writeText(text);
+        alert('已复制：' + text);
+    }
+
+    // 获取所有字段名称（用于索引字段下拉）
+    function updateIndexFieldOptions() {
+        const fieldSelect = document.getElementById('indexField');
+        if (!fieldSelect) return;
+        
+        const fields = [];
+        document.querySelectorAll('#fieldsTableBody tr').forEach(row => {
+            const nameCell = row.cells[2];
+            let fieldName = '';
+            // 判断是输入框还是显示文本
+            const input = nameCell.querySelector('.name-input');
+            const display = nameCell.querySelector('.name-display');
+            if (input) {
+                fieldName = input.value;
+            } else if (display) {
+                fieldName = display.innerText;
+            }
+            const title = row.cells[3]?.innerText || '';
+            const typeSelect = row.querySelector('.type-select');
+            const fieldType = typeSelect ? typeSelect.value : '文本';
+            if (fieldName) {
+                fields.push({ name: fieldName, title: title, type: fieldType });
+            }
+        });
+        
+        // 清空并重新填充
+        fieldSelect.innerHTML = '<option value="">请选择</option>';
+        fields.forEach(field => {
+            const option = document.createElement('option');
+            option.value = field.name;
+            option.textContent = `${field.name} (${field.title || field.name}) - ${field.type}`;
+            fieldSelect.appendChild(option);
+        });
+    }
+
+    // 添加新字段（名称可编辑，保存后不可编辑）
+    let isEditing = false;
+    let currentEditRow = null;
+    
+    function addNewField() {
+        const tbody = document.getElementById('fieldsTableBody');
+        const newRow = tbody.insertRow();
+        const newFieldName = prompt('请输入字段名称（英文）:', 'NEW_FIELD');
+        if (!newFieldName) return;
+        
+        const fieldId = 'field_' + Date.now();
+        newRow.setAttribute('data-field', fieldId);
+        newRow.setAttribute('data-saved', 'false');
+        
+        // 复选框
+        const cbCell = newRow.insertCell(0);
+        cbCell.className = 'checkbox-col';
+        cbCell.innerHTML = '<input type="checkbox" class="row-checkbox">';
+        
+        // 拖拽手柄
+        const dragCell = newRow.insertCell(1);
+        dragCell.className = 'drag-handle';
+        dragCell.innerText = '⋮⋮';
+        
+        // 名称 - 可编辑输入框（新添加的字段可编辑）
+        const nameCell = newRow.insertCell(2);
+        const nameInput = document.createElement('input');
+        nameInput.type = 'text';
+        nameInput.value = newFieldName;
+        nameInput.className = 'name-input';
+        nameInput.placeholder = '字段名称';
+        nameCell.appendChild(nameInput);
+        
+        // 标题
+        const titleCell = newRow.insertCell(3);
+        const titleInput = document.createElement('input');
+        titleInput.type = 'text';
+        titleInput.className = 'inline-input';
+        titleInput.placeholder = '标题';
+        titleInput.value = '';
+        titleCell.appendChild(titleInput);
+        
+        // 类型下拉 - 文本/数字/日期/大文本
+        const typeCell = newRow.insertCell(4);
+        const typeSelect = document.createElement('select');
+        typeSelect.className = 'inline-select type-select';
+        typeSelect.innerHTML = `
+            <option selected>文本</option>
+            <option>数字</option>
+            <option>日期</option>
+            <option>大文本</option>
+        `;
+        typeCell.appendChild(typeSelect);
+        
+        // 长度
+        const lengthCell = newRow.insertCell(5);
+        const lengthInput = document.createElement('input');
+        lengthInput.type = 'text';
+        lengthInput.className = 'inline-input';
+        lengthInput.value = '128';
+        lengthInput.style.width = '60px';
+        lengthCell.appendChild(lengthInput);
+        
+        // 组件
+        const componentCell = newRow.insertCell(6);
+        const componentSelect = document.createElement('select');
+        componentSelect.className = 'inline-select';
+        componentSelect.innerHTML = `<option>单行文本</option><option>多行文本</option>`;
+        componentCell.appendChild(componentSelect);
+        
+        // 默认值
+        const defaultCell = newRow.insertCell(7);
+        const defaultInput = document.createElement('input');
+        defaultInput.type = 'text';
+        defaultInput.className = 'inline-input';
+        defaultInput.placeholder = '默认值';
+        defaultCell.appendChild(defaultInput);
+        
+        // 必填复选框
+        const requiredCell = newRow.insertCell(8);
+        requiredCell.className = 'checkbox-col';
+        requiredCell.innerHTML = '<input type="checkbox" class="required-checkbox">';
+        
+        // 可见复选框
+        const visibleCell = newRow.insertCell(9);
+        visibleCell.className = 'checkbox-col';
+        visibleCell.innerHTML = '<input type="checkbox" class="visible-checkbox" checked>';
+        
+        // 只读复选框
+        const readonlyCell = newRow.insertCell(10);
+        readonlyCell.className = 'checkbox-col';
+        readonlyCell.innerHTML = '<input type="checkbox" class="readonly-checkbox">';
+        
+        // 绑定新行复选框事件
+        const newCheckbox = newRow.querySelector('.row-checkbox');
+        newCheckbox.addEventListener('change', function() {
+            updateSelectAll();
+            updateSelectedRows();
+        });
+        
+        // 字段名称变更时更新索引下拉选项
+        nameInput.addEventListener('change', function() {
+            updateIndexFieldOptions();
+        });
+        
+        // 类型变更时，自动调整组件选项
+        typeSelect.addEventListener('change', function() {
+            const selectedType = this.value;
+            if (selectedType === '日期') {
+                componentSelect.innerHTML = `<option>日期选择</option><option>日期时间</option>`;
+            } else if (selectedType === '数字') {
+                componentSelect.innerHTML = `<option>数字输入</option><option>滑块</option>`;
+            } else if (selectedType === '大文本') {
+                componentSelect.innerHTML = `<option>多行文本</option><option>富文本</option>`;
+            } else {
+                componentSelect.innerHTML = `<option>单行文本</option><option>下拉选择</option>`;
+            }
+        });
+        
+        updateIndexFieldOptions();
+        alert('新字段已添加，保存后字段名称将不可编辑');
+    }
+    
+    // 保存后，将所有新添加的字段名称变为不可编辑
+    function saveFields() {
+        const rows = document.querySelectorAll('#fieldsTableBody tr');
+        rows.forEach(row => {
+            const isSaved = row.getAttribute('data-saved') === 'true';
+            const nameCell = row.cells[2];
+            const input = nameCell.querySelector('.name-input');
+            
+            if (input && !isSaved) {
+                // 将输入框替换为显示文本
+                const fieldName = input.value;
+                const displaySpan = document.createElement('span');
+                displaySpan.className = 'name-display';
+                displaySpan.innerText = fieldName;
+                nameCell.innerHTML = '';
+                nameCell.appendChild(displaySpan);
+                row.setAttribute('data-saved', 'true');
+            }
+        });
+        
+        // 收集所有字段数据
+        const fields = [];
+        document.querySelectorAll('#fieldsTableBody tr').forEach(row => {
+            const nameCell = row.cells[2];
+            let name = '';
+            const display = nameCell.querySelector('.name-display');
+            const input = nameCell.querySelector('.name-input');
+            if (display) name = display.innerText;
+            else if (input) name = input.value;
+            
+            fields.push({
+                name: name,
+                title: row.cells[3]?.querySelector('input')?.value || row.cells[3]?.innerText || '',
+                type: row.querySelector('.type-select')?.value || '',
+                length: row.cells[5]?.querySelector('input')?.value || '',
+                component: row.cells[6]?.querySelector('select')?.value || '',
+                defaultValue: row.cells[7]?.querySelector('input')?.value || '',
+                required: row.cells[8]?.querySelector('input')?.checked || false,
+                visible: row.cells[9]?.querySelector('input')?.checked || false,
+                readonly: row.cells[10]?.querySelector('input')?.checked || false
+            });
+        });
+        
+        console.log('保存的数据:', fields);
+        alert('✅ 保存成功！新添加的字段名称已锁定，不可再编辑。');
+        updateIndexFieldOptions();
+    }
+    
+    // 引用和删除逻辑（保持不变）
+    const rowCheckboxes = document.querySelectorAll('.row-checkbox');
+    const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+    const batchDeleteBtn = document.getElementById('batchDeleteBtn');
+    
+    function updateSelectAll() {
+        const allCheckboxes = document.querySelectorAll('.row-checkbox');
+        const total = allCheckboxes.length;
+        const checked = document.querySelectorAll('.row-checkbox:checked').length;
+        if (selectAllCheckbox) {
+            if (checked === 0) {
+                selectAllCheckbox.checked = false;
+                selectAllCheckbox.indeterminate = false;
+            } else if (checked === total) {
+                selectAllCheckbox.checked = true;
+                selectAllCheckbox.indeterminate = false;
+            } else {
+                selectAllCheckbox.checked = false;
+                selectAllCheckbox.indeterminate = true;
+            }
+        }
+    }
+    
+    function updateSelectedRows() {
+        document.querySelectorAll('.row-checkbox').forEach(cb => {
+            const row = cb.closest('tr');
+            if (cb.checked) row.classList.add('selected');
+            else row.classList.remove('selected');
+        });
+    }
+    
+    // 重新绑定复选框事件（动态添加后需要重新绑定）
+    function bindCheckboxEvents() {
+        document.querySelectorAll('.row-checkbox').forEach(cb => {
+            cb.removeEventListener('change', updateSelectedRows);
+            cb.addEventListener('change', () => {
+                updateSelectAll();
+                updateSelectedRows();
+            });
+        });
+    }
+    
+    if (selectAllCheckbox) {
+        selectAllCheckbox.addEventListener('change', function() {
+            document.querySelectorAll('.row-checkbox').forEach(cb => cb.checked = selectAllCheckbox.checked);
+            updateSelectedRows();
+            updateSelectAll();
+        });
+    }
+    
+    batchDeleteBtn?.addEventListener('click', () => {
+        const checked = document.querySelectorAll('.row-checkbox:checked');
+        if (checked.length === 0) {
+            alert('请先选中要删除的字段');
+            return;
+        }
+        if (confirm(`确定删除选中的 ${checked.length} 个字段吗？`)) {
+            checked.forEach(cb => cb.closest('tr').remove());
+            updateSelectAll();
+            updateIndexFieldOptions();
+        }
+    });
+    
+    // 搜索
+    const searchInput = document.getElementById('searchInput');
+    function filterTable() {
+        const keyword = searchInput?.value.toLowerCase() || '';
+        document.querySelectorAll('#fieldsTableBody tr').forEach(row => {
+            const nameCell = row.cells[2];
+            let name = '';
+            const display = nameCell.querySelector('.name-display');
+            const input = nameCell.querySelector('.name-input');
+            if (display) name = display.innerText.toLowerCase();
+            else if (input) name = input.value.toLowerCase();
+            const title = row.cells[3]?.innerText.toLowerCase() || row.cells[3]?.querySelector('input')?.value.toLowerCase() || '';
+            row.style.display = (name.includes(keyword) || title.includes(keyword)) ? '' : 'none';
+        });
+    }
+    searchInput?.addEventListener('input', filterTable);
+    
+    // 索引弹窗逻辑
+    const modal = document.getElementById('indexModal');
+    const showBtn = document.getElementById('showAddIndexBtn');
+    const closeModalBtn = document.getElementById('closeModalBtn');
+    const cancelModalBtn = document.getElementById('cancelModalBtn');
+    const confirmModalBtn = document.getElementById('confirmModalBtn');
+    
+    function openModal() {
+        updateIndexFieldOptions();
+        modal.classList.add('active');
+    }
+    function closeModal() {
+        modal.classList.remove('active');
+        document.getElementById('indexType').value = '普通索引';
+        document.getElementById('indexField').value = '';
+        document.getElementById('indexRemark').value = '';
+    }
+    
+    showBtn?.addEventListener('click', openModal);
+    closeModalBtn?.addEventListener('click', closeModal);
+    cancelModalBtn?.addEventListener('click', closeModal);
+    
+    confirmModalBtn?.addEventListener('click', () => {
+        const indexType = document.getElementById('indexType').value;
+        const indexField = document.getElementById('indexField').value;
+        const indexRemark = document.getElementById('indexRemark').value;
+        
+        if (!indexField) {
+            alert('请选择索引字段');
+            return;
+        }
+        
+        const tagsContainer = document.getElementById('indexTags');
+        const existingTags = Array.from(tagsContainer.querySelectorAll('.index-tag')).some(
+            tag => tag.innerText.includes(indexField)
+        );
+        
+        if (!existingTags) {
+            const tag = document.createElement('div');
+            tag.className = 'index-tag';
+            const typeIcon = indexType === '唯一索引' ? '🔷' : '🔹';
+            tag.innerHTML = `${typeIcon} ${indexField} <span class="remove">✕</span>`;
+            tag.querySelector('.remove').onclick = function() { tag.remove(); };
+            tagsContainer.appendChild(tag);
+        } else {
+            alert('该字段已添加为索引');
+            return;
+        }
+        
+        console.log('新建索引:', { indexType, indexField, indexRemark });
+        closeModal();
+    });
+    
+    modal?.addEventListener('click', (e) => {
+        if (e.target === modal) closeModal();
+    });
+    
+    // 初始化索引删除
+    document.querySelectorAll('.index-tag .remove').forEach(btn => {
+        btn.addEventListener('click', function() { this.parentElement.remove(); });
+    });
+    
+    // 绑定按钮事件
+    document.getElementById('referenceBtn')?.addEventListener('click', () => alert('引用其他业务对象字段（演示）'));
+    document.getElementById('addFieldBtn')?.addEventListener('click', addNewField);
+    document.getElementById('saveBtn')?.addEventListener('click', saveFields);
+    document.getElementById('cancelBtn')?.addEventListener('click', () => {
+        if (confirm('确定取消吗？未保存的更改将丢失。')) history.back();
+    });
+    document.getElementById('backBtn')?.addEventListener('click', () => history.back());
+    
+    bindCheckboxEvents();
+    updateSelectAll();
+    updateSelectedRows();
+    updateIndexFieldOptions();
+</script>
+</body>
+</html>

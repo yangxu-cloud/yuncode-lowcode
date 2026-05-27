@@ -74,7 +74,7 @@ knife4j:
 # Sa-Token 配置
 sa-token:
   token-name: token
-  timeout: 2592000
+  timeout: 604800  # 7天（原30天过长，管理员后台建议缩短）
   active-timeout: -1
   is-concurrent: true
   is-share: false

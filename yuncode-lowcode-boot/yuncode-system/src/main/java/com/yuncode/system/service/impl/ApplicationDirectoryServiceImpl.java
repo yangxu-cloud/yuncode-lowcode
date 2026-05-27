@@ -2,16 +2,30 @@ package com.yuncode.system.service.impl;
 
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.util.ZipUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.yuncode.system.service.ApplicationDirectoryService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.w3c.dom.Document;
+import org.w3c.dom.NodeList;
 
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
 import java.io.File;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * 应用目录服务实现类
@@ -36,6 +50,7 @@ public class ApplicationDirectoryServiceImpl implements ApplicationDirectoryServ
     private static final String INSTALL_DIR = "install";
     private static final String UNINSTALL_DIR = "uninstall";
     private static final String HISTORY_DIR = "history";
+    private static final String STAGING_DIR = "staging";
 
     /**
      * 时间格式化器
@@ -131,11 +146,424 @@ public class ApplicationDirectoryServiceImpl implements ApplicationDirectoryServ
         return appDir.exists() && appDir.isDirectory();
     }
 
+    @Override
+    public boolean moveAppDirectory(String appId, String fromDir, String toDir) {
+        try {
+            String folderName = appId;
+            File sourceDir = new File(new File(appsBasePath, fromDir), folderName);
+            File targetDir = new File(new File(appsBasePath, toDir), folderName);
+
+            if (!sourceDir.exists()) {
+                log.warn("源目录不存在: {}", sourceDir.getAbsolutePath());
+                return false;
+            }
+
+            // 确保目标父目录存在
+            targetDir.getParentFile().mkdirs();
+
+            // 如果目标已存在先删除
+            if (targetDir.exists()) {
+                FileUtil.del(targetDir);
+            }
+
+            // File.renameTo 在 Windows 上可能静默失败，使用 Hutool 的 FileUtil.move 确保跨平台可靠
+            FileUtil.move(sourceDir, targetDir, true);
+            log.info("移动应用目录: {} → {} 成功", sourceDir.getAbsolutePath(), targetDir.getAbsolutePath());
+            return true;
+
+        } catch (Exception e) {
+            log.error("移动应用目录失败: appId={}, from={}, to={}", appId, fromDir, toDir, e);
+            throw new RuntimeException("移动应用目录失败: " + e.getMessage());
+        }
+    }
+
+    @Override
+    public File packageApplication(String appId, String newVersion) {
+        File installDir = new File(new File(appsBasePath, INSTALL_DIR), appId);
+        if (!installDir.exists()) {
+            log.error("应用目录不存在，无法打包: {}", installDir.getAbsolutePath());
+            throw new RuntimeException("应用目录不存在，无法打包");
+        }
+
+        // 临时 dist 目录（分发文件即时生成，下载后清理）
+        File distDir = new File(new File(new File(appsBasePath, HISTORY_DIR), appId), "dist");
+        distDir.mkdirs();
+
+        // 清理上次的残留 .sap 文件
+        File[] oldFiles = distDir.listFiles((dir, name) -> name.endsWith(".sap"));
+        if (oldFiles != null) {
+            for (File f : oldFiles) {
+                FileUtil.del(f);
+            }
+        }
+
+        // 创建临时目录用于处理打包内容
+        File tempDir = null;
+        try {
+            tempDir = java.nio.file.Files.createTempDirectory("yuncode-dist-").toFile();
+            // 复制安装目录内容（排除 src/ 和 target/）
+            FileUtil.copyContent(installDir, tempDir, true);
+            FileUtil.del(new File(tempDir, "src"));
+            FileUtil.del(new File(tempDir, "target"));
+
+            // 更新临时目录中 manifest.xml 的版本号
+            updateManifestVersionInDir(tempDir, newVersion);
+
+            // 创建 .sap 压缩包
+            String fileName = appId + ".sap";
+            File sapFile = new File(distDir, fileName);
+            ZipUtil.zip(sapFile, false, tempDir);
+
+            log.info("应用打包成功: {}, 文件: {}, 大小: {} bytes",
+                    appId, sapFile.getAbsolutePath(), sapFile.length());
+            return sapFile;
+
+        } catch (Exception e) {
+            log.error("打包应用失败: appId={}", appId, e);
+            throw new RuntimeException("打包应用失败: " + e.getMessage());
+        } finally {
+            // 清理临时目录
+            if (tempDir != null) {
+                FileUtil.del(tempDir);
+            }
+        }
+    }
+
+    @Override
+    public File snapshotApplication(String appId, String version) {
+        File installDir = new File(new File(appsBasePath, INSTALL_DIR), appId);
+        if (!installDir.exists()) {
+            log.warn("安装目录不存在，跳过快照: {}", installDir.getAbsolutePath());
+            return null;
+        }
+
+        File snapshotDir = new File(new File(new File(appsBasePath, HISTORY_DIR), appId), "snapshots");
+        snapshotDir.mkdirs();
+
+        String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));
+        String snapshotName = "v" + version + "-" + timestamp + ".zip";
+        File snapshotFile = new File(snapshotDir, snapshotName);
+
+        ZipUtil.zip(snapshotFile, false, installDir);
+
+        log.info("应用快照创建成功: {}, 大小: {} bytes", snapshotFile.getAbsolutePath(), snapshotFile.length());
+
+        // 只保留最新 5 个快照
+        cleanupOldSnapshots(snapshotDir, 5);
+
+        return snapshotFile;
+    }
+
+    @Override
+    public File getDistributeFile(String appId, String fileName) {
+        File distDir = new File(new File(new File(appsBasePath, HISTORY_DIR), appId), "dist");
+        File file = new File(distDir, fileName);
+        if (file.exists() && file.isFile()) {
+            return file;
+        }
+        log.warn("分发文件不存在: {}", file.getAbsolutePath());
+        return null;
+    }
+
+    @Override
+    public boolean deleteDistributeFile(String appId, String fileName) {
+        File file = getDistributeFile(appId, fileName);
+        if (file != null) {
+            try {
+                boolean deleted = FileUtil.del(file);
+                log.info("删除分发临时文件: {}, 结果: {}", file.getAbsolutePath(), deleted);
+                return deleted;
+            } catch (Exception e) {
+                log.warn("删除分发临时文件失败（文件可能被占用）: {}, {}", file.getAbsolutePath(), e.getMessage());
+                return false;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * 清理旧快照，只保留最新 N 个
+     */
+    private void cleanupOldSnapshots(File snapshotDir, int maxKeep) {
+        File[] files = snapshotDir.listFiles((dir, name) -> name.endsWith(".zip"));
+        if (files == null || files.length <= maxKeep) {
+            return;
+        }
+
+        java.util.Arrays.sort(files, (a, b) -> Long.compare(a.lastModified(), b.lastModified()));
+
+        for (int i = 0; i < files.length - maxKeep; i++) {
+            FileUtil.del(files[i]);
+            log.debug("清理旧快照: {}", files[i].getName());
+        }
+    }
+
+    @Override
+    public void updateManifestVersion(String appId, String newVersion) {
+        File appDir = new File(new File(appsBasePath, INSTALL_DIR), appId);
+        updateManifestVersionInDir(appDir, newVersion);
+    }
+
+    @Override
+    public Map<String, String> stageFromSap(File sapFile) {
+        File tempDir = null;
+        try {
+            tempDir = java.nio.file.Files.createTempDirectory("yuncode-stage-").toFile();
+            ZipUtil.unzip(sapFile, tempDir);
+
+            // 处理 .sap 打包时可能包含单个根目录的情况
+            // 如果解压后只有一个子目录，则将工作目录指向该子目录
+            File workDir = tempDir;
+            File[] topFiles = tempDir.listFiles();
+            if (topFiles != null && topFiles.length == 1 && topFiles[0].isDirectory()) {
+                workDir = topFiles[0];
+                log.debug("检测到 .sap 包含外层目录，使用子目录: {}", topFiles[0].getName());
+            }
+
+            String appId = resolveAppId(workDir);
+            String appName = readManifestValue(workDir, "name");
+            String version = readManifestValue(workDir, "version");
+
+            if (appId == null || appId.isEmpty()) {
+                // 日志输出解压后目录结构，方便排查
+                log.warn("manifest.xml 未找到应用标识，解压目录内容: {}", Arrays.toString(tempDir.list()));
+                throw new RuntimeException("manifest.xml 缺少应用标识 <id>/<sapid> 或 deployment/system/@appId");
+            }
+
+            File stagingDir = new File(new File(appsBasePath, STAGING_DIR), appId);
+            // 如果暂存区已有同 appId 的包，先删除
+            if (stagingDir.exists()) {
+                FileUtil.del(stagingDir);
+            }
+            stagingDir.getParentFile().mkdirs();
+            if (workDir != tempDir) {
+                // .sap 有外层目录：移出子目录，再清理 tempDir 空壳
+                FileUtil.move(workDir, stagingDir, true);
+                if (tempDir.exists()) {
+                    FileUtil.del(tempDir);
+                }
+            } else {
+                // 常规：直接移动整个 tempDir
+                FileUtil.move(tempDir, stagingDir, true);
+            }
+            tempDir = null;
+
+            long fileSize = FileUtil.size(stagingDir);
+
+            Map<String, String> result = new HashMap<>();
+            result.put("appId", appId);
+            result.put("appName", appName != null ? appName : appId);
+            result.put("version", version != null ? version : "1.0.0");
+            result.put("fileSize", String.valueOf(fileSize));
+            log.info(".sap 暂存成功: appId={}, appName={}, version={}", appId, appName, version);
+            return result;
+        } catch (Exception e) {
+            log.error("暂存.sap文件失败", e);
+            throw new RuntimeException("暂存失败: " + e.getMessage());
+        } finally {
+            if (tempDir != null) {
+                FileUtil.del(tempDir);
+            }
+        }
+    }
+
+    @Override
+    public List<Map<String, String>> listStagedPackages() {
+        List<Map<String, String>> result = new java.util.ArrayList<>();
+        File stagingDir = new File(appsBasePath, STAGING_DIR);
+        if (!stagingDir.exists()) {
+            return result;
+        }
+        File[] dirs = stagingDir.listFiles(File::isDirectory);
+        if (dirs == null) {
+            return result;
+        }
+        for (File dir : dirs) {
+            String appName = readManifestValue(dir, "name");
+            String version = readManifestValue(dir, "version");
+            Map<String, String> info = new HashMap<>();
+            info.put("appId", dir.getName());
+            info.put("appName", appName != null ? appName : dir.getName());
+            info.put("version", version != null ? version : "1.0.0");
+            info.put("fileSize", String.valueOf(FileUtil.size(dir)));
+            result.add(info);
+        }
+        return result;
+    }
+
+    @Override
+    public Map<String, String> deployStagedPackage(String appId) {
+        File stagingDir = new File(new File(appsBasePath, STAGING_DIR), appId);
+        if (!stagingDir.exists()) {
+            throw new RuntimeException("暂存包不存在: " + appId);
+        }
+
+        String appName = readManifestValue(stagingDir, "name");
+        String version = readManifestValue(stagingDir, "version");
+
+        File installDir = new File(new File(appsBasePath, INSTALL_DIR), appId);
+        if (installDir.exists()) {
+            FileUtil.del(installDir);
+        }
+        installDir.getParentFile().mkdirs();
+        FileUtil.move(stagingDir, installDir, true);
+
+        Map<String, String> result = new HashMap<>();
+        result.put("appId", appId);
+        result.put("appName", appName != null ? appName : appId);
+        result.put("version", version != null ? version : "1.0.0");
+        log.info("暂存包部署成功: appId={}", appId);
+        return result;
+    }
+
+    @Override
+    public boolean deleteStagedPackage(String appId) {
+        File stagingDir = new File(new File(appsBasePath, STAGING_DIR), appId);
+        if (!stagingDir.exists()) {
+            return true;
+        }
+        boolean deleted = FileUtil.del(stagingDir);
+        log.info("删除暂存包: appId={}, 结果={}", appId, deleted);
+        return deleted;
+    }
+
+    /**
+     * 从 manifest.xml 中读取应用标识 &lt;id&gt;
+     */
+    private String resolveAppId(File workDir) {
+        return readManifestValue(workDir, "id");
+    }
+
+    /**
+     * 从 manifest.xml 读取指定标签的值
+     */
+    private String readManifestValue(File dir, String tagName) {
+        File manifestFile = new File(dir, "manifest.xml");
+        if (!manifestFile.exists()) {
+            return null;
+        }
+        try {
+            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+            factory.setNamespaceAware(true);
+            DocumentBuilder builder = factory.newDocumentBuilder();
+            Document doc = builder.parse(manifestFile);
+            // 先尝试 namespace-aware 查找
+            NodeList nodes = doc.getElementsByTagNameNS("*", tagName);
+            if (nodes.getLength() > 0) {
+                return nodes.item(0).getTextContent().trim();
+            }
+            // 降级：非 namespace-aware 查找
+            NodeList legacyNodes = doc.getElementsByTagName(tagName);
+            if (legacyNodes.getLength() > 0) {
+                return legacyNodes.item(0).getTextContent().trim();
+            }
+        } catch (Exception e) {
+            log.warn("读取manifest.xml字段失败: tag={}", tagName, e);
+        }
+        return null;
+    }
+
+    @Override
+    public String readManifestVersion(String appId) {
+        File appDir = new File(new File(appsBasePath, INSTALL_DIR), appId);
+        File manifestFile = new File(appDir, "manifest.xml");
+        if (!manifestFile.exists()) {
+            return null;
+        }
+        try {
+            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+            factory.setNamespaceAware(true);
+            DocumentBuilder builder = factory.newDocumentBuilder();
+            Document doc = builder.parse(manifestFile);
+            NodeList versionNodes = doc.getElementsByTagNameNS("*", "version");
+            if (versionNodes.getLength() > 0) {
+                return versionNodes.item(0).getTextContent().trim();
+            }
+            // 降级：非 namespace-aware 查找
+            NodeList legacyNodes = doc.getElementsByTagName("version");
+            if (legacyNodes.getLength() > 0) {
+                return legacyNodes.item(0).getTextContent().trim();
+            }
+        } catch (Exception e) {
+            log.error("读取manifest.xml版本失败: appId={}", appId, e);
+        }
+        return null;
+    }
+
+    @Override
+    public String readStagingManifestVersion(String appId) {
+        File stagingDir = new File(new File(appsBasePath, STAGING_DIR), appId);
+        File manifestFile = new File(stagingDir, "manifest.xml");
+        if (!manifestFile.exists()) {
+            return null;
+        }
+        try {
+            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+            factory.setNamespaceAware(true);
+            DocumentBuilder builder = factory.newDocumentBuilder();
+            Document doc = builder.parse(manifestFile);
+            NodeList versionNodes = doc.getElementsByTagNameNS("*", "version");
+            if (versionNodes.getLength() > 0) {
+                return versionNodes.item(0).getTextContent().trim();
+            }
+            NodeList legacyNodes = doc.getElementsByTagName("version");
+            if (legacyNodes.getLength() > 0) {
+                return legacyNodes.item(0).getTextContent().trim();
+            }
+        } catch (Exception e) {
+            log.error("读取暂存区manifest.xml版本失败: appId={}", appId, e);
+        }
+        return null;
+    }
+
+    /**
+     * 在指定目录中更新 manifest.xml 的版本号
+     */
+    private void updateManifestVersionInDir(File appDir, String newVersion) {
+        File manifestFile = new File(appDir, "manifest.xml");
+        if (!manifestFile.exists()) {
+            log.warn("manifest.xml 不存在: {}", manifestFile.getAbsolutePath());
+            return;
+        }
+
+        try {
+            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+            factory.setNamespaceAware(true);
+            DocumentBuilder builder = factory.newDocumentBuilder();
+            Document doc = builder.parse(manifestFile);
+
+            NodeList versionNodes = doc.getElementsByTagNameNS("*", "version");
+            if (versionNodes.getLength() > 0) {
+                versionNodes.item(0).setTextContent(newVersion);
+            } else {
+                // 降级：非 namespace-aware 查找
+                NodeList legacyNodes = doc.getElementsByTagName("version");
+                if (legacyNodes.getLength() > 0) {
+                    legacyNodes.item(0).setTextContent(newVersion);
+                }
+            }
+
+            // 写回文件
+            TransformerFactory tf = TransformerFactory.newInstance();
+            Transformer transformer = tf.newTransformer();
+            transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+            transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "4");
+            DOMSource source = new DOMSource(doc);
+            StreamResult result = new StreamResult(manifestFile);
+            transformer.transform(source, result);
+
+            log.info("manifest.xml版本已更新为: {}", newVersion);
+        } catch (Exception e) {
+            log.error("更新manifest.xml版本失败", e);
+            throw new RuntimeException("更新manifest.xml版本失败: " + e.getMessage());
+        }
+    }
+
     /**
      * 创建基础目录（install/uninstall/history）
      */
     private void createBaseDirectories(File appsDir) {
-        String[] baseDirs = {INSTALL_DIR, UNINSTALL_DIR, HISTORY_DIR};
+        String[] baseDirs = {INSTALL_DIR, UNINSTALL_DIR, HISTORY_DIR, STAGING_DIR};
 
         for (String dir : baseDirs) {
             File subDir = new File(appsDir, dir);
@@ -162,7 +590,22 @@ public class ApplicationDirectoryServiceImpl implements ApplicationDirectoryServ
     }
 
     /**
-     * 创建manifest.xml文件
+     * 创建manifest.xml文件（Yuncode 格式 v1）
+     *
+     * 格式说明：
+     * <app> - 根元素
+     *   <id> 应用唯一标识（包名格式）
+     *   <name> 应用显示名称
+     *   <version> 版本号
+     *   <description> 应用描述
+ *   <details> 详细描述
+     *   <icon> 图标 code + color
+     *   <developer> 开发者信息
+     *   <listeners> 生命周期钩子
+     *   <dependencies> 依赖的平台/模块
+     *   <properties> 扩展配置
+     *   <deployment> 部署菜单结构（<system id="..." name="..."> → <menu>）
+     *   <dates> 时间戳
      */
     private void createManifestXml(File appDir, String appId, String appName,
                                   String appDescription, String version) {
@@ -170,34 +613,31 @@ public class ApplicationDirectoryServiceImpl implements ApplicationDirectoryServ
 
         StringBuilder content = new StringBuilder();
         content.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n\n");
-        content.append("<app xmlns=\"http://www.yuncode.com.cn/app\">\n");
+        content.append("<app xmlns=\"http://www.yuncode.com/app\">\n");
+        content.append("    <id>").append(escapeXml(appId)).append("</id>\n");
         content.append("    <name>").append(escapeXml(appName)).append("</name>\n");
         content.append("    <version>").append(version != null ? version : "1.0.0").append("</version>\n");
-        content.append("    <buildNo>1</buildNo>\n");
-        content.append("    <developer id=\"yuncode\" tablePrefix=\"YC\" url=\"http://www.yuncode.com\">Yuncode-LowCode</developer>\n");
-        content.append("    <categoryVisible>true</categoryVisible>\n");
         content.append("    <description><![CDATA[").append(appDescription != null ? appDescription : "").append("]]></description>\n");
         content.append("    <details><![CDATA[").append(appDescription != null ? appDescription : "").append("]]></details>\n");
-        content.append("    <installListener/>\n");
-        content.append("    <pluginListener/>\n");
-        content.append("    <startListener/>\n");
-        content.append("    <stopListener/>\n");
-        content.append("    <upgradeListener/>\n");
-        content.append("    <uninstallListener/>\n");
-        content.append("    <reloadable>true</reloadable>\n");
-        content.append("    <requires/>\n");
+        content.append("    <icon code=\"Box\" color=\"#409EFF\"/>\n");
+        content.append("    <developer id=\"yuncode\">Yuncode-LowCode</developer>\n");
+        content.append("    <listeners>\n");
+        content.append("        <install/>\n");
+        content.append("        <start/>\n");
+        content.append("        <stop/>\n");
+        content.append("        <uninstall/>\n");
+        content.append("        <upgrade/>\n");
+        content.append("    </listeners>\n");
+        content.append("    <dependencies>\n");
+        content.append("        <platform min-version=\"1.0\"/>\n");
+        content.append("    </dependencies>\n");
         content.append("    <properties/>\n");
-        content.append("    <allowStartup>true</allowStartup>\n");
-        content.append("    <allowUpgradeByStore>true</allowUpgradeByStore>\n");
-        content.append("    <depend versions=\"1.0\" env=\"\">_platform</depend>\n");
-        content.append("    <modelAdministrator/>\n");
-        content.append("    <installDate>").append(currentDate).append("</installDate>\n");
-        content.append("    <icon code=\"\" color=\"#409EFF\"/>\n");
-        content.append("    <productId/>\n");
-        content.append("    <deployment/>\n");
-        content.append("    <releaseDate>").append(currentDate).append("</releaseDate>\n");
-        content.append("    <upgradeDate/>\n");
-        content.append("    <restoreDate/>\n");
+        content.append("    <deployment>\n");
+        content.append("        <system id=\"").append(escapeXml(appId)).append("\" name=\"").append(escapeXml(appName)).append("\"/>\n");
+        content.append("    </deployment>\n");
+        content.append("    <dates>\n");
+        content.append("        <created>").append(currentDate).append("</created>\n");
+        content.append("    </dates>\n");
         content.append("</app>");
 
         File manifestFile = new File(appDir, "manifest.xml");

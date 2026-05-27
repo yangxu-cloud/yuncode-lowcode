@@ -10,7 +10,7 @@ import type {
   PureHttpRequestConfig
 } from "./types.d";
 import { stringify } from "qs";
-import { getToken, formatToken } from "@/utils/auth";
+import { getToken } from "@/utils/auth";
 import { useUserStoreHook } from "@/store/modules/user";
 
 // API 基础路径前缀（从环境变量读取，默认为 /api）
@@ -60,7 +60,7 @@ class PureHttp {
   private static retryOriginalRequest(config: PureHttpRequestConfig) {
     return new Promise(resolve => {
       PureHttp.requests.push((token: string) => {
-        config.headers["Authorization"] = formatToken(token);
+        config.headers["token"] = token;
         resolve(config);
       });
     });
@@ -71,8 +71,8 @@ class PureHttp {
     PureHttp.axiosInstance.interceptors.request.use(
       async (config: PureHttpRequestConfig): Promise<any> => {
         // 为所有请求添加 /api 前缀（如果还没有的话）
-        if (config.url && !config.url.startsWith("/api") && !config.url.startsWith("http")) {
-          config.url = "/api" + config.url;
+        if (config.url && !config.url.startsWith(API_BASE_PREFIX) && !config.url.startsWith("http")) {
+          config.url = API_BASE_PREFIX + config.url;
         }
 
         // 注意：tenantId 现在由后端多租户插件自动处理，不再需要前端传递
@@ -88,7 +88,7 @@ class PureHttp {
         }
         /** 请求白名单，放置一些不需要`token`的接口（通过设置请求白名单，防止`token`过期后再请求造成的死循环问题） */
         const whiteList = [
-          "/refresh-token",
+          "/auth/refresh",
           "/login",
           `${API_BASE_PREFIX}/auth/admin/login`,
           `${API_BASE_PREFIX}/auth/user/login`,
@@ -109,7 +109,7 @@ class PureHttp {
                       .handRefreshToken({ refreshToken: data.refreshToken })
                       .then(res => {
                         const token = res.data.accessToken;
-                        config.headers["Authorization"] = formatToken(token);
+                        config.headers["token"] = token;
                         PureHttp.requests.forEach(cb => cb(token));
                         PureHttp.requests = [];
                       })
@@ -119,9 +119,7 @@ class PureHttp {
                   }
                   resolve(PureHttp.retryOriginalRequest(config));
                 } else {
-                  config.headers["Authorization"] = formatToken(
-                    data.accessToken
-                  );
+                  config.headers["token"] = data.accessToken;
                   resolve(config);
                 }
               } else {

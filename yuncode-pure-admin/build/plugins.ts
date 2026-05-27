@@ -21,7 +21,7 @@ export function getPluginsList(
   return [
     tailwindcss(),
     vue(),
-    // jsx、tsx语法支持
+    // jsx、tsx语法支持（form-create 组件包在 optimizeDeps.exclude 中排除预构建）
     vueJsx(),
     /**
      * 在页面上按住组合键时，鼠标在页面移动即会在 DOM 上出现遮罩层并显示相关信息，点击一下将自动打开 IDE 并将光标定位到元素对应的代码位置

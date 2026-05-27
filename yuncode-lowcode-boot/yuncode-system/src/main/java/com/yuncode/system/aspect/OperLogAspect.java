@@ -9,6 +9,7 @@ import com.yuncode.common.utils.web.ServletUtils;
 import com.yuncode.common.utils.web.TraceIdContext;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import org.springframework.web.multipart.MultipartFile;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
@@ -114,11 +115,26 @@ public class OperLogAspect {
         operationLog.setSpanId(TraceIdContext.getSpanId());
         operationLog.setParentSpanId(TraceIdContext.getParentSpanId());
 
-        // 记录请求参数
+        // 记录请求参数（过滤 MultipartFile 避免序列化失败）
         Object[] args = joinPoint.getArgs();
         try {
             if (args != null && args.length > 0) {
-                String params = objectMapper.writeValueAsString(args);
+                Object[] loggableArgs = new Object[args.length];
+                for (int i = 0; i < args.length; i++) {
+                    if (args[i] instanceof MultipartFile) {
+                        loggableArgs[i] = ((MultipartFile) args[i]).getOriginalFilename();
+                    } else if (args[i] instanceof MultipartFile[]) {
+                        MultipartFile[] files = (MultipartFile[]) args[i];
+                        String[] names = new String[files.length];
+                        for (int j = 0; j < files.length; j++) {
+                            names[j] = files[j].getOriginalFilename();
+                        }
+                        loggableArgs[i] = names;
+                    } else {
+                        loggableArgs[i] = args[i];
+                    }
+                }
+                String params = objectMapper.writeValueAsString(loggableArgs);
                 operationLog.setParams(params.length() > 2000 ? params.substring(0, 2000) : params);
             }
         } catch (Throwable e) {

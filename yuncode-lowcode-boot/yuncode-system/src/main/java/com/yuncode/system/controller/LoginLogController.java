@@ -3,11 +3,13 @@ package com.yuncode.system.controller;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.yuncode.common.model.util.response.Result;
+import com.yuncode.common.utils.SecurityUtil;
 import com.yuncode.system.entity.SysLoginLog;
 import com.yuncode.system.service.LoginLogService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
 
@@ -16,6 +18,7 @@ import java.time.LocalDateTime;
 /**
  * 登录日志控制器
  */
+@Slf4j
 @RequiredArgsConstructor
 @RestController
 @RequestMapping("/log/user")
@@ -45,6 +48,8 @@ public class LoginLogController {
             @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime startTime,
             @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime endTime) {
 
+        SecurityUtil.checkPlatformAdmin();
+
         Page<SysLoginLog> pageParam = new Page<>(page, size);
         IPage<SysLoginLog> pageResult = loginLogService.listLoginLogs(
                 pageParam,
@@ -67,6 +72,7 @@ public class LoginLogController {
     @GetMapping("/{id}")
     @Operation(summary = "查询登录日志详情", description = "根据ID查询登录日志的详细信息")
     public Result<SysLoginLog> getById(@PathVariable Long id) {
+        SecurityUtil.checkPlatformAdmin();
         SysLoginLog loginLog = loginLogService.getLoginLogById(id);
         if (loginLog == null) {
             return Result.error("登录日志不存在");
@@ -83,6 +89,7 @@ public class LoginLogController {
     @DeleteMapping("/delete")
     @Operation(summary = "批量删除登录日志", description = "根据ID列表批量删除登录日志")
     public Result<Void> delete(@RequestBody Long[] ids) {
+        SecurityUtil.checkPlatformAdmin();
         loginLogService.deleteLoginLogs(ids);
         return Result.success();
     }
@@ -95,6 +102,7 @@ public class LoginLogController {
     @DeleteMapping("/clean")
     @Operation(summary = "清空登录日志", description = "清空所有登录日志")
     public Result<Void> clean() {
+        SecurityUtil.checkPlatformAdmin();
         loginLogService.cleanLoginLogs();
         return Result.success();
     }
@@ -109,6 +117,7 @@ public class LoginLogController {
     @Operation(summary = "删除历史登录日志", description = "删除指定时间之前的登录日志")
     public Result<Void> cleanBefore(
             @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime beforeTime) {
+        SecurityUtil.checkPlatformAdmin();
         loginLogService.deleteLoginLogsBefore(beforeTime);
         return Result.success();
     }

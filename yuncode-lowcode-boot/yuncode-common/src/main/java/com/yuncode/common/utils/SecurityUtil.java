@@ -227,7 +227,7 @@ public final class SecurityUtil {
     // ======================== 密码工具 ========================
 
     public static String hashPassword(String password) {
-        return BCrypt.hashpw(password);
+        return BCrypt.hashpw(password, BCrypt.gensalt(12));
     }
 
     public static boolean checkPassword(String password, String hashed) {

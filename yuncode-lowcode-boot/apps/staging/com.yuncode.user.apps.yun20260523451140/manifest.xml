@@ -1,0 +1,202 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<app xmlns="http://www.yuncode.com/app">
+                                
+    
+    
+    
+    
+    
+    
+    <id>com.yuncode.user.apps.yun20260523451140</id>
+                                
+    
+    
+    
+    
+    
+    
+    <name>waaa</name>
+                                
+    
+    
+    
+    
+    
+    
+    <version>1.4.0</version>
+                                
+    
+    
+    
+    
+    
+    
+    <description/>
+                                
+    
+    
+    
+    
+    
+    
+    <details/>
+                                
+    
+    
+    
+    
+    
+    
+    <icon code="Box" color="#409EFF"/>
+                                
+    
+    
+    
+    
+    
+    
+    <developer id="yuncode">Yuncode-LowCode</developer>
+                                
+    
+    
+    
+    
+    
+    
+    <listeners>
+                                                                
+        
+        
+        
+        
+        
+        
+        <install/>
+                                                                
+        
+        
+        
+        
+        
+        
+        <start/>
+                                                                
+        
+        
+        
+        
+        
+        
+        <stop/>
+                                                                
+        
+        
+        
+        
+        
+        
+        <uninstall/>
+                                                                
+        
+        
+        
+        
+        
+        
+        <upgrade/>
+                                                            
+    
+    
+    
+    
+    
+    
+    </listeners>
+                                
+    
+    
+    
+    
+    
+    
+    <dependencies>
+                                                                
+        
+        
+        
+        
+        
+        
+        <platform min-version="1.0"/>
+                                                            
+    
+    
+    
+    
+    
+    
+    </dependencies>
+                                
+    
+    
+    
+    
+    
+    
+    <properties/>
+                                
+    
+    
+    
+    
+    
+    
+    <deployment>
+                                                                
+        
+        
+        
+        
+        
+        
+        <system id="com.yuncode.user.apps.yun20260523451140" name="waaa"/>
+                                                            
+    
+    
+    
+    
+    
+    
+    </deployment>
+                                
+    
+    
+    
+    
+    
+    
+    <dates>
+                                                                
+        
+        
+        
+        
+        
+        
+        <created>2026-05-23</created>
+                                                            
+    
+    
+    
+    
+    
+    
+    </dates>
+                            
+
+
+
+
+
+
+</app>

@@ -1,0 +1,84 @@
+server:
+  port: 9000
+
+spring:
+  main:
+    web-application-type: reactive
+  application:
+    name: yuncode-gateway
+  profiles:
+    active: dev
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
+      - org.springframework.boot.autoconfigure.jdbc.DataSourceTransactionManagerAutoConfiguration
+      - org.springframework.boot.actuate.autoconfigure.jdbc.DataSourceHealthContributorAutoConfiguration
+
+  cloud:
+    gateway:
+      # 全局跨域配置
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowedOriginPatterns: ${GATEWAY_CORS_ORIGINS:http://localhost:3000,http://localhost:8848}
+            allowedMethods:
+              - GET
+              - POST
+              - PUT
+              - DELETE
+              - OPTIONS
+            allowedHeaders: "*"
+            allowCredentials: true
+            maxAge: 3600
+
+      # 路由配置（使用服务发现或固定地址）
+      routes:
+        # 管理后台路由
+        - id: yuncode-admin
+          uri: ${gateway.backend.admin-url:http://localhost:8080}
+          predicates:
+            - Path=/api/**
+          filters:
+            - StripPrefix=0
+
+    nacos:
+      discovery:
+        enabled: false
+      config:
+        enabled: false
+
+# Nacos 配置开关
+nacos:
+  discovery:
+    # 是否启用 Nacos 服务发现 (true/false)
+    enabled: false
+    server-addr: localhost:8848
+    namespace: public
+    group: YUNCODE_GROUP
+
+# 网关自定义配置
+gateway:
+  backend:
+    # 后端服务地址（Nacos 关闭时使用）
+    admin-url: http://localhost:8080
+
+# Actuator 配置
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,gateway
+  endpoint:
+    health:
+      show-details: always
+
+# 日志配置
+logging:
+  level:
+    com.yuncode: debug
+    org.springframework.cloud.gateway: debug
+    org.springframework.web.reactive: debug
+
+# JWT 密钥（与后端 admin 保持一致，用于验证 token 签名）
+sa-token:
+  jwt-secret-key: ${JWT_SECRET_KEY:yuncode-lowcode-sa-token-jwt-secret-key-2024-hutool-bcrypt-compatible-with-spring-boot-3-x8k9m2v4n6}

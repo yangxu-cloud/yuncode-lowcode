@@ -35,7 +35,7 @@
             <artifactId>sa-token-jwt</artifactId>
         </dependency>
 
-        <!-- MyBatis Plus -->
+        <!-- MyBatis Plus (核心依赖，所有模块使用) -->
         <dependency>
             <groupId>com.baomidou</groupId>
             <artifactId>mybatis-plus-boot-starter</artifactId>
@@ -57,6 +57,7 @@
         <dependency>
             <groupId>com.github.xiaoymin</groupId>
             <artifactId>knife4j-openapi3-jakarta-spring-boot-starter</artifactId>
+            <optional>true</optional>
         </dependency>
 
         <!-- Spring Cloud Alibaba Nacos Discovery (optional) -->

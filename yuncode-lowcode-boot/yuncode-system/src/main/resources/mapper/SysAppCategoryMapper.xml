@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yuncode.system.mapper.SysAppCategoryMapper">
+
+    <select id="selectByAppId" resultType="com.yuncode.system.entity.SysAppCategory">
+        SELECT *
+        FROM sys_app_category
+        WHERE app_id = #{appId}
+          AND deleted = 0
+        ORDER BY sort ASC, create_time ASC
+    </select>
+
+    <select id="selectByParentId" resultType="com.yuncode.system.entity.SysAppCategory">
+        SELECT *
+        FROM sys_app_category
+        WHERE app_id = #{appId}
+          AND deleted = 0
+          <choose>
+            <when test="parentId != null">
+              AND parent_id = #{parentId}
+            </when>
+            <otherwise>
+              AND parent_id IS NULL
+            </otherwise>
+          </choose>
+        ORDER BY sort ASC, create_time ASC
+    </select>
+
+</mapper>

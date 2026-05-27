@@ -2,6 +2,7 @@ package com.yuncode.system.service.impl;
 
 import cn.dev33.satoken.stp.StpUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.yuncode.common.utils.SecurityUtil;
 import com.yuncode.system.entity.*;
 import com.yuncode.system.mapper.*;
 import com.yuncode.system.service.RoleAssignmentService;
@@ -111,11 +112,17 @@ public class RoleAssignmentServiceImpl implements RoleAssignmentService {
 
     @Override
     public void removeUserFromRole(Long roleId, Long userId) {
-        roleUserMapper.delete(
-            new LambdaQueryWrapper<SysRoleUser>()
-                .eq(SysRoleUser::getRoleId, roleId)
-                .eq(SysRoleUser::getUserId, userId)
-        );
+        LambdaQueryWrapper<SysRoleUser> wrapper = new LambdaQueryWrapper<SysRoleUser>()
+            .eq(SysRoleUser::getRoleId, roleId)
+            .eq(SysRoleUser::getUserId, userId);
+        // 非管理员只能删除自己租户的角色分配
+        if (!SecurityUtil.isPlatformAdmin()) {
+            Long tenantId = SecurityUtil.getTenantIdOrNull();
+            if (tenantId != null) {
+                wrapper.eq(SysRoleUser::getTenantId, tenantId);
+            }
+        }
+        roleUserMapper.delete(wrapper);
         log.info("从角色移除人员成功: roleId={}, userId={}", roleId, userId);
     }
 
@@ -204,11 +211,17 @@ public class RoleAssignmentServiceImpl implements RoleAssignmentService {
 
     @Override
     public void removeDeptFromRole(Long roleId, Long deptId) {
-        roleDeptMapper.delete(
-            new LambdaQueryWrapper<SysRoleDept>()
-                .eq(SysRoleDept::getRoleId, roleId)
-                .eq(SysRoleDept::getDeptId, deptId)
-        );
+        LambdaQueryWrapper<SysRoleDept> wrapper = new LambdaQueryWrapper<SysRoleDept>()
+            .eq(SysRoleDept::getRoleId, roleId)
+            .eq(SysRoleDept::getDeptId, deptId);
+        // 非管理员只能删除自己租户的角色分配
+        if (!SecurityUtil.isPlatformAdmin()) {
+            Long tenantId = SecurityUtil.getTenantIdOrNull();
+            if (tenantId != null) {
+                wrapper.eq(SysRoleDept::getTenantId, tenantId);
+            }
+        }
+        roleDeptMapper.delete(wrapper);
         log.info("从角色移除部门成功: roleId={}, deptId={}", roleId, deptId);
     }
 
@@ -256,11 +269,17 @@ public class RoleAssignmentServiceImpl implements RoleAssignmentService {
 
     @Override
     public void removePermissionFromRole(Long roleId, Long permissionId) {
-        rolePermissionMapper.delete(
-            new LambdaQueryWrapper<SysRolePermission>()
-                .eq(SysRolePermission::getRoleId, roleId)
-                .eq(SysRolePermission::getPermissionId, permissionId)
-        );
+        LambdaQueryWrapper<SysRolePermission> wrapper = new LambdaQueryWrapper<SysRolePermission>()
+            .eq(SysRolePermission::getRoleId, roleId)
+            .eq(SysRolePermission::getPermissionId, permissionId);
+        // 非管理员只能删除自己租户的角色权限
+        if (!SecurityUtil.isPlatformAdmin()) {
+            Long tenantId = SecurityUtil.getTenantIdOrNull();
+            if (tenantId != null) {
+                wrapper.eq(SysRolePermission::getTenantId, tenantId);
+            }
+        }
+        rolePermissionMapper.delete(wrapper);
         log.info("从角色移除权限成功: roleId={}, permissionId={}", roleId, permissionId);
     }
 }

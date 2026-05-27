@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+
+<html lang="zh-CN"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>企业级应用管理系统 - 现代化后台</title>
+<!-- Tailwind CSS (本地) -->
+<script src="https://modao.cc/agent-py/static/source/js/tailwindcss.js"></script>
+<!-- Iconify图标 -->
+<script src="https://modao.cc/agent-py/static/source/js/iconify-icon.min.js"></script>
+<style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background-color: #f8fafc;
+        }
+
+        .glass-sidebar {
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(10px);
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .nav-item-active {
+            background: linear-gradient(90deg, rgba(79, 70, 229, 0.2) 0%, rgba(79, 70, 229, 0) 100%);
+            border-left: 4px solid #6366f1;
+            color: #ffffff;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+        }
+
+        .card-shadow {
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .card-shadow:hover {
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body class="flex h-screen overflow-hidden text-slate-700">
+<!-- 左侧导航栏 -->
+<aside class="glass-sidebar w-72 flex-shrink-0 flex flex-col text-slate-300 transition-all duration-300 ease-in-out">
+<!-- Logo & 搜索区 -->
+<div class="p-6">
+<div class="relative group">
+<iconify-icon class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-indigo-400 transition-colors" icon="hugeicons:search-01"></iconify-icon>
+<input class="w-full bg-slate-800/50 border border-slate-700 rounded-lg py-2 pl-10 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all placeholder-slate-500" placeholder="搜索菜单或功能" type="text"/>
+<div class="absolute right-3 top-1/2 -translate-y-1/2 flex items-center space-x-1">
+<button class="hover:text-indigo-400 transition-colors" title="刷新">
+<iconify-icon icon="heroicons:arrow-path-20-solid"></iconify-icon>
+</button>
+<button class="hover:text-indigo-400 transition-colors" title="折叠">
+<iconify-icon icon="heroicons:bars-3-bottom-left-20-solid"></iconify-icon>
+</button>
+</div>
+</div>
+</div>
+<!-- 菜单区域 -->
+<nav class="flex-1 overflow-y-auto custom-scrollbar px-4 space-y-6 pb-6">
+<!-- 微应用模块 -->
+<div>
+<div class="flex items-center justify-between px-2 mb-2 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+<span>微应用</span>
+<iconify-icon icon="heroicons:chevron-down-20-solid"></iconify-icon>
+</div>
+<ul class="space-y-1">
+<li>
+<a class="flex items-center px-3 py-2 rounded-lg hover:bg-slate-800 transition-colors group" href="#">
+<iconify-icon class="text-yellow-500 text-lg mr-3" icon="material-symbols:settings-input-component"></iconify-icon>
+<span class="text-sm">AWS SDK API接口验证</span>
+</a>
+</li>
+<li>
+<a class="flex items-center px-3 py-2 rounded-lg hover:bg-slate-800 transition-colors" href="#">
+<iconify-icon class="text-green-500 text-lg mr-3" icon="material-symbols:shield-outline"></iconify-icon>
+<span class="text-sm">KMS知识管理</span>
+</a>
+</li>
+<li>
+<a class="flex items-center px-3 py-2 rounded-lg hover:bg-slate-800 transition-colors" href="#">
+<iconify-icon class="text-blue-500 text-lg mr-3" icon="material-symbols:folder-open-outline"></iconify-icon>
+<span class="text-sm">不合格品初级审理</span>
+</a>
+</li>
+<li>
+<a class="flex items-center px-3 py-2 rounded-lg hover:bg-slate-800 transition-colors" href="#">
+<iconify-icon class="text-blue-500 text-lg mr-3" icon="material-symbols:database-outline"></iconify-icon>
+<span class="text-sm">故障库管理</span>
+</a>
+</li>
+<li>
+<a class="flex items-center px-3 py-2 rounded-lg hover:bg-slate-800 transition-colors" href="#">
+<iconify-icon class="text-green-500 text-lg mr-3" icon="material-symbols:book-outline"></iconify-icon>
+<span class="text-sm">基础字典</span>
+</a>
+</li>
+</ul>
+</div>
+<!-- 扩展ORG -->
+<div>
+</div>
+<!-- 通用工具管理 -->
+<div>
+<ul class="space-y-1">
+<li>
+<div class="flex flex-col">
+<ul class="ml-9 mt-1 space-y-1 border-l border-slate-800 pl-4">
+<li></li>
+<li></li>
+</ul>
+</div>
+</li>
+<li class="mt-2">
+</li>
+</ul>
+</div>
+</nav>
+<!-- 用户底部 -->
+<div class="p-4 border-t border-slate-800">
+</div>
+</aside>
+<!-- 右侧主内容区 -->
+<main class="flex-1 flex flex-col min-w-0 overflow-hidden">
+<!-- 顶部导航栏 -->
+<header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8 flex-shrink-0">
+<!-- 面包屑 -->
+<nav class="flex items-center space-x-2 text-sm">
+<a class="text-slate-400 hover:text-indigo-600 transition-colors" href="#">统计</a>
+<span class="text-slate-300">|</span>
+<a class="text-slate-400 hover:text-indigo-600 transition-colors" href="#" style="opacity: 1;">存储管理</a>
+<span class="text-slate-300" style="opacity: 1;">|</span><span class="text-slate-900 font-semibold">存储模型</span>
+</nav>
+<!-- 右侧操作 -->
+</header>
+<!-- 内容滚动区 -->
+<div class="flex-1 overflow-y-auto p-8 custom-scrollbar">
+<!-- 头部操作区 -->
+<div class="flex flex-col md:flex-row md:items-center justify-between mb-8 space-y-4 md:space-y-0">
+<div class="flex items-center space-x-3">
+<h1 class="text-2xl font-bold text-slate-900">数据关系表</h1>
+<button class="p-1 hover:bg-slate-100 rounded-md transition-colors text-slate-400 hover:text-indigo-600" title="编辑名称">
+<iconify-icon icon="material-symbols:edit-outline"></iconify-icon>
+</button>
+</div>
+<div class="flex items-center space-x-3">
+<button class="flex items-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium shadow-lg shadow-indigo-200 transition-all active:scale-95">
+<iconify-icon class="mr-2" icon="heroicons:plus-20-solid"></iconify-icon>
+                        新建
+                    </button>
+<button class="flex items-center px-4 py-2 bg-white border border-slate-200 hover:border-slate-300 text-slate-700 rounded-lg font-medium shadow-sm transition-all hover:bg-slate-50">
+<iconify-icon class="mr-2 text-indigo-500" icon="material-symbols:fact-check-outline"></iconify-icon>
+                        结构检查
+                    </button>
+<button class="flex items-center px-4 py-2 bg-white border border-slate-200 hover:border-slate-300 text-slate-700 rounded-lg font-medium shadow-sm transition-all hover:bg-slate-50">
+<iconify-icon class="mr-2 text-indigo-500" icon="material-symbols:refresh-rounded"></iconify-icon>
+                        加载
+                    </button>
+</div>
+</div>
+<!-- 数据统计概览 (新增丰富度) -->
+<div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+<div class="bg-white p-5 rounded-2xl card-shadow border border-slate-100">
+<div class="flex items-center justify-between mb-3">
+<div class="w-10 h-10 bg-indigo-50 rounded-lg flex items-center justify-center text-indigo-600">
+<iconify-icon class="text-2xl" icon="material-symbols:database-outline"></iconify-icon>
+</div>
+<span class="text-xs font-medium text-green-500 bg-green-50 px-2 py-1 rounded-full">+12%</span>
+</div>
+<p class="text-slate-500 text-sm">总表数量</p>
+<p class="text-2xl font-bold text-slate-900 mt-1">1,284</p>
+</div>
+<div class="bg-white p-5 rounded-2xl card-shadow border border-slate-100">
+<div class="flex items-center justify-between mb-3">
+<div class="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center text-blue-600">
+<iconify-icon class="text-2xl" icon="material-symbols:link-rounded"></iconify-icon>
+</div>
+<span class="text-xs font-medium text-blue-500 bg-blue-50 px-2 py-1 rounded-full">稳定</span>
+</div>
+<p class="text-slate-500 text-sm">活跃关联</p>
+<p class="text-2xl font-bold text-slate-900 mt-1">856</p>
+</div>
+<div class="bg-white p-5 rounded-2xl card-shadow border border-slate-100">
+<div class="flex items-center justify-between mb-3">
+<div class="w-10 h-10 bg-yellow-50 rounded-lg flex items-center justify-center text-yellow-600">
+<iconify-icon class="text-2xl" icon="material-symbols:warning-outline"></iconify-icon>
+</div>
+<span class="text-xs font-medium text-red-500 bg-red-50 px-2 py-1 rounded-full">3 待查</span>
+</div>
+<p class="text-slate-500 text-sm">结构异常</p>
+<p class="text-2xl font-bold text-slate-900 mt-1">0.2%</p>
+</div>
+<div class="bg-white p-5 rounded-2xl card-shadow border border-slate-100">
+<div class="flex items-center justify-between mb-3">
+<div class="w-10 h-10 bg-purple-50 rounded-lg flex items-center justify-center text-purple-600">
+<iconify-icon class="text-2xl" icon="material-symbols:speed-outline"></iconify-icon>
+</div>
+<span class="text-xs font-medium text-purple-500 bg-purple-50 px-2 py-1 rounded-full">极速</span>
+</div>
+<p class="text-slate-500 text-sm">平均同步耗时</p>
+<p class="text-2xl font-bold text-slate-900 mt-1">240ms</p>
+</div>
+</div>
+<!-- 数据表格卡片 -->
+<div class="bg-white rounded-2xl card-shadow border border-slate-100 overflow-hidden">
+<div class="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+<div class="flex items-center space-x-4">
+<h2 class="font-bold text-slate-800">数据关系列表</h2>
+<div class="flex items-center space-x-2">
+<span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+<span class="text-xs text-slate-500">实时同步中</span>
+</div>
+</div>
+<div class="flex items-center space-x-2">
+<button class="p-2 hover:bg-white hover:shadow-sm rounded-lg transition-all text-slate-400 hover:text-indigo-600 border border-transparent hover:border-slate-200">
+<iconify-icon icon="material-symbols:filter-list-rounded"></iconify-icon>
+</button>
+<button class="p-2 hover:bg-white hover:shadow-sm rounded-lg transition-all text-slate-400 hover:text-indigo-600 border border-transparent hover:border-slate-200">
+<iconify-icon icon="material-symbols:download-rounded"></iconify-icon>
+</button>
+</div>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-slate-900 text-slate-300 text-xs uppercase tracking-wider">
+<th class="px-6 py-4 font-semibold">序号</th>
+<th class="px-6 py-4 font-semibold">关系名称</th>
+<th class="px-6 py-4 font-semibold">关联表 (BO)</th>
+<th class="px-6 py-4 font-semibold">描述说明</th>
+<th class="px-6 py-4 font-semibold">创建时间</th>
+<th class="px-6 py-4 font-semibold">状态</th>
+<th class="px-6 py-4 font-semibold text-right">操作</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-slate-100 text-sm">
+<tr class="hover:bg-indigo-50/30 transition-colors group">
+<td class="px-6 py-4 text-slate-500 font-mono">01</td>
+<td class="px-6 py-4 font-medium text-slate-900">BO_EU_QMS_API_ASSO</td>
+<td class="px-6 py-4">
+<span class="px-2 py-1 bg-slate-100 text-slate-600 rounded text-xs">T_QMS_MASTER</span>
+</td>
+<td class="px-6 py-4 text-slate-500 max-w-xs truncate">质量管理系统接口关联主表，用于同步核心业务数据。</td>
+<td class="px-6 py-4 text-slate-500">2026-05-20 14:30</td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                        已上线
+                                    </span>
+</td>
+<td class="px-6 py-4 text-right">
+<div class="flex items-center justify-end space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-white rounded-md shadow-sm transition-all" title="查看">
+<iconify-icon icon="heroicons:eye"></iconify-icon>
+</button>
+<button class="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-white rounded-md shadow-sm transition-all" title="编辑">
+<iconify-icon icon="heroicons:pencil-square"></iconify-icon>
+</button>
+<button class="p-1.5 text-slate-400 hover:text-red-600 hover:bg-white rounded-md shadow-sm transition-all" title="删除">
+<iconify-icon icon="heroicons:trash"></iconify-icon>
+</button>
+</div>
+</td>
+</tr>
+<tr class="hover:bg-indigo-50/30 transition-colors group">
+<td class="px-6 py-4 text-slate-500 font-mono">02</td>
+<td class="px-6 py-4 font-medium text-slate-900">BO_SYS_USER_LOG_MAP</td>
+<td class="px-6 py-4">
+<span class="px-2 py-1 bg-slate-100 text-slate-600 rounded text-xs">T_SYS_LOGS</span>
+</td>
+<td class="px-6 py-4 text-slate-500 max-w-xs truncate">系统用户操作日志映射表，记录用户审计追踪。</td>
+<td class="px-6 py-4 text-slate-500">2026-05-21 09:15</td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                        已上线
+                                    </span>
+</td>
+<td class="px-6 py-4 text-right">
+<div class="flex items-center justify-end space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-white rounded-md shadow-sm transition-all"><iconify-icon icon="heroicons:eye"></iconify-icon></button>
+<button class="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-white rounded-md shadow-sm transition-all"><iconify-icon icon="heroicons:pencil-square"></iconify-icon></button>
+<button class="p-1.5 text-slate-400 hover:text-red-600 hover:bg-white rounded-md shadow-sm transition-all"><iconify-icon icon="heroicons:trash"></iconify-icon></button>
+</div>
+</td>
+</tr>
+<tr class="hover:bg-indigo-50/30 transition-colors group">
+<td class="px-6 py-4 text-slate-500 font-mono">03</td>
+<td class="px-6 py-4 font-medium text-slate-900">BO_WMS_INV_SYNC_REL</td>
+<td class="px-6 py-4">
+<span class="px-2 py-1 bg-slate-100 text-slate-600 rounded text-xs">T_WMS_STOCK</span>
+</td>
+<td class="px-6 py-4 text-slate-500 max-w-xs truncate">仓库库存同步关系定义，对接ERP与WMS。</td>
+<td class="px-6 py-4 text-slate-500">2026-05-22 16:45</td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                                        测试中
+                                    </span>
+</td>
+<td class="px-6 py-4 text-right">
+<div class="flex items-center justify-end space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-white rounded-md shadow-sm transition-all"><iconify-icon icon="heroicons:eye"></iconify-icon></button>
+<button class="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-white rounded-md shadow-sm transition-all"><iconify-icon icon="heroicons:pencil-square"></iconify-icon></button>
+<button class="p-1.5 text-slate-400 hover:text-red-600 hover:bg-white rounded-md shadow-sm transition-all"><iconify-icon icon="heroicons:trash"></iconify-icon></button>
+</div>
+</td>
+</tr>
+<tr class="hover:bg-indigo-50/30 transition-colors group">
+<td class="px-6 py-4 text-slate-500 font-mono">04</td>
+<td class="px-6 py-4 font-medium text-slate-900">BO_KMS_DOC_AUTH_LINK</td>
+<td class="px-6 py-4">
+<span class="px-2 py-1 bg-slate-100 text-slate-600 rounded text-xs">T_KMS_AUTH</span>
+</td>
+<td class="px-6 py-4 text-slate-500 max-w-xs truncate">知识管理系统文档权限关联，控制细粒度访问。</td>
+<td class="px-6 py-4 text-slate-500">2026-05-23 10:00</td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                        已上线
+                                    </span>
+</td>
+<td class="px-6 py-4 text-right">
+<div class="flex items-center justify-end space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-white rounded-md shadow-sm transition-all"><iconify-icon icon="heroicons:eye"></iconify-icon></button>
+<button class="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-white rounded-md shadow-sm transition-all"><iconify-icon icon="heroicons:pencil-square"></iconify-icon></button>
+<button class="p-1.5 text-slate-400 hover:text-red-600 hover:bg-white rounded-md shadow-sm transition-all"><iconify-icon icon="heroicons:trash"></iconify-icon></button>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="px-6 py-4 bg-slate-50 flex items-center justify-between border-t border-slate-100">
+<p class="text-xs text-slate-500">共 124 条记录，当前显示 1-4 条</p>
+<div class="flex items-center space-x-1">
+<button class="p-2 hover:bg-white rounded-md border border-slate-200 text-slate-400 disabled:opacity-50" disabled="">
+<iconify-icon icon="heroicons:chevron-left-20-solid"></iconify-icon>
+</button>
+<button class="w-8 h-8 bg-indigo-600 text-white rounded-md text-xs font-bold">1</button>
+<button class="w-8 h-8 hover:bg-white rounded-md border border-slate-200 text-slate-600 text-xs font-medium transition-colors">2</button>
+<button class="w-8 h-8 hover:bg-white rounded-md border border-slate-200 text-slate-600 text-xs font-medium transition-colors">3</button>
+<span class="text-slate-400 px-1">...</span>
+<button class="w-8 h-8 hover:bg-white rounded-md border border-slate-200 text-slate-600 text-xs font-medium transition-colors">31</button>
+<button class="p-2 hover:bg-white rounded-md border border-slate-200 text-slate-600">
+<iconify-icon icon="heroicons:chevron-right-20-solid"></iconify-icon>
+</button>
+</div>
+</div>
+</div>
+<!-- 底部额外信息 (新增丰富度) -->
+<div class="mt-8 grid grid-cols-1 md:grid-cols-2 gap-8">
+<div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
+<h3 class="font-bold text-slate-800 mb-4 flex items-center">
+<iconify-icon class="mr-2 text-indigo-500 text-xl" icon="material-symbols:history-rounded"></iconify-icon>
+                        最近操作日志
+                    </h3>
+<div class="space-y-4">
+<div class="flex items-start space-x-3">
+<div class="w-2 h-2 mt-1.5 bg-indigo-500 rounded-full"></div>
+<div>
+<p class="text-sm font-medium text-slate-800">修改了 BO_EU_QMS_API_ASSO</p>
+<p class="text-xs text-slate-500">管理员 (admin) - 10分钟前</p>
+</div>
+</div>
+<div class="flex items-start space-x-3">
+<div class="w-2 h-2 mt-1.5 bg-green-500 rounded-full"></div>
+<div>
+<p class="text-sm font-medium text-slate-800">成功同步 WMS 库存数据</p>
+<p class="text-xs text-slate-500">系统自动 - 45分钟前</p>
+</div>
+</div>
+<div class="flex items-start space-x-3">
+<div class="w-2 h-2 mt-1.5 bg-slate-300 rounded-full"></div>
+<div>
+<p class="text-sm font-medium text-slate-800">新建存储模型 1 项</p>
+<p class="text-xs text-slate-500">张三 (zhangsan) - 2小时前</p>
+</div>
+</div>
+</div>
+</div>
+<div class="bg-indigo-900 p-6 rounded-2xl shadow-xl relative overflow-hidden">
+<div class="relative z-10">
+<h3 class="font-bold text-white mb-2">系统资源占用</h3>
+<p class="text-indigo-200 text-xs mb-6">当前存储引擎运行状态良好，负载较低。</p>
+<div class="space-y-4">
+<div>
+<div class="flex justify-between text-xs text-indigo-200 mb-1">
+<span>数据库连接池</span>
+<span>24/100</span>
+</div>
+<div class="w-full bg-indigo-950 rounded-full h-1.5">
+<div class="bg-indigo-400 h-1.5 rounded-full" style="width: 24%"></div>
+</div>
+</div>
+<div>
+<div class="flex justify-between text-xs text-indigo-200 mb-1">
+<span>内存使用率</span>
+<span>42%</span>
+</div>
+<div class="w-full bg-indigo-950 rounded-full h-1.5">
+<div class="bg-indigo-400 h-1.5 rounded-full" style="width: 42%"></div>
+</div>
+</div>
+</div>
+<button class="mt-6 text-xs bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-lg transition-colors border border-white/10">
+                            查看详细报告
+                        </button>
+</div>
+<!-- 装饰背景 -->
+<div class="absolute -right-10 -bottom-10 w-40 h-40 bg-indigo-500/20 rounded-full blur-3xl"></div>
+<div class="absolute top-0 right-0 p-4 opacity-10">
+<iconify-icon class="text-8xl text-white" icon="line-md:cloud-braces-loop"></iconify-icon>
+</div>
+</div>
+</div>
+</div>
+<!-- 全局页脚 -->
+<footer class="px-8 py-4 bg-white border-t border-slate-100 flex items-center justify-between text-xs text-slate-400">
+<p>© 2026 EnterpriseOS. All rights reserved. 云端管理系统 V2.4.0</p>
+<div class="flex items-center space-x-4">
+<a class="hover:text-indigo-600 transition-colors" href="#">隐私政策</a>
+<a class="hover:text-indigo-600 transition-colors" href="#">服务条款</a>
+<a class="hover:text-indigo-600 transition-colors" href="#">联系支持</a>
+</div>
+</footer>
+</main>
+<script>
+        // 模拟交互：按钮点击反馈
+        document.querySelectorAll('button').forEach(btn => {
+            btn.addEventListener('click', function() {
+                console.log('Action triggered:', this.innerText.trim());
+            });
+        });
+
+        // 模拟侧边栏折叠逻辑 (UI展示)
+        const sidebar = document.querySelector('aside');
+        const toggleBtn = document.querySelector('[title="折叠"]');
+        let isCollapsed = false;
+
+        toggleBtn.addEventListener('click', () => {
+            isCollapsed = !isCollapsed;
+            if (isCollapsed) {
+                sidebar.classList.remove('w-72');
+                sidebar.classList.add('w-20');
+                // 这里可以进一步隐藏文字等
+            } else {
+                sidebar.classList.remove('w-20');
+                sidebar.classList.add('w-72');
+            }
+        });
+    </script>
+</body></html>

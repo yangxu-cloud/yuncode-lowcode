@@ -1,34 +1,50 @@
 package com.yuncode.auth.config;
 
 import cn.dev33.satoken.interceptor.SaInterceptor;
+import cn.dev33.satoken.stp.StpLogic;
 import cn.dev33.satoken.stp.StpUtil;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
+import java.util.List;
+
 /**
  * Sa-Token 配置类
  * 使用 Sa-Token + JWT 模式
+ *
+ * 拦截器检查所有登录类型的 StpLogic，任一有效即可通过。
+ * 三种登录类型（admin/user/tenant）使用独立的 JWT 签名密钥隔离。
  */
 @Configuration
 public class SaTokenConfig implements WebMvcConfigurer {
 
+    @Autowired
+    private List<StpLogic> stpLogics;
+
     /**
-     * 注册 Sa-Token 拦截器，进行登录校验
+     * 注册 Sa-Token 拦截器，校验所有登录类型的 token
      */
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
-        // 注册 Sa-Token 拦截器，校验登录状态
-        registry.addInterceptor(new SaInterceptor(handle -> StpUtil.checkLogin()))
+        registry.addInterceptor(new SaInterceptor(handle -> {
+            // 三种登录类型任一 token 有效即可通过
+            boolean anyValid = stpLogics.stream().anyMatch(stp -> {
+                try {
+                    return stp.isLogin();
+                } catch (Exception e) {
+                    return false;
+                }
+            });
+            if (!anyValid) {
+                StpUtil.checkLogin(); // 抛出标准 NotLoginException
+            }
+        }))
                 .addPathPatterns("/**")
                 .excludePathPatterns(
-                        // 排除认证接口
                         "/auth/**",
-                        // 排除设置接口（允许匿名访问基础设置）
                         "/settings/basic",
-                        // 排除工具接口（仅开发环境）
-                        "/util/**",
-                        // 排除静态资源
                         "/favicon.ico",
                         "/error",
                         "/swagger-resources/**",
@@ -37,18 +53,7 @@ public class SaTokenConfig implements WebMvcConfigurer {
                         "/doc.html",
                         "/swagger-ui/**",
                         "/knife4j/**",
-                        // 排除健康检查
                         "/actuator/**"
                 );
-    }
-
-    /**
-     * 权限认证规则配置（预留）
-     * 可以在这里添加更复杂的权限校验逻辑
-     */
-    public void checkPermission() {
-        // 根据路由路径进行权限校验
-        // 例如：根据请求路径检查具体权限
-        // StpUtil.checkPermission("user:add");
     }
 }

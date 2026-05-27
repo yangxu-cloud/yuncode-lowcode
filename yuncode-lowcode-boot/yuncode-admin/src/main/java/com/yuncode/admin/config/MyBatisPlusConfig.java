@@ -156,11 +156,16 @@ public class MyBatisPlusConfig {
             }
 
             /**
-             * 获取当前用户
-             * TODO: 从请求上下文或 Security 上下文获取当前登录用户
+             * 获取当前登录用户名（从 Sa-Token Session 读取）
              */
             private String getCurrentUser() {
-                // 暂时返回固定值，后续可以从 Request 或 SecurityContext 获取
+                try {
+                    if (StpUtil.isLogin()) {
+                        return StpUtil.getTokenSession().get("username", "system");
+                    }
+                } catch (Exception e) {
+                    // 非 Web 上下文（异步线程等），使用默认值
+                }
                 return "system";
             }
         };

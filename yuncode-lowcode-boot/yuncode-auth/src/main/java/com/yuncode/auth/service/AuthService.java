@@ -2,13 +2,9 @@ package com.yuncode.auth.service;
 
 import cn.dev33.satoken.stp.StpLogic;
 import cn.dev33.satoken.stp.StpUtil;
-import com.yuncode.auth.dto.LoginDTO;
-import com.yuncode.auth.factory.LoginStrategyFactory;
-import com.yuncode.auth.strategy.LoginStrategy;
 import com.yuncode.auth.vo.LoginVO;
 import com.yuncode.system.service.LoginLogService;
 import com.yuncode.system.service.OnlineUserService;
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -22,17 +18,14 @@ import java.util.List;
 @Service
 public class AuthService {
 
-    private final LoginStrategyFactory loginStrategyFactory;
     private final LoginLogService loginLogService;
     private final OnlineUserService onlineUserService;
     private final List<StpLogic> stpLogics;
 
     public AuthService(
-            LoginStrategyFactory loginStrategyFactory,
             LoginLogService loginLogService,
             OnlineUserService onlineUserService,
             List<StpLogic> stpLogics) {
-        this.loginStrategyFactory = loginStrategyFactory;
         this.loginLogService = loginLogService;
         this.onlineUserService = onlineUserService;
         this.stpLogics = stpLogics;
@@ -54,18 +47,14 @@ public class AuthService {
         // 如果获取到了 token，遍历所有 StpLogic 找到能验证这个 token 的那个
         if (tokenValue != null && !tokenValue.isEmpty()) {
             for (StpLogic stpLogic : stpLogics) {
-                // 跳过自动配置的 StpLogic（它的 loginType 通常是 "login" 或为空）
                 if ("login".equals(stpLogic.getLoginType()) || stpLogic.getLoginType() == null) {
                     continue;
                 }
 
                 try {
-                    // 检查这个 StpLogic 是否能认领这个 token
-                    // 通过尝试获取 loginId 来验证
                     if (stpLogic.isLogin()) {
                         Object loginId = stpLogic.getLoginIdDefaultNull();
                         if (loginId != null) {
-                            // 验证这个 token 是否真的属于这个 StpLogic
                             String stpToken = stpLogic.getTokenValue();
                             if (tokenValue.equals(stpToken)) {
                                 log.debug("通过 token 匹配到 StpLogic: {}, loginId: {}", stpLogic.getLoginType(), loginId);
@@ -110,24 +99,6 @@ public class AuthService {
     }
 
     /**
-     * 用户登录（带日志记录）
-     * 使用策略模式处理不同登录类型
-     */
-    public LoginVO login(LoginDTO loginDTO, HttpServletRequest request) {
-        // 获取对应的登录策略
-        LoginStrategy strategy = loginStrategyFactory.getStrategy(loginDTO.getLoginType());
-
-        // 执行登录
-        log.info("开始登录: username={}, loginType={}", loginDTO.getUsername(), loginDTO.getLoginType());
-        LoginVO loginVO = strategy.login(loginDTO, request);
-
-        log.info("登录成功: userId={}, username={}, loginType={}",
-                loginVO.getUserId(), loginVO.getUsername(), loginDTO.getLoginType());
-
-        return loginVO;
-    }
-
-    /**
      * 用户登出
      */
     public void logout() {
@@ -137,7 +108,6 @@ public class AuthService {
         String token = null;
         try {
             token = stpLogic.getTokenValue();
-            // 从 Sa-Token session 中获取业务会话ID
             sessionId = stpLogic.getSession().get("sessionId", "");
             log.info("[Logout] 开始登出流程，sessionId={}, token (前32位): {}",
                 sessionId, token != null ? token.substring(0, Math.min(32, token.length())) : "null");
@@ -146,23 +116,18 @@ public class AuthService {
         }
 
         try {
-            // 获取当前用户信息
             Long userId = stpLogic.getLoginIdAsLong();
             String username = stpLogic.getSession().get("username", "");
 
-            // 更新登录日志的登出时间
             loginLogService.updateLogoutTime(username, LocalDateTime.now());
 
             log.info("[Logout] 用户登出成功: userId={}, username={}, loginType={}",
                     userId, username, stpLogic.getLoginType());
-
         } catch (cn.dev33.satoken.exception.NotLoginException e) {
-            // token 无效或已过期，这是正常情况
             log.debug("[Logout] 登出时 token 已失效: {}", e.getMessage());
         } catch (Exception e) {
             log.error("[Logout] 更新登出时间失败", e);
         } finally {
-            // 移除在线用户记录
             try {
                 if (sessionId != null && !sessionId.isEmpty()) {
                     log.info("[Logout] 准备移除在线用户记录，sessionId={}", sessionId);
@@ -175,7 +140,6 @@ public class AuthService {
                 log.error("[Logout] 移除在线用户记录失败: {}", e.getMessage(), e);
             }
 
-            // 执行登出操作（即使 token 已失效也要尝试清理）
             try {
                 stpLogic.logout();
                 log.info("[Logout] StpLogic.logout() 执行成功");
@@ -193,7 +157,6 @@ public class AuthService {
     public LoginVO getCurrentUserInfo() {
         StpLogic stpLogic = getCurrentStpLogic();
 
-        // 检查是否登录（StpLogic.checkLogin() 会自动抛出 NotLoginException）
         stpLogic.checkLogin();
 
         try {

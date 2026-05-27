@@ -1,10 +1,11 @@
 package com.yuncode.auth.service;
 
-import cn.dev33.satoken.stp.StpUtil;
+import cn.dev33.satoken.stp.StpLogic;
 import cn.hutool.crypto.digest.BCrypt;
 import com.yuncode.auth.dto.LoginDTO;
 import com.yuncode.auth.properties.SaTokenProperties;
 import com.yuncode.auth.vo.LoginVO;
+import org.springframework.beans.factory.annotation.Value;
 import com.yuncode.common.exception.BusinessException;
 import com.yuncode.common.exception.ErrorCode;
 import com.yuncode.common.utils.web.ServletUtils;
@@ -16,8 +17,9 @@ import com.yuncode.system.mapper.SysUserMapper;
 import com.yuncode.system.service.SysLoginLogService;
 import com.yuncode.system.service.OnlineUserService;
 import com.yuncode.system.service.UserCacheService;
-import com.yuncode.tenant.entity.SysTenant;
-import com.yuncode.tenant.mapper.SysTenantMapper;
+import com.yuncode.system.entity.SysTenant;
+import com.yuncode.system.mapper.SysTenantMapper;
+import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -41,6 +43,14 @@ public class TenantLoginService {
     private final OnlineUserService onlineUserService;
     private final UserCacheService userCacheService;
 
+    @Resource(name = "tenantStpLogic")
+    private StpLogic stpLogic;
+
+    private final LoginAttemptService loginAttemptService;
+
+    @Value("${system.default-password:123456}")
+    private String defaultPassword;
+
     /**
      * 租户登录
      */
@@ -49,6 +59,12 @@ public class TenantLoginService {
         Long tenantId = null;
         String username = loginDTO.getUsername();
         SysTenant tenant = null;
+
+        // 暴力破解防护：检查登录是否被锁定
+        if (loginAttemptService.isLocked(username)) {
+            long remaining = loginAttemptService.getRemainingLockTime(username);
+            throw new BusinessException(ErrorCode.ACCOUNT_LOCKED, "账号已锁定，请 " + remaining + " 秒后重试");
+        }
 
         try {
             // 1. 校验租户编码是否存在
@@ -93,27 +109,27 @@ public class TenantLoginService {
             }
 
             // 8. 使用 Sa-Token 进行登录，将用户类型和租户信息存储在 Token Extra 中
-            StpUtil.login(user.getId());
+            stpLogic.login(user.getId());
 
             // 将用户类型、租户ID等信息存入 Token Extra
-            StpUtil.getTokenSession().set("loginType", "tenant");
-            StpUtil.getTokenSession().set("tenantId", tenantId);
-            StpUtil.getTokenSession().set("userId", user.getId());
-            StpUtil.getTokenSession().set("username", user.getUsername());
-            StpUtil.getTokenSession().set("nickname", user.getNickname() != null ? user.getNickname() : "");
-            StpUtil.getTokenSession().set("avatar", user.getAvatar() != null ? user.getAvatar() : "");
-            StpUtil.getTokenSession().set("roleCode", user.getRoleCode() != null ? user.getRoleCode() : "");
+            stpLogic.getTokenSession().set("loginType", "tenant");
+            stpLogic.getTokenSession().set("tenantId", tenantId);
+            stpLogic.getTokenSession().set("userId", user.getId());
+            stpLogic.getTokenSession().set("username", user.getUsername());
+            stpLogic.getTokenSession().set("nickname", user.getNickname() != null ? user.getNickname() : "");
+            stpLogic.getTokenSession().set("avatar", user.getAvatar() != null ? user.getAvatar() : "");
+            stpLogic.getTokenSession().set("roleCode", user.getRoleCode() != null ? user.getRoleCode() : "");
 
             log.info("租户登录成功: userId={}, username={}, tenantId={}",
                     user.getId(), username, tenantId);
 
             // 将用户信息存入 Session
-            StpUtil.getSession().set("userId", user.getId());
-            StpUtil.getSession().set("username", user.getUsername());
-            StpUtil.getSession().set("nickname", user.getNickname() != null ? user.getNickname() : "");
-            StpUtil.getSession().set("avatar", user.getAvatar() != null ? user.getAvatar() : "");
-            StpUtil.getSession().set("tenantId", tenantId);
-            StpUtil.getSession().set("loginType", "tenant");
+            stpLogic.getSession().set("userId", user.getId());
+            stpLogic.getSession().set("username", user.getUsername());
+            stpLogic.getSession().set("nickname", user.getNickname() != null ? user.getNickname() : "");
+            stpLogic.getSession().set("avatar", user.getAvatar() != null ? user.getAvatar() : "");
+            stpLogic.getSession().set("tenantId", tenantId);
+            stpLogic.getSession().set("loginType", "tenant");
 
             // 9. 缓存用户信息到 Redis（30分钟）
             userCacheService.cacheUser(user.getId(), user, 1800);
@@ -123,11 +139,11 @@ public class TenantLoginService {
             log.info("生成业务会话ID: userId={}, sessionId={}", user.getId(), sessionId);
 
             // 将 sessionId 存入 Sa-Token session，供退出时使用
-            StpUtil.getSession().set("sessionId", sessionId);
-            log.info("sessionId 已存入 Sa-Token session，验证: {}", StpUtil.getSession().get("sessionId"));
+            stpLogic.getSession().set("sessionId", sessionId);
+            log.info("sessionId 已存入 Sa-Token session，验证: {}", stpLogic.getSession().get("sessionId"));
 
             // 11. 获取 Sa-Token 的 JWT Token
-            String token = StpUtil.getTokenValue();
+            String token = stpLogic.getTokenValue();
 
             // 12. 添加在线用户记录
             OnlineUser onlineUser = new OnlineUser();
@@ -150,21 +166,31 @@ public class TenantLoginService {
             loginVO.setToken(token);
             loginVO.setSessionId(sessionId);  // 返回业务会话ID给前端
             loginVO.setTokenName(saTokenProperties.getTokenName());  // 从配置读取
-            loginVO.setUserId(StpUtil.getLoginIdAsLong());
+            loginVO.setUserId(stpLogic.getLoginIdAsLong());
             loginVO.setUsername(username);
-            loginVO.setNickname(StpUtil.getSession().get("nickname", ""));
-            loginVO.setAvatar(StpUtil.getSession().get("avatar", ""));
+            loginVO.setNickname(stpLogic.getSession().get("nickname", ""));
+            loginVO.setAvatar(stpLogic.getSession().get("avatar", ""));
             loginVO.setTenantId(tenantId);
 
             if (tenant != null) {
                 loginVO.setTenantName(tenant.getTenantName());
             }
+            loginVO.setPermissions(stpLogic.getPermissionList(user.getId()));
 
+            // 检测是否使用默认密码，首次登录需要强制修改
+            if (BCrypt.checkpw(defaultPassword, user.getPassword())) {
+                loginVO.setRequireChange(true);
+                log.warn("租户管理员 {} 正在使用默认密码，建议立即修改", username);
+            }
+
+            loginAttemptService.loginSucceeded(username);
             return loginVO;
 
         } catch (BusinessException e) {
+            loginAttemptService.loginFailed(username);
             throw e;
         } catch (Exception e) {
+            loginAttemptService.loginFailed(username);
             throw new BusinessException(ErrorCode.SYSTEM_ERROR, "登录失败，请稍后重试");
         }
     }

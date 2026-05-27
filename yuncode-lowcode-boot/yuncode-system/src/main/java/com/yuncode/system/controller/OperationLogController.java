@@ -2,6 +2,7 @@ package com.yuncode.system.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.yuncode.common.model.util.response.Result;
+import com.yuncode.common.utils.SecurityUtil;
 import com.yuncode.system.dto.OperationLogQueryDTO;
 import com.yuncode.system.entity.SysOperationLog;
 import com.yuncode.system.service.SysOperationLogService;
@@ -32,6 +33,7 @@ public class OperationLogController {
     @GetMapping("/list")
     @Operation(summary = "分页查询操作日志", description = "根据条件分页查询操作日志")
     public Result<Page<SysOperationLog>> getOperationLogPage(@Valid OperationLogQueryDTO dto) {
+        SecurityUtil.checkPlatformAdmin();
         Page<SysOperationLog> page = operationLogService.getOperationLogPage(dto);
         return Result.success(page);
     }
@@ -42,6 +44,7 @@ public class OperationLogController {
     @GetMapping("/trace/{traceId}")
     @Operation(summary = "根据 TraceId 查询操作日志", description = "查询指定 TraceId 的所有操作日志")
     public Result<List<SysOperationLog>> getLogsByTraceId(@PathVariable String traceId) {
+        SecurityUtil.checkPlatformAdmin();
         List<SysOperationLog> logs = operationLogService.getLogsByTraceId(traceId);
         return Result.success(logs);
     }

@@ -3,6 +3,7 @@ package com.yuncode.system.service;
 import cn.dev33.satoken.stp.StpUtil;
 import cn.hutool.crypto.digest.BCrypt;
 import com.yuncode.common.model.util.response.Result;
+import com.yuncode.common.utils.PasswordValidator;
 import com.yuncode.system.entity.SysUser;
 import com.yuncode.system.mapper.SysUserOrgMapper;
 import lombok.RequiredArgsConstructor;
@@ -61,8 +62,13 @@ public class UserService {
             ? "123456"  // 默认密码
             : user.getPassword();
 
+        // 自定义密码时校验强度
+        if (user.getPassword() != null && !user.getPassword().isEmpty()) {
+            PasswordValidator.validate(plainPassword);
+        }
+
         // 加密密码
-        user.setPassword(BCrypt.hashpw(plainPassword));
+        user.setPassword(BCrypt.hashpw(plainPassword, BCrypt.gensalt(12)));
 
         // 设置默认状态
         if (user.getStatus() == null) {

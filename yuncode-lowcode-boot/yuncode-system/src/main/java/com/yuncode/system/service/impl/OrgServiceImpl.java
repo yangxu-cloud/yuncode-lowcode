@@ -13,8 +13,8 @@ import com.yuncode.system.mapper.SysUserOrgMapper;
 import com.yuncode.system.service.OrgService;
 import com.yuncode.system.vo.OrgTreeNode;
 import com.yuncode.system.vo.OrgVO;
-import com.yuncode.tenant.entity.SysTenant;
-import com.yuncode.tenant.mapper.SysTenantMapper;
+import com.yuncode.system.entity.SysTenant;
+import com.yuncode.system.mapper.SysTenantMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
@@ -56,14 +56,30 @@ public class OrgServiceImpl implements OrgService {
                 log.info("平台管理员查询所有组织（忽略租户限制）");
                 allOrgs = orgMapper.selectAllForPlatformAdmin();
             } else {
-                // 普通用户只能查看自己租户的组织（多租户插件会自动添加 tenant_id 条件）
-                log.info("普通用户查询组织（受租户限制，tenantId={}）", SecurityUtil.getTenantId());
-                allOrgs = orgMapper.selectList(new LambdaQueryWrapper<>());
+                // 普通用户只能查看自己租户的组织
+                Long tenantId = SecurityUtil.getTenantIdOrNull();
+                log.info("普通用户查询组织（受租户限制，tenantId={}）", tenantId);
+                if (tenantId != null) {
+                    allOrgs = orgMapper.selectList(new LambdaQueryWrapper<SysOrg>()
+                            .eq(SysOrg::getTenantId, tenantId));
+                } else {
+                    allOrgs = orgMapper.selectList(new LambdaQueryWrapper<>());
+                }
             }
         } catch (Exception e) {
-            // 如果获取用户信息失败（如未登录），使用默认查询（多租户插件会自动添加 tenant_id 条件）
+            // 如果获取用户信息失败（如未登录），仅返回当前租户的组织
             log.warn("获取用户信息失败，使用默认租户限制查询", e);
-            allOrgs = orgMapper.selectList(new LambdaQueryWrapper<>());
+            try {
+                Long tenantId = SecurityUtil.getTenantIdOrNull();
+                if (tenantId != null) {
+                    allOrgs = orgMapper.selectList(new LambdaQueryWrapper<SysOrg>()
+                            .eq(SysOrg::getTenantId, tenantId));
+                } else {
+                    allOrgs = orgMapper.selectList(new LambdaQueryWrapper<>());
+                }
+            } catch (Exception ex) {
+                allOrgs = orgMapper.selectList(new LambdaQueryWrapper<>());
+            }
         }
 
         // 构建组织树节点
@@ -79,8 +95,15 @@ public class OrgServiceImpl implements OrgService {
 
     @Override
     public List<OrgVO> getOrgList(OrgQueryDTO queryDTO) {
-        // 多租户插件会自动添加 tenant_id 条件
         LambdaQueryWrapper<SysOrg> wrapper = new LambdaQueryWrapper<>();
+
+        // 非管理员用户只能查看自己租户的组织
+        if (!SecurityUtil.isPlatformAdmin()) {
+            Long tenantId = SecurityUtil.getTenantIdOrNull();
+            if (tenantId != null) {
+                wrapper.eq(SysOrg::getTenantId, tenantId);
+            }
+        }
 
         if (queryDTO != null) {
             if (StringUtils.hasText(queryDTO.getOrgName())) {
@@ -113,10 +136,18 @@ public class OrgServiceImpl implements OrgService {
 
     @Override
     public OrgVO getOrgById(Long id) {
-        // 多租户插件会自动添加 tenant_id 条件，无需手动检查
         SysOrg org = orgMapper.selectById(id);
         if (org == null) {
             return null;
+        }
+        // 非管理员只能查看自己租户的组织
+        if (!SecurityUtil.isPlatformAdmin()) {
+            Long tenantId = SecurityUtil.getTenantIdOrNull();
+            if (tenantId != null && !tenantId.equals(org.getTenantId())) {
+                log.warn("跨租户访问组织被拦截: orgId={}, orgTenantId={}, userTenantId={}",
+                        id, org.getTenantId(), tenantId);
+                return null;
+            }
         }
         return convertToOrgVO(org);
     }
@@ -445,8 +476,16 @@ public class OrgServiceImpl implements OrgService {
 
     @Override
     public List<OrgVO> searchOrgs(String keyword) {
-        // 多租户插件会自动添加 tenant_id 条件
         LambdaQueryWrapper<SysOrg> wrapper = new LambdaQueryWrapper<>();
+
+        // 非管理员只能搜索自己租户的组织
+        if (!SecurityUtil.isPlatformAdmin()) {
+            Long tenantId = SecurityUtil.getTenantIdOrNull();
+            if (tenantId != null) {
+                wrapper.eq(SysOrg::getTenantId, tenantId);
+            }
+        }
+
         wrapper.and(w -> w.like(SysOrg::getOrgName, keyword)
                 .or()
                 .like(SysOrg::getOrgCode, keyword));
@@ -459,8 +498,16 @@ public class OrgServiceImpl implements OrgService {
 
     @Override
     public boolean checkOrgCodeExists(String orgCode, Long excludeId) {
-        // 多租户插件会自动添加 tenant_id 条件
         LambdaQueryWrapper<SysOrg> wrapper = new LambdaQueryWrapper<>();
+
+        // 非管理员只能检查自己租户的组织编码
+        if (!SecurityUtil.isPlatformAdmin()) {
+            Long tenantId = SecurityUtil.getTenantIdOrNull();
+            if (tenantId != null) {
+                wrapper.eq(SysOrg::getTenantId, tenantId);
+            }
+        }
+
         wrapper.eq(SysOrg::getOrgCode, orgCode);
         if (excludeId != null) {
             wrapper.ne(SysOrg::getId, excludeId);

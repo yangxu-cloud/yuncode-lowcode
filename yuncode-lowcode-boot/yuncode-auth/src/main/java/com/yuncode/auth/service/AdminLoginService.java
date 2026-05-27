@@ -1,10 +1,11 @@
 package com.yuncode.auth.service;
 
-import cn.dev33.satoken.stp.StpUtil;
+import cn.dev33.satoken.stp.StpLogic;
 import cn.hutool.crypto.digest.BCrypt;
 import com.yuncode.auth.dto.LoginDTO;
 import com.yuncode.auth.properties.SaTokenProperties;
 import com.yuncode.auth.vo.LoginVO;
+import org.springframework.beans.factory.annotation.Value;
 import com.yuncode.common.exception.BusinessException;
 import com.yuncode.common.exception.ErrorCode;
 import com.yuncode.common.utils.web.ServletUtils;
@@ -16,8 +17,9 @@ import com.yuncode.system.mapper.SysUserMapper;
 import com.yuncode.system.service.SysLoginLogService;
 import com.yuncode.system.service.OnlineUserService;
 import com.yuncode.system.service.UserCacheService;
-import com.yuncode.tenant.entity.SysTenant;
-import com.yuncode.tenant.mapper.SysTenantMapper;
+import com.yuncode.system.entity.SysTenant;
+import com.yuncode.system.mapper.SysTenantMapper;
+import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -34,12 +36,20 @@ public class AdminLoginService {
 
     private static final String SYSTEM_TENANT_CODE = "system";
 
+    @Value("${system.default-password:123456}")
+    private String defaultPassword;
+
     private final SaTokenProperties saTokenProperties;
     private final SysTenantMapper sysTenantMapper;
     private final SysUserMapper sysUserMapper;
     private final SysLoginLogService sysLoginLogService;
     private final OnlineUserService onlineUserService;
     private final UserCacheService userCacheService;
+
+    @Resource(name = "adminStpLogic")
+    private StpLogic stpLogic;
+
+    private final LoginAttemptService loginAttemptService;
 
     /**
      * 管理员登录
@@ -48,6 +58,12 @@ public class AdminLoginService {
     @LoginLog(loginType = "admin")
     public LoginVO login(LoginDTO loginDTO, HttpServletRequest request) {
         String username = loginDTO.getUsername();
+
+        // 暴力破解防护：检查登录是否被锁定
+        if (loginAttemptService.isLocked(username)) {
+            long remaining = loginAttemptService.getRemainingLockTime(username);
+            throw new BusinessException(ErrorCode.ACCOUNT_LOCKED, "账号已锁定，请 " + remaining + " 秒后重试");
+        }
 
         try {
             // 1. 查询系统租户（固定ID=2）
@@ -79,25 +95,25 @@ public class AdminLoginService {
             }
 
             // 6. 使用 Sa-Token 进行登录
-            StpUtil.login(user.getId());
+            stpLogic.login(user.getId());
 
             // 将用户类型、系统租户ID、角色编码等信息存入 Token Session（统一存储位置）
-            StpUtil.getTokenSession().set("loginType", "admin");
-            StpUtil.getTokenSession().set("tenantId", systemTenantId);
-            StpUtil.getTokenSession().set("userId", user.getId());
-            StpUtil.getTokenSession().set("username", user.getUsername());
-            StpUtil.getTokenSession().set("nickname", user.getNickname() != null ? user.getNickname() : "");
-            StpUtil.getTokenSession().set("avatar", user.getAvatar() != null ? user.getAvatar() : "");
-            StpUtil.getTokenSession().set("roleCode", user.getRoleCode() != null ? user.getRoleCode() : "PLATFORM_ADMIN");
+            stpLogic.getTokenSession().set("loginType", "admin");
+            stpLogic.getTokenSession().set("tenantId", systemTenantId);
+            stpLogic.getTokenSession().set("userId", user.getId());
+            stpLogic.getTokenSession().set("username", user.getUsername());
+            stpLogic.getTokenSession().set("nickname", user.getNickname() != null ? user.getNickname() : "");
+            stpLogic.getTokenSession().set("avatar", user.getAvatar() != null ? user.getAvatar() : "");
+            stpLogic.getTokenSession().set("roleCode", user.getRoleCode() != null ? user.getRoleCode() : "PLATFORM_ADMIN");
 
             // 将用户信息存入 Session（统一存储位置，供日志切面等组件读取）
-            StpUtil.getSession().set("loginType", "admin");
-            StpUtil.getSession().set("tenantId", systemTenantId);
-            StpUtil.getSession().set("userId", user.getId());
-            StpUtil.getSession().set("username", user.getUsername());
-            StpUtil.getSession().set("nickname", user.getNickname() != null ? user.getNickname() : "");
-            StpUtil.getSession().set("avatar", user.getAvatar() != null ? user.getAvatar() : "");
-            StpUtil.getSession().set("roleCode", user.getRoleCode() != null ? user.getRoleCode() : "PLATFORM_ADMIN");
+            stpLogic.getSession().set("loginType", "admin");
+            stpLogic.getSession().set("tenantId", systemTenantId);
+            stpLogic.getSession().set("userId", user.getId());
+            stpLogic.getSession().set("username", user.getUsername());
+            stpLogic.getSession().set("nickname", user.getNickname() != null ? user.getNickname() : "");
+            stpLogic.getSession().set("avatar", user.getAvatar() != null ? user.getAvatar() : "");
+            stpLogic.getSession().set("roleCode", user.getRoleCode() != null ? user.getRoleCode() : "PLATFORM_ADMIN");
 
             // 7. 缓存用户信息到 Redis（30分钟）- 注意：如果 Redis 未连接会抛出异常
             try {
@@ -114,12 +130,12 @@ public class AdminLoginService {
             log.info("生成业务会话ID: userId={}, sessionId={}", user.getId(), sessionId);
 
             // 将 sessionId 存入 Sa-Token session，供退出时使用
-            StpUtil.getTokenSession().set("sessionId", sessionId);
-            StpUtil.getSession().set("sessionId", sessionId);
-            log.info("sessionId 已存入 Sa-Token session，验证: {}", StpUtil.getTokenSession().get("sessionId"));
+            stpLogic.getTokenSession().set("sessionId", sessionId);
+            stpLogic.getSession().set("sessionId", sessionId);
+            log.info("sessionId 已存入 Sa-Token session，验证: {}", stpLogic.getTokenSession().get("sessionId"));
 
             // 9. 获取 Sa-Token 的 JWT Token
-            String token = StpUtil.getTokenValue();
+            String token = stpLogic.getTokenValue();
             log.info("获取 Sa-Token: userId={}, token (前32位)={}", user.getId(), token.substring(0, Math.min(32, token.length())));
 
             // 10. 添加在线用户记录
@@ -149,19 +165,29 @@ public class AdminLoginService {
             loginVO.setToken(token);
             loginVO.setSessionId(sessionId);  // 返回业务会话ID给前端
             loginVO.setTokenName(saTokenProperties.getTokenName());
-            loginVO.setUserId(StpUtil.getLoginIdAsLong());
+            loginVO.setUserId(stpLogic.getLoginIdAsLong());
             loginVO.setUsername(username);
-            loginVO.setNickname(StpUtil.getSession().get("nickname", ""));
-            loginVO.setAvatar(StpUtil.getSession().get("avatar", ""));
+            loginVO.setNickname(stpLogic.getSession().get("nickname", ""));
+            loginVO.setAvatar(stpLogic.getSession().get("avatar", ""));
             loginVO.setTenantId(systemTenantId);  // 使用系统租户ID
             loginVO.setTenantName(systemTenant.getTenantName());
+            loginVO.setPermissions(stpLogic.getPermissionList(user.getId()));
 
+            // 检测是否使用默认密码，首次登录需要强制修改
+            if (BCrypt.checkpw(defaultPassword, user.getPassword())) {
+                loginVO.setRequireChange(true);
+                log.warn("管理员 {} 正在使用默认密码，建议立即修改", username);
+            }
+
+            loginAttemptService.loginSucceeded(username);
             return loginVO;
 
         } catch (BusinessException e) {
+            loginAttemptService.loginFailed(username);
             log.error("登录业务异常: {}", e.getMessage());
             throw e;
         } catch (Exception e) {
+            loginAttemptService.loginFailed(username);
             log.error("登录系统异常: {}", e.getMessage(), e);
             throw new BusinessException(ErrorCode.SYSTEM_ERROR, "登录失败：" + e.getMessage());
         }

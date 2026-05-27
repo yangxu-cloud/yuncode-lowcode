@@ -108,12 +108,12 @@ export const useUserStore = defineStore("pure-user", {
                   ...response.data,
                   // 添加 Pure Admin 需要的字段
                   accessToken: response.data.token,
-                  refreshToken: "",
+                  refreshToken: response.data.token,
                   userId: response.data.userId,
                   tenantId: response.data.tenantId || 0,
                   roleCode: response.data.roleCode || "NORMAL",
-                  roles: ["admin"],
-                  permissions: [],
+                  roles: response.data.roleCode ? [response.data.roleCode] : [],
+                  permissions: response.data.roleCode === "admin" ? ["*:*:*"] : [],
                   loginType: loginType
                 }
               };

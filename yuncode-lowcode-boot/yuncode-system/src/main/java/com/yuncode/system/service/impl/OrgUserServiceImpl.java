@@ -1,6 +1,7 @@
 package com.yuncode.system.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.yuncode.common.utils.SecurityUtil;
 import com.yuncode.system.entity.SysOrg;
 import com.yuncode.system.entity.SysUser;
 import com.yuncode.system.entity.SysUserOrg;
@@ -98,6 +99,7 @@ public class OrgUserServiceImpl implements OrgUserService {
         if (userOrg == null) {
             throw new RuntimeException("用户不在该组织中");
         }
+        checkTenantAccess(userOrg);
         if (userOrg.getIsMainDept() == 1) {
             throw new RuntimeException("不能移除用户的主部门");
         }
@@ -116,6 +118,7 @@ public class OrgUserServiceImpl implements OrgUserService {
         if (userOrg == null) {
             throw new RuntimeException("用户不在该组织中");
         }
+        checkTenantAccess(userOrg);
 
         userOrg.setIsLeader(isLeader);
         userOrgMapper.updateById(userOrg);
@@ -128,6 +131,15 @@ public class OrgUserServiceImpl implements OrgUserService {
         SysUser user = userMapper.selectByIdIgnoreTenant(userId);
         if (user == null) {
             throw new RuntimeException("用户不存在");
+        }
+        // 非管理员只能查询自己租户的用户
+        if (!SecurityUtil.isPlatformAdmin()) {
+            Long tenantId = SecurityUtil.getTenantIdOrNull();
+            if (tenantId != null && !tenantId.equals(user.getTenantId())) {
+                log.warn("跨租户查询用户组织被拦截: targetUserId={}, userTenantId={}, targetTenantId={}",
+                        userId, tenantId, user.getTenantId());
+                throw new RuntimeException("用户不存在");
+            }
         }
 
         LambdaQueryWrapper<SysUserOrg> wrapper = new LambdaQueryWrapper<>();
@@ -205,5 +217,19 @@ public class OrgUserServiceImpl implements OrgUserService {
         }
 
         return String.join(" / ", pathNames);
+    }
+
+    /**
+     * 校验租户访问权限：非管理员只能操作自己租户的数据
+     */
+    private void checkTenantAccess(SysUserOrg userOrg) {
+        if (!SecurityUtil.isPlatformAdmin()) {
+            Long tenantId = SecurityUtil.getTenantIdOrNull();
+            if (tenantId != null && !tenantId.equals(userOrg.getTenantId())) {
+                log.warn("跨租户操作组织人员关系被拦截: userOrgId={}, recordTenantId={}, userTenantId={}",
+                        userOrg.getId(), userOrg.getTenantId(), tenantId);
+                throw new RuntimeException("用户不在该组织中");
+            }
+        }
     }
 }

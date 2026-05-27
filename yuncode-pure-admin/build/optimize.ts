@@ -25,6 +25,19 @@ const include = [
  * 在预构建中强制排除的依赖项
  * 温馨提示：平台推荐的使用方式是哪里需要哪里引入而且都是单个的引入，不需要预构建，直接让浏览器加载就好
  */
-const exclude = ["@iconify/json"];
+const exclude = [
+  "@iconify/json",
+  // form-create 组件包使用 .jsx 语法，预构建时 esbuild 会错误使用 React JSX 转换
+  // 排除后由 @vitejs/plugin-vue-jsx 在 dev 模式下按需处理
+  "@form-create/component-elm-checkbox",
+  "@form-create/component-elm-frame",
+  "@form-create/component-elm-group",
+  "@form-create/component-elm-radio",
+  "@form-create/component-elm-select",
+  "@form-create/component-elm-tree",
+  "@form-create/component-elm-upload",
+  "@form-create/component-subform",
+  "@form-create/component-wangeditor"
+];
 
 export { include, exclude };
