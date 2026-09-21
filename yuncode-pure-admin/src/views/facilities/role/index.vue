@@ -1,15 +1,14 @@
 <template>
   <div class="role-management">
-    <el-card class="role-card">
+    <div class="page-card role-card">
       <!-- 页面头部 -->
-      <template #header>
-        <div class="card-header">
-          <span>角色管理</span>
-        </div>
-      </template>
+      <div class="page-card-header">
+        <span class="page-title" style="margin-bottom: 0">角色管理</span>
+      </div>
 
       <!-- 主体内容：左右布局 -->
-      <div class="role-content">
+      <div class="page-card-body">
+        <div class="role-content">
         <!-- 左侧：角色树 -->
         <div class="role-tree-panel">
           <!-- 搜索框 -->
@@ -244,7 +243,8 @@
           </div>
         </div>
       </div>
-    </el-card>
+    </div>
+    </div>
 
     <!-- 角色表单对话框 -->
     <RoleFormDialog
@@ -793,7 +793,6 @@ onMounted(() => {
 <style scoped lang="scss">
 .role-management {
   height: 100%;
-  padding: 0px 0px 30px 0px;
   box-sizing: border-box;
 
   .role-card {
@@ -801,20 +800,15 @@ onMounted(() => {
     display: flex;
     flex-direction: column;
 
-    :deep(.el-card__body) {
+    :deep(.page-card-body) {
+      padding: 0;
       flex: 1;
       overflow: hidden;
-      padding: 20px;
-    }
-
-    .card-header {
-      font-size: 16px;
-      font-weight: 500;
     }
 
     .role-content {
       display: flex;
-      gap: 20px;
+      gap: 0;
       height: 100%;
     }
 

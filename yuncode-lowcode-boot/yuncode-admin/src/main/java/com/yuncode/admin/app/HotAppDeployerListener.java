@@ -1,6 +1,6 @@
 package com.yuncode.admin.app;
 
-import com.yuncode.system.event.AppLifecycleEvent;
+import com.yuncode.common.event.AppLifecycleEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;

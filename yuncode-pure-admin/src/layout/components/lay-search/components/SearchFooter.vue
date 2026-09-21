@@ -15,16 +15,22 @@ const { device } = useNav();
 <template>
   <div class="search-footer text-[#333] dark:text-white">
     <span class="search-footer-item">
-      <EnterOutlined class="icon" />
+      <span class="kbd-icon">
+        <EnterOutlined class="kbd-svg" />
+      </span>
       确认
     </span>
     <span class="search-footer-item">
-      <IconifyIconOffline :icon="ArrowUpLine" class="icon" />
-      <IconifyIconOffline :icon="ArrowDownLine" class="icon" />
+      <span class="kbd-icon">
+        <IconifyIconOffline :icon="ArrowUpLine" class="kbd-svg" />
+      </span>
+      <span class="kbd-icon">
+        <IconifyIconOffline :icon="ArrowDownLine" class="kbd-svg" />
+      </span>
       切换
     </span>
     <span class="search-footer-item">
-      <MdiKeyboardEsc class="icon" />
+      <span class="kbd-icon kbd-esc">ESC</span>
       关闭
     </span>
     <p v-if="device !== 'mobile' && total > 0" class="search-footer-total">
@@ -36,26 +42,49 @@ const { device } = useNav();
 <style lang="scss" scoped>
 .search-footer {
   display: flex;
+  align-items: center;
 
   .search-footer-item {
     display: flex;
     align-items: center;
-    margin-right: 14px;
+    gap: 4px;
+    margin-right: 12px;
+    font-size: 12px;
+    color: #86909c;
   }
 
-  .icon {
-    padding: 2px;
-    margin-right: 3px;
-    font-size: 20px;
-    box-shadow:
-      inset 0 -2px #cdcde6,
-      inset 0 0 1px 1px #fff,
-      0 1px 2px 1px #1e235a66;
+  .kbd-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 20px;
+    height: 18px;
+    padding: 0 4px;
+    background: #f2f3f5;
+    border: 1px solid #e5e6eb;
+    border-radius: 4px;
+    font-size: 10px;
+    color: #4e5969;
+    line-height: 1;
+    box-sizing: border-box;
+
+    .kbd-svg {
+      width: 12px;
+      height: 12px;
+    }
+  }
+
+  .kbd-esc {
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.5px;
   }
 
   .search-footer-total {
     position: absolute;
     right: 20px;
+    font-size: 12px;
+    color: #c9cdd4;
   }
 }
 </style>

@@ -3,7 +3,7 @@ package com.yuncode.auth.service;
 import cn.dev33.satoken.stp.StpLogic;
 import cn.dev33.satoken.stp.StpUtil;
 import com.yuncode.auth.vo.LoginVO;
-import com.yuncode.system.service.LoginLogService;
+import com.yuncode.system.log.service.LoginLogService;
 import com.yuncode.system.service.OnlineUserService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

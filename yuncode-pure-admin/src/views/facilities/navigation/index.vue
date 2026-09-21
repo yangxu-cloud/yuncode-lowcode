@@ -1,17 +1,16 @@
 <template>
   <div class="navigation-management">
-    <el-card class="navigation-card">
+    <div class="page-card navigation-card">
       <!-- 页面头部 -->
-      <template #header>
-        <div class="card-header">
-          <span>导航管理</span>
-        </div>
-      </template>
+      <div class="page-card-header">
+        <span class="page-title" style="margin-bottom: 0">导航管理</span>
+      </div>
 
       <!-- 主体内容：左右布局 -->
-      <div class="navigation-content">
-        <!-- 左侧：菜单树 -->
-        <div class="navigation-tree-panel">
+      <div class="page-card-body">
+        <div class="navigation-content">
+          <!-- 左侧：菜单树 -->
+          <div class="navigation-tree-panel">
           <!-- 搜索框 -->
           <div class="tree-search">
             <el-input
@@ -223,7 +222,8 @@
         </div>
       </div>
     </div>
-    </el-card>
+    </div>
+    </div>
 
     <!-- 菜单编辑对话框 -->
     <MenuFormDialog
@@ -625,7 +625,6 @@ onMounted(() => {
 <style scoped lang="scss">
 .navigation-management {
   height: 100%;
-  padding: 0px 0px 30px 0px;
   box-sizing: border-box;
 
   .navigation-card {
@@ -633,20 +632,15 @@ onMounted(() => {
     display: flex;
     flex-direction: column;
 
-    :deep(.el-card__body) {
+    :deep(.page-card-body) {
+      padding: 0;
       flex: 1;
       overflow: hidden;
-      padding: 20px;
-    }
-
-    .card-header {
-      font-size: 16px;
-      font-weight: 500;
     }
 
     .navigation-content {
       display: flex;
-      gap: 20px;
+      gap: 0;
       height: 100%;
     }
 

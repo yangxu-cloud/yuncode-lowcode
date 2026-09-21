@@ -17,6 +17,8 @@ import { useMultiTagsStoreHook } from "@/store/modules/multiTags";
 import Segmented, { type OptionsType } from "@/components/ReSegmented";
 import { useDataThemeChange } from "@/layout/hooks/useDataThemeChange";
 import { useDark, useGlobal, debounce, isNumber } from "@pureadmin/utils";
+import { appConfig, setDataSource, getDataSource, type DataSource } from "@/config/app";
+import { ElMessageBox } from "element-plus";
 
 import Check from "~icons/ep/check";
 import LeftArrow from "~icons/ri/arrow-left-s-line?width=20&height=20";
@@ -32,6 +34,7 @@ const { $storage } = useGlobal<GlobalPropertiesApi>();
 const mixRef = ref();
 const verticalRef = ref();
 const horizontalRef = ref();
+const simpleRef = ref();
 
 const {
   dataTheme,
@@ -42,6 +45,25 @@ const {
   dataThemeChange,
   setLayoutThemeColor
 } = useDataThemeChange();
+
+/** 数据源切换 */
+const isMockMode = ref(getDataSource() === 'mock');
+const isDevMode = import.meta.env.DEV;
+
+async function onDataSourceChange(val: boolean) {
+  const newSource: DataSource = val ? 'mock' : 'api';
+  const newLabel = newSource === 'mock' ? 'Mock 数据' : '真实 API';
+  try {
+    await ElMessageBox.confirm(
+      `切换到 ${newLabel} 将刷新页面，是否继续？`,
+      '切换数据源',
+      { confirmButtonText: '确定', cancelButtonText: '取消', type: 'info' }
+    );
+    setDataSource(newSource);
+  } catch {
+    isMockMode.value = !val;
+  }
+}
 
 /* body添加layout属性，作用于src/style/sidebar.scss */
 if (unref(layoutTheme)) {
@@ -256,18 +278,19 @@ watch($storage, ({ layout }) => {
   switch (layout["layout"]) {
     case "vertical":
       toggleClass(true, "is-select", unref(verticalRef));
-      debounce(setFalse([horizontalRef]), 50);
-      debounce(setFalse([mixRef]), 50);
+      debounce(setFalse([horizontalRef, mixRef, simpleRef]), 50);
       break;
     case "horizontal":
       toggleClass(true, "is-select", unref(horizontalRef));
-      debounce(setFalse([verticalRef]), 50);
-      debounce(setFalse([mixRef]), 50);
+      debounce(setFalse([verticalRef, mixRef, simpleRef]), 50);
       break;
     case "mix":
       toggleClass(true, "is-select", unref(mixRef));
-      debounce(setFalse([verticalRef]), 50);
-      debounce(setFalse([horizontalRef]), 50);
+      debounce(setFalse([verticalRef, horizontalRef, simpleRef]), 50);
+      break;
+    case "simple":
+      toggleClass(true, "is-select", unref(simpleRef));
+      debounce(setFalse([verticalRef, horizontalRef, mixRef]), 50);
       break;
   }
 });
@@ -354,6 +377,18 @@ onUnmounted(() => removeMatchMedia);
 
       <p :class="['mt-5!', pClass]">导航模式</p>
       <ul class="pure-theme">
+        <li
+          ref="simpleRef"
+          v-tippy="{
+            content: '简易风格，清爽高效',
+            zIndex: 41000
+          }"
+          :class="layoutTheme.layout === 'simple' ? 'is-select' : ''"
+          @click="setLayoutModel('simple')"
+        >
+          <div />
+          <div />
+        </li>
         <li
           ref="verticalRef"
           v-tippy="{
@@ -509,6 +544,20 @@ onUnmounted(() => removeMatchMedia);
             @change="multiTagsCacheChange"
           />
         </li>
+        <li v-if="isDevMode">
+          <span class="dark:text-white">Mock 数据</span>
+          <el-tooltip content="开发模式下切换 Mock / 真实 API" placement="left">
+            <el-switch
+              v-model="isMockMode"
+              inline-prompt
+              active-text="Mock"
+              active-color="#e6a23c"
+              inactive-text="API"
+              inactive-color="#409eff"
+              @change="onDataSourceChange"
+            />
+          </el-tooltip>
+        </li>
       </ul>
     </div>
   </LayPanel>
@@ -564,6 +613,27 @@ onUnmounted(() => removeMatchMedia);
     &:nth-child(1) {
       div {
         &:nth-child(1) {
+          width: 100%;
+          height: 20%;
+          background: #1b2a47;
+          box-shadow: 0 0 1px #888;
+        }
+
+        &:nth-child(2) {
+          position: absolute;
+          top: 20%;
+          left: 0;
+          width: 100%;
+          height: 80%;
+          background: #fff;
+          box-shadow: 0 0 1px #888;
+        }
+      }
+    }
+
+    &:nth-child(2) {
+      div {
+        &:nth-child(1) {
           width: 30%;
           height: 100%;
           background: #1b2a47;
@@ -581,7 +651,7 @@ onUnmounted(() => removeMatchMedia);
       }
     }
 
-    &:nth-child(2) {
+    &:nth-child(3) {
       div {
         &:nth-child(1) {
           width: 100%;
@@ -592,7 +662,7 @@ onUnmounted(() => removeMatchMedia);
       }
     }
 
-    &:nth-child(3) {
+    &:nth-child(4) {
       div {
         &:nth-child(1) {
           width: 100%;

@@ -24,10 +24,7 @@ export const useMultiTagsStore = defineStore("pure-multiTags", {
           `${responsiveStorageNameSpace()}tags`
         )
       : ([
-          ...routerArrays,
-          ...usePermissionStoreHook().flatteningRoutes.filter(
-            v => v?.meta?.fixedTag
-          )
+          ...routerArrays
         ] as any),
     multiTagsCache: storageLocal().getItem<StorageConfigs>(
       `${responsiveStorageNameSpace()}configure`
@@ -81,11 +78,7 @@ export const useMultiTagsStore = defineStore("pure-multiTags", {
               return;
             const tagPath = tagVal.path;
             const tagHasExits = this.multiTags.some(tag => {
-              return (
-                tag.path === tagPath &&
-                isEqual(tag?.query, tagVal?.query) &&
-                isEqual(tag?.params, tagVal?.params)
-              );
+              return tag.path === tagPath;
             });
 
             if (tagHasExits) return;

@@ -18,6 +18,9 @@ import org.springframework.context.annotation.FilterType;
         ))
 @MapperScan({
     "com.yuncode.system.mapper",
+    "com.yuncode.system.app.mapper",
+    "com.yuncode.system.iam.mapper",
+    "com.yuncode.system.log.mapper",
     "com.yuncode.auth.mapper"
 })
 public class YuncodeAdminApplication {

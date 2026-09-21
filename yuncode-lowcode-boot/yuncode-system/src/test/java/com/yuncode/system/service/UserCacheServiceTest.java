@@ -1,7 +1,8 @@
 package com.yuncode.system.service;
 
 import com.yuncode.system.config.TestApplicationConfig;
-import com.yuncode.system.entity.SysUser;
+import com.yuncode.system.iam.entity.SysUser;
+import com.yuncode.system.iam.service.UserCacheService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

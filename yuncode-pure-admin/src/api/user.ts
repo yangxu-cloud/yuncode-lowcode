@@ -90,37 +90,28 @@ export const refreshTokenApi = (data?: object) => {
  * 创建用户
  */
 export const createUser = async (data: any) => {
-  const response = await http.request<{ code: number; message: string; data: number }>("post", `/user/create`, { data });
-  // 检查响应码
-  if (response.code !== 200) {
-    throw new Error(response.message || "创建用户失败");
-  }
+  const response = await http.request<{ code: number; message: string; data: number }>("post", `/system/user`, { data });
+  
   return response.data;
 };
 
 /**
  * 更新用户信息
  */
-export const updateUser = async (data: any) => {
-  const response = await http.request<{ code: number; message: string; data: void }>("put", `/user/update`, { data });
-  // 检查响应码
-  if (response.code !== 200) {
-    throw new Error(response.message || "更新用户失败");
-  }
+export const updateUser = async (id: number, data: any) => {
+  const response = await http.request<{ code: number; message: string; data: void }>("put", `/system/user/${id}`, { data });
+  
   return response.data;
 };
 
 /**
  * 更新用户状态
  */
-export const updateUserStatus = async (userId: number, status: number) => {
-  const response = await http.request<{ code: number; message: string; data: void }>("put", `/user/status`, {
-    params: { userId, status }
+export const updateUserStatus = async (id: number, status: number) => {
+  const response = await http.request<{ code: number; message: string; data: void }>("patch", `/system/user/${id}/status`, {
+    params: { status }
   });
-  // 检查响应码
-  if (response.code !== 200) {
-    throw new Error(response.message || "更新用户状态失败");
-  }
+  
   return response.data;
 };
 
@@ -128,5 +119,5 @@ export const updateUserStatus = async (userId: number, status: number) => {
  * 获取用户列表
  */
 export const getUserList = async (params?: any) => {
-  return http.request<any>("get", `/user/list`, { params });
+  return http.request<any>("get", `/system/user`, { params });
 };

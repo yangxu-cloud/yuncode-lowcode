@@ -1,17 +1,16 @@
 <template>
   <div class="org-container">
-    <el-card class="org-card">
+    <div class="page-card org-card">
       <!-- 页面头部 -->
-      <template #header>
-        <div class="card-header">
-          <span>{{ $t('routes.org') }}</span>
-        </div>
-      </template>
+      <div class="page-card-header">
+        <span class="page-title" style="margin-bottom: 0">{{ $t('routes.org') }}</span>
+      </div>
 
       <!-- 主体内容：左右布局 -->
-      <div class="org-content">
-        <!-- 左侧：组织树 -->
-        <div class="org-tree-panel">
+      <div class="page-card-body">
+        <div class="org-content">
+          <!-- 左侧：组织树 -->
+          <div class="org-tree-panel">
           <!-- 搜索框 -->
           <div class="tree-search">
             <el-input
@@ -402,7 +401,8 @@
           </div>
         </div>
       </div>
-    </el-card>
+    </div>
+    </div>
 
     <!-- 添加/编辑组织抽屉 -->
     <el-drawer
@@ -1346,8 +1346,7 @@ const handleAddUserSubmit = async () => {
 
     if (isUserEditMode.value) {
       // 编辑模式：更新用户信息
-      await updateUser({
-        id: addUserForm.userId,
+      await updateUser(addUserForm.userId, {
         nickname: addUserForm.nickname,
         realName: addUserForm.realName,
         email: addUserForm.email,
@@ -1935,7 +1934,6 @@ onMounted(() => {
 <style scoped lang="scss">
 .org-container {
   height: 100%;
-  padding: 0px 0px 30px 0px;
   box-sizing: border-box;
 
   .org-card {
@@ -1943,20 +1941,15 @@ onMounted(() => {
     display: flex;
     flex-direction: column;
 
-    :deep(.el-card__body) {
+    :deep(.page-card-body) {
+      padding: 0;
       flex: 1;
       overflow: hidden;
-      padding: 20px;
-    }
-
-    .card-header {
-      font-size: 16px;
-      font-weight: 500;
     }
 
     .org-content {
       display: flex;
-      gap: 20px;
+      gap: 0;
       height: 100%;
 
       .org-tree-panel {

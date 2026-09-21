@@ -198,7 +198,7 @@ export default {
     requireUppercaseTip: "Password must contain at least one uppercase letter (A-Z)",
     requireLowercaseTip: "Password must contain at least one lowercase letter (a-z)",
     requireNumberTip: "Password must contain at least one number (0-9)",
-    requireSpecialTip: "Password must contain at least one special character (!@#$%^&*)",
+    requireSpecialTip: "Password must contain at least one special character (!{'@'}#$%^&*)",
     // Storage
     storageConfig: "Storage Settings",
     storageDesc: "Configure file storage method (local or cloud storage)",

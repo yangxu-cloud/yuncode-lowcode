@@ -224,6 +224,32 @@ public final class SecurityUtil {
         StpUtil.logout();
     }
 
+    // ======================== 租户访问控制 ========================
+
+    /**
+     * 检查当前用户是否有权访问指定租户的数据
+     *
+     * @param targetTenantId 目标数据的租户ID
+     * @throws BusinessException 如果无权访问
+     */
+    public static void checkTenantAccess(Long targetTenantId) {
+        // 平台管理员可以访问所有租户
+        if (isPlatformAdmin()) {
+            return;
+        }
+        // 获取当前用户的租户ID
+        Long currentTenantId = getTenantIdOrNull();
+        if (currentTenantId == null) {
+            throw new BusinessException(ErrorCode.UNAUTHORIZED, "无法获取当前租户信息");
+        }
+        // 检查是否匹配
+        if (!currentTenantId.equals(targetTenantId)) {
+            log.warn("租户访问拒绝: 当前租户={}, 目标租户={}, 用户ID={}",
+                currentTenantId, targetTenantId, getUserIdOrNull());
+            throw new BusinessException(ErrorCode.NO_PERMISSION, "无权访问其他租户的数据");
+        }
+    }
+
     // ======================== 密码工具 ========================
 
     public static String hashPassword(String password) {

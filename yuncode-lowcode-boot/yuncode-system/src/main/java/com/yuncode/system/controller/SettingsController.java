@@ -1,4 +1,5 @@
 package com.yuncode.system.controller;
+import jakarta.validation.Valid;
 
 import com.yuncode.common.model.util.response.Result;
 import com.yuncode.system.service.SysSettingsService;
@@ -17,7 +18,7 @@ import java.util.Map;
  */
 @Slf4j
 @RestController
-@RequestMapping("/settings")
+@RequestMapping("/system/settings")
 @RequiredArgsConstructor
 @Tag(name = "系统设置", description = "系统设置相关接口")
 public class SettingsController {
@@ -39,7 +40,7 @@ public class SettingsController {
      */
     @PostMapping("/basic")
     @Operation(summary = "更新基础设置", description = "更新应用的基础设置信息")
-    public Result<Void> updateBasicSettings(@RequestBody SettingsVO settingsVO) {
+    public Result<Void> updateBasicSettings(@Valid @RequestBody SettingsVO settingsVO) {
         settingsService.updateBasicSettings(settingsVO);
         return Result.success();
     }
@@ -69,7 +70,7 @@ public class SettingsController {
      */
     @PostMapping("/security")
     @Operation(summary = "更新安全设置", description = "更新密码和登录策略设置")
-    public Result<Void> updateSecuritySettings(@RequestBody SettingsVO settingsVO) {
+    public Result<Void> updateSecuritySettings(@Valid @RequestBody SettingsVO settingsVO) {
         settingsService.updateSecuritySettings(settingsVO);
         return Result.success();
     }

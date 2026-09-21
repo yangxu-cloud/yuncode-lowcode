@@ -2,11 +2,11 @@ package com.yuncode.admin.controller;
 
 import com.baomidou.mybatisplus.core.toolkit.PluginUtils;
 import com.yuncode.common.model.util.response.Result;
-import com.yuncode.system.entity.SysRole;
-import com.yuncode.system.service.RoleAssignmentService;
-import com.yuncode.system.service.SysRoleService;
-import com.yuncode.system.vo.RoleDetailVO;
-import com.yuncode.system.vo.RoleNodeVO;
+import com.yuncode.system.iam.entity.SysRole;
+import com.yuncode.system.iam.service.RoleAssignmentService;
+import com.yuncode.system.iam.service.SysRoleService;
+import com.yuncode.system.iam.vo.RoleDetailVO;
+import com.yuncode.system.iam.vo.RoleNodeVO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;

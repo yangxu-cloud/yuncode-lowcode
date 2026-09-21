@@ -26,6 +26,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Enumeration;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -55,6 +56,14 @@ public class HotAppDeployer implements ApplicationContextAware {
 
     /** 已加载的 App：key = 目录名（appId），value = 加载信息 */
     private final Map<String, LoadedApp> loadedApps = new ConcurrentHashMap<>();
+
+    /** App 状态枚举 */
+    public enum AppStatus {
+        LOADING,
+        LOADED,
+        FAILED,
+        UNLOADING
+    }
 
     @Override
     public void setApplicationContext(ApplicationContext applicationContext) {
@@ -121,14 +130,13 @@ public class HotAppDeployer implements ApplicationContextAware {
         return appInstallDir;
     }
 
-    /** 目录下是否存在含有 lib/*.jar 的 App 子目录 */
+    /** 目录下是否存在 App 子目录（有 lib/ 目录即可，不要求必须有 JAR） */
     private boolean hasAppSubdirs(File installDir) {
         File[] subdirs = installDir.listFiles(File::isDirectory);
         if (subdirs == null) return false;
         for (File sub : subdirs) {
             File libDir = new File(sub, "lib");
-            File[] jars = libDir.listFiles((d, n) -> n.endsWith(".jar"));
-            if (jars != null && jars.length > 0) return true;
+            if (libDir.exists() && libDir.isDirectory()) return true;
         }
         return false;
     }
@@ -150,7 +158,8 @@ public class HotAppDeployer implements ApplicationContextAware {
     }
 
     /**
-     * 安装一个 App 目录（加载其 lib/ 下所有 JAR，注册所有 Spring Bean）
+     * 安装一个 App 目录（加载其 lib/ 下所有 JAR，注册所有 Spring Bean）。
+     * 如果没有 JAR，仍会注册为已加载的低代码应用（无 Spring Bean）。
      */
     public synchronized void installApp(File appDir) {
         String appId = appDir.getName();
@@ -160,17 +169,20 @@ public class HotAppDeployer implements ApplicationContextAware {
             uninstallApp(appId);
         }
 
+        LoadedApp app = new LoadedApp(appId, new ArrayList<>(), new ArrayList<>(), System.currentTimeMillis());
+        app.status = AppStatus.LOADING;
+        loadedApps.put(appId, app);
+
         File libDir = new File(appDir, "lib");
         File[] jars = libDir.listFiles((dir, name) -> name.endsWith(".jar"));
+
         if (jars == null || jars.length == 0) {
-            log.info("No JARs in {}/lib/, skipping: {}", appId, appDir.getAbsolutePath());
+            log.info("App installed (no JARs): {} - 低代码应用", appId);
+            app.status = AppStatus.LOADED;
             return;
         }
 
         log.info("Installing app: {} ({} JARs)", appId, jars.length);
-
-        List<URLClassLoader> classLoaders = new ArrayList<>();
-        List<String> allBeanNames = new ArrayList<>();
 
         for (File jar : jars) {
             try {
@@ -180,23 +192,53 @@ public class HotAppDeployer implements ApplicationContextAware {
                 );
                 List<Class<?>> beanClasses = scanJarForBeans(jar, cl);
                 for (Class<?> beanClass : beanClasses) {
-                    registerBean(beanClass, allBeanNames);
+                    try {
+                        registerBean(beanClass, app.beanNames);
+                    } catch (Exception e) {
+                        log.error("Failed to register bean {} in JAR {}: {}", beanClass.getName(), jar.getName(), e.getMessage(), e);
+                        // 回滚已注册的 bean
+                        rollbackBeans(app);
+                        app.status = AppStatus.FAILED;
+                        return;
+                    }
                 }
-                classLoaders.add(cl);
+                app.classLoaders.add(cl);
                 log.debug("Loaded JAR: {} ({} beans)", jar.getName(), beanClasses.size());
             } catch (Exception e) {
                 log.error("Failed to load JAR {} in app {}: {}", jar.getName(), appId, e.getMessage(), e);
-                // 已创建的 classloader 需要关闭，已注册的 bean 不回滚（由 uninstallApp 在重试时清理）
-                for (URLClassLoader cl : classLoaders) {
-                    try { cl.close(); } catch (IOException ignored) {}
-                }
+                // 回滚
+                rollbackBeans(app);
+                app.status = AppStatus.FAILED;
                 return;
             }
         }
 
-        loadedApps.put(appId, new LoadedApp(appId, classLoaders, allBeanNames, System.currentTimeMillis()));
-        log.info("App installed successfully: {} ({} beans)", appId, allBeanNames.size());
+        app.status = AppStatus.LOADED;
+        log.info("App installed successfully: {} ({} beans)", appId, app.beanNames.size());
         refreshOpenApiCache();
+    }
+
+    /**
+     * 回滚已注册的 bean
+     */
+    private void rollbackBeans(LoadedApp app) {
+        if (app == null || app.beanNames == null) return;
+        log.info("Rolling back {} beans for app: {}", app.beanNames.size(), app.appId);
+        for (String beanName : app.beanNames) {
+            removeHandlerMappings(beanName);
+            if (beanFactory.containsBeanDefinition(beanName)) {
+                if (beanFactory.containsSingleton(beanName)) {
+                    beanFactory.destroySingleton(beanName);
+                }
+                beanFactory.removeBeanDefinition(beanName);
+                log.debug("Rolled back bean: {}", beanName);
+            }
+        }
+        app.beanNames.clear();
+        for (URLClassLoader cl : app.classLoaders) {
+            try { cl.close(); } catch (IOException ignored) {}
+        }
+        app.classLoaders.clear();
     }
 
     /**
@@ -234,6 +276,60 @@ public class HotAppDeployer implements ApplicationContextAware {
         }
 
         log.info("App uninstalled: {} ({} beans)", appId, app.beanNames.size());
+        // 卸载后也清理 SpringDoc 缓存，避免残留的 API 文档
+        refreshOpenApiCache();
+    }
+
+    /**
+     * 获取已加载 App 数量
+     */
+    public int getLoadedAppCount() {
+        return loadedApps.size();
+    }
+
+    /**
+     * 获取所有已加载 App 的 ID 列表
+     */
+    public List<String> getLoadedAppIds() {
+        return List.copyOf(loadedApps.keySet());
+    }
+
+    /**
+     * 获取安装目录下所有 App 目录数（包括已停用）
+     */
+    public int getTotalAppCount() {
+        File installDir = new File(appInstallDir);
+        if (!installDir.exists() || !installDir.isDirectory()) return 0;
+        File[] subdirs = installDir.listFiles(File::isDirectory);
+        return subdirs != null ? subdirs.length : 0;
+    }
+
+    /**
+     * 获取所有 App 及其运行状态
+     */
+    public List<Map<String, Object>> getAllAppsWithStatus() {
+        List<Map<String, Object>> result = new ArrayList<>();
+        File installDir = new File(appInstallDir);
+        if (!installDir.exists() || !installDir.isDirectory()) return result;
+
+        File[] subdirs = installDir.listFiles(File::isDirectory);
+        if (subdirs == null) return result;
+
+        for (File appDir : subdirs) {
+            String appId = appDir.getName();
+            LoadedApp loaded = loadedApps.get(appId);
+            Map<String, Object> item = new LinkedHashMap<>();
+            item.put("appId", appId);
+            if (loaded != null && loaded.status == AppStatus.LOADED) {
+                item.put("status", "running");
+                item.put("beanCount", loaded.beanNames.size());
+            } else {
+                item.put("status", "stopped");
+                item.put("beanCount", 0);
+            }
+            result.add(item);
+        }
+        return result;
     }
 
     // ==================== 内部方法 ====================
@@ -464,30 +560,140 @@ public class HotAppDeployer implements ApplicationContextAware {
         }
     }
 
-    private record LoadedApp(String appId, List<URLClassLoader> classLoaders,
-                             List<String> beanNames, long lastLoadedAt) {}
+    private static class LoadedApp {
+        final String appId;
+        final List<URLClassLoader> classLoaders;
+        final List<String> beanNames;
+        final long lastLoadedAt;
+        volatile AppStatus status;
+
+        LoadedApp(String appId, List<URLClassLoader> classLoaders, List<String> beanNames, long lastLoadedAt) {
+            this.appId = appId;
+            this.classLoaders = classLoaders;
+            this.beanNames = beanNames;
+            this.lastLoadedAt = lastLoadedAt;
+            this.status = AppStatus.LOADED;
+        }
+    }
 
     /**
      * Child-first URLClassLoader：优先从 JAR 中加载类，再委托给父 ClassLoader。
+     *
+     * 安全限制：
+     * - 禁止加载系统敏感类（java.lang.reflect、java.io.File、java.net等）
+     * - 禁止加载 Spring 内部 BeanFactory 类
+     * - 禁止加载与 App 部署相关的类
      */
     private static class ChildFirstURLClassLoader extends URLClassLoader {
+
+        /** 被禁止访问的系统包前缀 */
+        private static final String[] BLOCKED_PACKAGES = {
+            "java.lang.reflect",
+            "java.lang.invoke",
+            "java.lang.management",
+            "java.io",
+            "java.net",
+            "java.nio.file",
+            "java.nio.channels",
+            "java.security",
+            "java.rmi",
+            "javax.management",
+            "javax.script",
+            "javax.tools",
+            "sun.reflect",
+            "sun.misc",
+            "jdk.internal",
+        };
+
+        /** 被禁止访问的 Spring 内部类 */
+        private static final String[] BLOCKED_SPRING_CLASSES = {
+            "org.springframework.beans.factory",
+            "org.springframework.context.support",
+            "org.springframework.boot",
+        };
+
         ChildFirstURLClassLoader(URL[] urls, ClassLoader parent) {
             super(urls, parent);
         }
 
         @Override
         public Class<?> loadClass(String name) throws ClassNotFoundException {
+            // 1. 安全检查
+            checkBlocked(name);
+
+            // 2. 标准 JVM 类必须从父类加载
             if (name.startsWith("java.") || name.startsWith("javax.") || name.startsWith("sun.")) {
                 return super.loadClass(name);
             }
 
+            // 3. 已加载的直接返回
             Class<?> loaded = findLoadedClass(name);
             if (loaded != null) return loaded;
 
+            // 4. 优先从 JAR 加载（child-first）
             try {
                 return findClass(name);
             } catch (ClassNotFoundException e) {
                 return super.loadClass(name);
+            }
+        }
+
+        /**
+         * 安全检查：如果类在禁止列表中，抛出异常
+         */
+        private void checkBlocked(String name) {
+            // 禁止反射 API
+            if (name.startsWith("java.lang.reflect.")) {
+                throw new SecurityException("App 不允许使用反射 API: " + name);
+            }
+            // 禁止进程执行（防止执行系统命令）
+            if (name.equals("java.lang.Runtime")
+                || name.equals("java.lang.ProcessBuilder")
+                || name.equals("java.lang.Process")
+                || name.startsWith("java.lang.Process")) {
+                throw new SecurityException("App 不允许执行系统命令: " + name);
+            }
+            // 禁止文件 IO
+            if (name.startsWith("java.io.")) {
+                throw new SecurityException("App 不允许直接文件 IO: " + name);
+            }
+            // 禁止网络访问
+            if (name.startsWith("java.net.")) {
+                throw new SecurityException("App 不允许直接网络访问: " + name);
+            }
+            // 禁止 NIO 文件
+            if (name.startsWith("java.nio.file.") || name.startsWith("java.nio.channels.")) {
+                throw new SecurityException("App 不允许文件 NIO 操作: " + name);
+            }
+            // 禁止安全管理器操控
+            if (name.startsWith("java.security.")) {
+                throw new SecurityException("App 不允许操作安全管理器: " + name);
+            }
+            // 禁止 System 关键操作（退出、属性修改等）
+            if (name.equals("java.lang.System")) {
+                throw new SecurityException("App 不允许操作 System 类: " + name);
+            }
+            // 禁止线程操控（修改上下文类加载器）
+            if (name.equals("java.lang.Thread")) {
+                throw new SecurityException("App 不允许操作 Thread 类: " + name);
+            }
+            // 禁止脚本引擎（防止 JavaScript 逃逸）
+            if (name.startsWith("javax.script.")) {
+                throw new SecurityException("App 不允许使用脚本引擎: " + name);
+            }
+            // 禁止 JDBC 直接访问（绕过平台数据层）
+            if (name.equals("java.sql.DriverManager")
+                || name.startsWith("java.sql.DriverManager")) {
+                throw new SecurityException("App 不允许直接 JDBC 访问: " + name);
+            }
+            // 禁止安全管理器
+            if (name.equals("java.lang.SecurityManager")) {
+                throw new SecurityException("App 不允许设置 SecurityManager: " + name);
+            }
+            // 禁止 Spring 内部容器
+            if (name.startsWith("org.springframework.beans.factory.")
+                || name.startsWith("org.springframework.context.support.")) {
+                throw new SecurityException("App 不允许访问 Spring 内部容器: " + name);
             }
         }
     }

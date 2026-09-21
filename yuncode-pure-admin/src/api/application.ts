@@ -93,7 +93,7 @@ export const getApplicationList = async (params: {
 }) => {
   const response = await http.request<{ code: number; message: string; data: PageResult<Application> }>(
     "get",
-    `/system/application/list`,
+    `/system/application`,
     { params }
   );
   return response;
@@ -128,7 +128,7 @@ export const getApplicationStats = async (appId: string, category?: string) => {
 export const createApplication = async (data: ApplicationForm) => {
   const response = await http.request<{ code: number; message: string; data: void }>(
     "post",
-    `/system/application/create`,
+    `/system/application`,
     { data }
   );
   return response.data;
@@ -137,10 +137,10 @@ export const createApplication = async (data: ApplicationForm) => {
 /**
  * 更新应用
  */
-export const updateApplication = async (data: ApplicationForm) => {
+export const updateApplication = async (id: number, data: ApplicationForm) => {
   const response = await http.request<{ code: number; message: string; data: void }>(
     "put",
-    `/system/application/update`,
+    `/system/application/${id}`,
     { data }
   );
   return response.data;
@@ -152,11 +152,9 @@ export const updateApplication = async (data: ApplicationForm) => {
 export const deleteApplication = async (id: number) => {
   const response = await http.request<{ code: number; message: string; data: void }>(
     "delete",
-    `/system/application/delete/${id}`
+    `/system/application/${id}`
   );
-  if (response.code !== 200) {
-    throw new Error(response.message || "删除失败");
-  }
+  
   return response.data;
 };
 
@@ -306,9 +304,7 @@ export const uploadDeployPackage = async (file: File) => {
       headers: { "Content-Type": null }
     } as any
   );
-  if (response.code !== 200) {
-    throw new Error(response.message || "上传失败");
-  }
+  
   return response.data;
 };
 
@@ -320,9 +316,7 @@ export const getStagedPackages = async () => {
     "get",
     `/system/application/deploy/packages`
   );
-  if (response.code !== 200) {
-    throw new Error(response.message || "获取暂存列表失败");
-  }
+  
   return response.data;
 };
 
@@ -334,9 +328,7 @@ export const deployStagedPackage = async (appId: string) => {
     "post",
     `/system/application/deploy/install/${appId}`
   );
-  if (response.code !== 200) {
-    throw new Error(response.message || "部署失败");
-  }
+  
   return response.data;
 };
 

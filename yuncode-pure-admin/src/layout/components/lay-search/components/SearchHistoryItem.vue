@@ -26,27 +26,74 @@ function handleDelete(item) {
 </script>
 
 <template>
-  <component :is="useRenderIcon(item.meta?.icon)" />
+  <component :is="useRenderIcon(item.meta?.icon)" class="history-item-icon" />
   <span class="history-item-title">
     {{ item.meta?.title }}
   </span>
-  <IconifyIconOffline
+  <span
     v-show="item.type === 'history'"
-    :icon="StarIcon"
-    class="w-[18px] h-[18px] mr-2 hover:text-[#d7d5d4]"
+    class="history-item-action"
+    @mousedown.prevent
     @click.stop="handleCollect(item)"
-  />
-  <IconifyIconOffline
-    :icon="CloseIcon"
-    class="w-[18px] h-[18px] hover:text-[#d7d5d4] cursor-pointer"
+  >
+    <IconifyIconOffline
+      :icon="StarIcon"
+      class="action-icon"
+    />
+  </span>
+  <span
+    class="history-item-action"
+    @mousedown.prevent
     @click.stop="handleDelete(item)"
-  />
+  >
+    <IconifyIconOffline
+      :icon="CloseIcon"
+      class="action-icon"
+    />
+  </span>
 </template>
 
 <style lang="scss" scoped>
+.history-item-icon {
+  flex-shrink: 0;
+}
+
 .history-item-title {
   display: flex;
   flex: 1;
-  margin-left: 5px;
+  margin-left: 10px;
+  font-size: 14px;
+  color: #1d2129;
+  line-height: 1.4;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.history-item-action {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  margin-left: 4px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+
+  .action-icon {
+    font-size: 14px;
+    color: #86909c;
+    transition: color 0.2s ease;
+  }
+
+  &:hover {
+    background: rgba(0, 0, 0, 0.06);
+
+    .action-icon {
+      color: #1d2129;
+    }
+  }
 }
 </style>

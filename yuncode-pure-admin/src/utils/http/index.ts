@@ -148,14 +148,17 @@ class PureHttp {
           PureHttp.initConfig.beforeResponseCallback(response);
           return response.data;
         }
-        // 直接返回后端响应数据，不做任何处理
-        // 后端统一返回 { code, message, data } 格式
-        return response.data;
+        // 统一错误处理：后端返回 { code, message, data } 格式
+        const res = response.data;
+        if (res && typeof res.code === "number" && res.code !== 200) {
+          // 非 200 响应，统一抛出错误（由调用方 catch）
+          return Promise.reject(new Error(res.message || `请求失败 (code: ${res.code})`));
+        }
+        return res;
       },
       (error: PureHttpError) => {
         const $error = error;
         $error.isCancelRequest = Axios.isCancel($error);
-        // 所有的响应异常 区分来源为取消请求/非取消请求
         return Promise.reject($error);
       }
     );

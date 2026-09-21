@@ -66,73 +66,175 @@
             <button class="tool-btn add-btn" @click="addField">+ 添加字段</button>
           </div>
 
-          <div class="field-table-wrapper">
-            <table class="field-table">
-              <thead>
-                <tr>
-                  <th style="width:40px" class="checkbox-col">
-                    <input type="checkbox" v-model="selectAll" @change="handleSelectAll" class="row-checkbox" />
-                  </th>
-                  <th style="width:30px"></th>
-                  <th>名称</th>
-                  <th>标题</th>
-                  <th style="width:100px">类型</th>
-                  <th>长度</th>
-                  <th>组件</th>
-                  <th>默认值</th>
-                  <th style="width:52px;white-space:nowrap" class="checkbox-col">必填</th>
-                  <th style="width:52px;white-space:nowrap" class="checkbox-col">可见</th>
-                  <th style="width:52px;white-space:nowrap" class="checkbox-col">只读</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr
-                  v-for="f in filteredFields"
-                  :key="f._key"
-                  :class="{ selected: f._checked }"
-                >
-                  <td class="checkbox-col">
-                    <input type="checkbox" v-model="f._checked" @change="updateSelectAll" class="row-checkbox" />
-                  </td>
-                  <td class="drag-handle">⋮⋮</td>
-                  <td>
-                    <span v-if="f.id" class="name-display">{{ f.fieldName }}</span>
-                    <input v-else v-model="f.fieldName" type="text" class="name-input" placeholder="字段名称" />
-                  </td>
-                  <td>
-                    <input v-model="f.fieldTitle" type="text" class="inline-input" placeholder="标题" />
-                  </td>
-                  <td>
-                    <select v-model="f.fieldType" class="inline-select type-select" @change="onTypeChange(f)">
-                      <option value="文本">文本</option>
-                      <option value="数字">数字</option>
-                      <option value="日期">日期</option>
-                      <option value="大文本">大文本</option>
-                    </select>
-                  </td>
-                  <td>
-                    <input v-model.number="f.fieldLength" type="text" class="inline-input" style="width:60px" placeholder="长度" />
-                  </td>
-                  <td>
-                    <select v-model="f.component" class="inline-select">
-                      <option v-for="opt in getComponentOptions(f.fieldType)" :key="opt" :value="opt">{{ opt }}</option>
-                    </select>
-                  </td>
-                  <td>
-                    <input v-model="f.defaultValue" type="text" class="inline-input" placeholder="默认值" />
-                  </td>
-                  <td class="checkbox-col">
-                    <input type="checkbox" v-model="f.required" :true-value="1" :false-value="0" class="required-checkbox" />
-                  </td>
-                  <td class="checkbox-col">
-                    <input type="checkbox" v-model="f.visible" :true-value="1" :false-value="0" class="visible-checkbox" />
-                  </td>
-                  <td class="checkbox-col">
-                    <input type="checkbox" v-model="f.readonly" :true-value="1" :false-value="0" class="readonly-checkbox" />
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+          <!-- 主表字段 -->
+          <div class="field-group">
+            <div class="field-group__header" @click="mainTableExpanded = !mainTableExpanded">
+              <div class="field-group__header-left">
+                <el-icon class="field-group__arrow" :class="{ 'is-expanded': mainTableExpanded }">
+                  <ArrowRight />
+                </el-icon>
+                <span class="field-group__tag field-group__tag--main">主</span>
+                <span class="field-group__title">{{ table?.titleName || '主表' }}</span>
+                <span class="field-group__count">{{ mainFields.length }}</span>
+              </div>
+            </div>
+            <transition name="slide">
+              <div v-show="mainTableExpanded" class="field-group__body">
+                <div class="field-table-wrapper">
+                  <table class="field-table">
+                    <thead>
+                      <tr>
+                        <th style="width:40px" class="checkbox-col">
+                          <input type="checkbox" v-model="selectAllMain" @change="handleSelectAllMain" class="row-checkbox" />
+                        </th>
+                        <th style="width:30px"></th>
+                        <th>名称</th>
+                        <th>标题</th>
+                        <th style="width:100px">类型</th>
+                        <th>长度</th>
+                        <th>组件</th>
+                        <th>默认值</th>
+                        <th style="width:52px;white-space:nowrap" class="checkbox-col">必填</th>
+                        <th style="width:52px;white-space:nowrap" class="checkbox-col">可见</th>
+                        <th style="width:52px;white-space:nowrap" class="checkbox-col">只读</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr
+                        v-for="f in mainFields"
+                        :key="f._key"
+                        :class="{ selected: f._checked }"
+                      >
+                        <td class="checkbox-col">
+                          <input type="checkbox" v-model="f._checked" @change="updateSelectAllMain" class="row-checkbox" />
+                        </td>
+                        <td class="drag-handle">⋮⋮</td>
+                        <td>
+                          <span v-if="f.id" class="name-display">{{ f.fieldName }}</span>
+                          <input v-else v-model="f.fieldName" type="text" class="name-input" placeholder="字段名称" />
+                        </td>
+                        <td>
+                          <input v-model="f.fieldTitle" type="text" class="inline-input" placeholder="标题" />
+                        </td>
+                        <td>
+                          <select v-model="f.fieldType" class="inline-select type-select" @change="onTypeChange(f)">
+                            <option value="文本">文本</option>
+                            <option value="数字">数字</option>
+                            <option value="日期">日期</option>
+                            <option value="大文本">大文本</option>
+                          </select>
+                        </td>
+                        <td>
+                          <input v-model.number="f.fieldLength" type="text" class="inline-input" style="width:60px" placeholder="长度" />
+                        </td>
+                        <td>
+                          <select v-model="f.component" class="inline-select">
+                            <option v-for="opt in getComponentOptions(f.fieldType)" :key="opt" :value="opt">{{ opt }}</option>
+                          </select>
+                        </td>
+                        <td>
+                          <input v-model="f.defaultValue" type="text" class="inline-input" placeholder="默认值" />
+                        </td>
+                        <td class="checkbox-col">
+                          <input type="checkbox" v-model="f.required" :true-value="1" :false-value="0" class="required-checkbox" />
+                        </td>
+                        <td class="checkbox-col">
+                          <input type="checkbox" v-model="f.visible" :true-value="1" :false-value="0" class="visible-checkbox" />
+                        </td>
+                        <td class="checkbox-col">
+                          <input type="checkbox" v-model="f.readonly" :true-value="1" :false-value="0" class="readonly-checkbox" />
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </transition>
+          </div>
+
+          <!-- 系统字段 -->
+          <div class="field-group">
+            <div class="field-group__header" @click="systemFieldsExpanded = !systemFieldsExpanded">
+              <div class="field-group__header-left">
+                <el-icon class="field-group__arrow" :class="{ 'is-expanded': systemFieldsExpanded }">
+                  <ArrowRight />
+                </el-icon>
+                <span class="field-group__tag field-group__tag--system">系</span>
+                <span class="field-group__title">系统字段</span>
+                <span class="field-group__count">{{ systemFields.length }}</span>
+              </div>
+            </div>
+            <transition name="slide">
+              <div v-show="systemFieldsExpanded" class="field-group__body">
+                <div class="field-table-wrapper">
+                  <table class="field-table">
+                    <thead>
+                      <tr>
+                        <th style="width:40px" class="checkbox-col">
+                          <input type="checkbox" v-model="selectAllSystem" @change="handleSelectAllSystem" class="row-checkbox" />
+                        </th>
+                        <th style="width:30px"></th>
+                        <th>名称</th>
+                        <th>标题</th>
+                        <th style="width:100px">类型</th>
+                        <th>长度</th>
+                        <th>组件</th>
+                        <th>默认值</th>
+                        <th style="width:52px;white-space:nowrap" class="checkbox-col">必填</th>
+                        <th style="width:52px;white-space:nowrap" class="checkbox-col">可见</th>
+                        <th style="width:52px;white-space:nowrap" class="checkbox-col">只读</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr
+                        v-for="f in systemFields"
+                        :key="f._key"
+                        :class="{ selected: f._checked }"
+                      >
+                        <td class="checkbox-col">
+                          <input type="checkbox" v-model="f._checked" @change="updateSelectAllSystem" class="row-checkbox" />
+                        </td>
+                        <td class="drag-handle">⋮⋮</td>
+                        <td>
+                          <span class="name-display">{{ f.fieldName }}</span>
+                        </td>
+                        <td>
+                          <input v-model="f.fieldTitle" type="text" class="inline-input" placeholder="标题" />
+                        </td>
+                        <td>
+                          <select v-model="f.fieldType" class="inline-select type-select" @change="onTypeChange(f)" disabled>
+                            <option value="文本">文本</option>
+                            <option value="数字">数字</option>
+                            <option value="日期">日期</option>
+                            <option value="大文本">大文本</option>
+                          </select>
+                        </td>
+                        <td>
+                          <input v-model.number="f.fieldLength" type="text" class="inline-input" style="width:60px" placeholder="长度" disabled />
+                        </td>
+                        <td>
+                          <select v-model="f.component" class="inline-select" disabled>
+                            <option v-for="opt in getComponentOptions(f.fieldType)" :key="opt" :value="opt">{{ opt }}</option>
+                          </select>
+                        </td>
+                        <td>
+                          <input v-model="f.defaultValue" type="text" class="inline-input" placeholder="默认值" />
+                        </td>
+                        <td class="checkbox-col">
+                          <input type="checkbox" v-model="f.required" :true-value="1" :false-value="0" class="required-checkbox" disabled />
+                        </td>
+                        <td class="checkbox-col">
+                          <input type="checkbox" v-model="f.visible" :true-value="1" :false-value="0" class="visible-checkbox" />
+                        </td>
+                        <td class="checkbox-col">
+                          <input type="checkbox" v-model="f.readonly" :true-value="1" :false-value="0" class="readonly-checkbox" disabled />
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </transition>
           </div>
         </div>
       </div>
@@ -218,7 +320,11 @@
 <script setup lang="ts">
 import { ref, computed, watch } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
+import { ArrowRight } from "@element-plus/icons-vue";
 import { getBoTableDetail, saveBoDesign, type BoTable, type BoField } from "@/api/bo-table";
+import { useBoFieldManager } from "./composables/useBoFieldManager";
+import { useBoIndexManager } from "./composables/useBoIndexManager";
+import { useBoTemplateManager } from "./composables/useBoTemplateManager";
 
 const props = defineProps<{ modelValue: boolean; tableId?: number | null }>();
 const emit = defineEmits<{ "update:modelValue": [val: boolean]; saved: [] }>();
@@ -228,35 +334,18 @@ const dialogVisible = computed({
   set: (val) => emit("update:modelValue", val),
 });
 
-// 全部系统字段（15个），用于在字段列表中隐藏
-const DEFAULT_FIELD_NAMES = [
-  // 工作流字段（11个）
-  "ID", "PROCESSINSTID", "ORGID", "CREATEDATE", "CREATEUSER",
-  "UPDATEDATE", "UPDATEUSER", "PROCESSDEFID", "ISEND",
-  "TASKINST_HANDLEUSER", "TASKINST_NODENAME",
-  // 审计字段（4个）
-  "DELETE_BY", "DELETE_FLAG", "DELETE_TIME", "TENANT_ID"
-];
-
-// 索引可选字段（仅11个工作流字段，不含审计字段）
-const INDEX_FIELD_NAMES = [
-  "ID", "PROCESSINSTID", "ORGID", "CREATEDATE", "CREATEUSER",
-  "UPDATEDATE", "UPDATEUSER", "PROCESSDEFID", "ISEND",
-  "TASKINST_HANDLEUSER", "TASKINST_NODENAME"
-];
+// 使用 composables
+const { fields, searchKeyword, selectAllMain, selectAllSystem, mainFields, systemFields, DEFAULT_FIELD_NAMES, setFields, addField, toggleSelectAllMain, toggleSelectAllSystem } = useBoFieldManager();
+const { indexTags, showIndexModal, indexForm, INDEX_FIELD_NAMES, addIndex, confirmAddIndex, removeIndex } = useBoIndexManager();
+const { showTemplateDialog, selectedTemplate, TEMPLATES, openTemplateDialog, applyTemplate } = useBoTemplateManager();
 
 const table = ref<BoTable | null>(null);
 const editTitle = ref("");
-const fields = ref<BoField[]>([]);
-const indexTags = ref<string[]>(["ID"]);
-const searchKeyword = ref("");
 const saving = ref(false);
-const showTemplateDialog = ref(false);
-const selectedTemplate = ref("");
+const mainTableExpanded = ref(true);
+const systemFieldsExpanded = ref(false);
 const selectAll = ref(false);
 const selectedSet = ref<Set<string>>(new Set());
-const showIndexModal = ref(false);
-const indexForm = ref({ type: "普通索引", field: "", remark: "" });
 
 const COMPONENT_MAP: Record<string, string[]> = {
   "文本": ["单行文本", "下拉选择", "隐藏"],
@@ -319,6 +408,30 @@ const filteredFields = computed(() => {
   return list;
 });
 
+function handleSelectAllMain() {
+  mainFields.value.forEach(f => {
+    f._checked = selectAllMain.value;
+  });
+}
+
+function handleSelectAllSystem() {
+  systemFields.value.forEach(f => {
+    f._checked = selectAllSystem.value;
+  });
+}
+
+function updateSelectAllMain() {
+  const filtered = mainFields.value;
+  const checked = filtered.filter(f => f._checked);
+  selectAllMain.value = filtered.length > 0 && checked.length === filtered.length;
+}
+
+function updateSelectAllSystem() {
+  const filtered = systemFields.value;
+  const checked = filtered.filter(f => f._checked);
+  selectAllSystem.value = filtered.length > 0 && checked.length === filtered.length;
+}
+
 function handleSelectAll() {
   filteredFields.value.forEach(f => {
     f._checked = selectAll.value;
@@ -357,83 +470,6 @@ function copyText(text: string) {
   navigator.clipboard.writeText(text).then(() => {
     ElMessage.success("已复制");
   });
-}
-
-function addField() {
-  fields.value.push({
-    _key: generateKey(),
-    _checked: false,
-    fieldName: "",
-    fieldTitle: "",
-    fieldType: "文本",
-    fieldLength: 128,
-    component: "单行文本",
-    defaultValue: "",
-    required: 0,
-    visible: 1,
-    readonly: 0,
-    copyable: 0,
-  } as BoField);
-}
-
-function addIndex() {
-  showIndexModal.value = true;
-}
-
-function confirmAddIndex() {
-  if (!indexForm.value.field) {
-    ElMessage.warning("请选择索引字段");
-    return;
-  }
-  if (!indexTags.value.includes(indexForm.value.field)) {
-    indexTags.value.push(indexForm.value.field);
-  } else {
-    ElMessage.warning("该字段已添加为索引");
-    return;
-  }
-  indexForm.value = { type: "普通索引", field: "", remark: "" };
-  showIndexModal.value = false;
-}
-
-function applyTemplate() {
-  const gen = () => ({ _key: generateKey(), _checked: false, required: 0, visible: 1, readonly: 0, copyable: 0 });
-  if (selectedTemplate.value === "bo_default") {
-    const existing = new Set(fields.value.map(f => f.fieldName));
-    const defaults = DEFAULT_FIELD_NAMES.filter(n => !existing.has(n)).map((name) => {
-      const isDate = name.includes("DATE") || name.includes("TIME");
-      const isId = name === "ID" || name.endsWith("ID");
-      const isDelFlag = name === "DELETE_FLAG";
-      return {
-        ...gen(),
-        fieldName: name,
-        fieldTitle: name === "ID" ? "主键ID" : name,
-        fieldType: isDate ? "日期" : (isDelFlag ? "数字" : "文本"),
-        fieldLength: isDate ? 0 : (isDelFlag ? 1 : (name === "TASKINST_HANDLEUSER" ? 500 : name === "TASKINST_NODENAME" ? 200 : name === "ISEND" ? 10 : 64)),
-        component: isDate ? "日期时间" : (isDelFlag || isId ? "隐藏" : "单行文本"),
-        defaultValue: name === "ISEND" ? "N" : name === "DELETE_FLAG" ? "0" : "",
-      };
-    });
-    fields.value.push(...defaults);
-    ElMessage.success(`已添加 ${defaults.length} 个默认字段`);
-  } else if (selectedTemplate.value === "contact") {
-    fields.value.push(
-      { ...gen(), fieldName: "CONTACT_NAME", fieldTitle: "联系人姓名", fieldType: "文本", fieldLength: 50, component: "单行文本", defaultValue: "" },
-      { ...gen(), fieldName: "CONTACT_PHONE", fieldTitle: "联系电话", fieldType: "文本", fieldLength: 20, component: "单行文本", defaultValue: "" },
-      { ...gen(), fieldName: "CONTACT_EMAIL", fieldTitle: "邮箱", fieldType: "文本", fieldLength: 100, component: "单行文本", defaultValue: "" },
-      { ...gen(), fieldName: "CONTACT_ADDR", fieldTitle: "地址", fieldType: "文本", fieldLength: 200, component: "单行文本", defaultValue: "" },
-    );
-    ElMessage.success("已添加联系人模板");
-  } else if (selectedTemplate.value === "address") {
-    fields.value.push(
-      { ...gen(), fieldName: "PROVINCE", fieldTitle: "省", fieldType: "文本", fieldLength: 50, component: "下拉选择", defaultValue: "" },
-      { ...gen(), fieldName: "CITY", fieldTitle: "市", fieldType: "文本", fieldLength: 50, component: "下拉选择", defaultValue: "" },
-      { ...gen(), fieldName: "DISTRICT", fieldTitle: "区", fieldType: "文本", fieldLength: 50, component: "下拉选择", defaultValue: "" },
-      { ...gen(), fieldName: "DETAIL_ADDR", fieldTitle: "详细地址", fieldType: "文本", fieldLength: 200, component: "多行文本", defaultValue: "" },
-    );
-    ElMessage.success("已添加地址模板");
-  }
-  showTemplateDialog.value = false;
-  selectedTemplate.value = "";
 }
 
 async function load() {
@@ -768,6 +804,111 @@ watch([() => props.modelValue, () => props.tableId], ([val, id]) => {
 .field-table-wrapper {
   overflow-x: auto;
   border-radius: 20px;
+}
+
+/* ====== 字段分组折叠 ====== */
+.field-group {
+  margin-bottom: 16px;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  overflow: hidden;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.field-group__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  cursor: pointer;
+  transition: all 0.2s;
+  user-select: none;
+
+  &:hover {
+    background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+  }
+}
+
+.field-group__header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.field-group__arrow {
+  font-size: 14px;
+  color: #64748b;
+  transition: transform 0.3s ease;
+
+  &.is-expanded {
+    transform: rotate(90deg);
+  }
+}
+
+.field-group__tag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  flex-shrink: 0;
+
+  &--main {
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+    color: #fff;
+    box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3);
+  }
+
+  &--system {
+    background: linear-gradient(135deg, #94a3b8, #64748b);
+    color: #fff;
+    box-shadow: 0 2px 6px rgba(148, 163, 184, 0.3);
+  }
+}
+
+.field-group__title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.field-group__count {
+  font-size: 12px;
+  font-weight: 600;
+  color: #64748b;
+  background: #e2e8f0;
+  padding: 2px 10px;
+  border-radius: 20px;
+}
+
+.field-group__body {
+  border-top: 1px solid #e2e8f0;
+}
+
+/* 折叠动画 */
+.slide-enter-active,
+.slide-leave-active {
+  transition: all 0.3s ease;
+  overflow: hidden;
+}
+
+.slide-enter-from,
+.slide-leave-to {
+  opacity: 0;
+  max-height: 0;
+}
+
+.slide-enter-to,
+.slide-leave-from {
+  opacity: 1;
+  max-height: 2000px;
 }
 
 .field-table {

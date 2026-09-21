@@ -1,103 +1,104 @@
 <template>
-  <div class="app-container">
-    <el-card shadow="never">
-      <template #header>
-        <div class="card-header">
-          <span class="card-title">用户日志</span>
-        </div>
-      </template>
+  <div class="page-container">
+    <div class="page-card">
+      <div class="page-card-header">
+        <span class="page-title" style="margin-bottom: 0">用户日志</span>
+      </div>
+      <div class="page-card-body">
+        <!-- 搜索表单 -->
+        <el-form :inline="true" :model="queryParams" class="page-search-form">
+          <el-form-item label="用户名">
+            <el-input
+              v-model="queryParams.username"
+              placeholder="请输入用户名"
+              clearable
+              @keyup.enter="handleQuery"
+            />
+          </el-form-item>
+          <el-form-item label="登录状态">
+            <el-select
+              v-model="queryParams.status"
+              placeholder="请选择登录状态"
+              clearable
+            >
+              <el-option label="成功" :value="1" />
+              <el-option label="失败" :value="0" />
+            </el-select>
+          </el-form-item>
+          <el-form-item label="时间范围">
+            <el-date-picker
+              v-model="dateRange"
+              type="datetimerange"
+              range-separator="至"
+              start-placeholder="开始时间"
+              end-placeholder="结束时间"
+              value-format="YYYY-MM-DD HH:mm:ss"
+            />
+          </el-form-item>
+          <el-form-item>
+            <el-button type="primary" @click="handleQuery">
+              <el-icon><Search /></el-icon>
+              搜索
+            </el-button>
+            <el-button @click="handleReset">
+              <el-icon><Refresh /></el-icon>
+              重置
+            </el-button>
+          </el-form-item>
+        </el-form>
 
-      <!-- 搜索表单 -->
-      <el-form :inline="true" :model="queryParams" class="search-form">
-        <el-form-item label="用户名">
-          <el-input
-            v-model="queryParams.username"
-            placeholder="请输入用户名"
-            clearable
-            @keyup.enter="handleQuery"
-          />
-        </el-form-item>
-        <el-form-item label="登录状态">
-          <el-select
-            v-model="queryParams.status"
-            placeholder="请选择登录状态"
-            clearable
-          >
-            <el-option label="成功" :value="1" />
-            <el-option label="失败" :value="0" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="时间范围">
-          <el-date-picker
-            v-model="dateRange"
-            type="datetimerange"
-            range-separator="至"
-            start-placeholder="开始时间"
-            end-placeholder="结束时间"
-            value-format="YYYY-MM-DD HH:mm:ss"
-          />
-        </el-form-item>
-        <el-form-item>
-          <el-button type="primary" @click="handleQuery">
-            <el-icon><Search /></el-icon>
-            搜索
-          </el-button>
-          <el-button @click="handleReset">
-            <el-icon><Refresh /></el-icon>
-            重置
-          </el-button>
-        </el-form-item>
-      </el-form>
+        <!-- 数据表格 -->
+        <el-table
+          v-loading="loading"
+          :data="logList"
+          border
+          stripe
+          style="width: 100%"
+          :header-cell-style="{ background: '#fafafa', color: '#606266', fontWeight: 500 }"
+        >
+          <el-table-column prop="username" label="用户名" width="120" />
+          <el-table-column prop="status" label="登录状态" width="100">
+            <template #default="{ row }">
+              <el-tag v-if="row.status === 1" type="success">
+                成功
+              </el-tag>
+              <el-tag v-else type="danger">
+                失败
+              </el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column prop="loginTime" label="登录时间" width="180" />
+          <el-table-column prop="loginLocation" label="登录地点" width="200" />
+          <el-table-column prop="logoutTime" label="退出时间" width="180">
+            <template #default="{ row }">
+              <span>{{ row.logoutTime || '-' }}</span>
+            </template>
+          </el-table-column>
+          <el-table-column prop="ipaddr" label="IP地址" width="140" />
+          <el-table-column prop="browser" label="浏览器" width="120" />
+          <el-table-column prop="os" label="操作系统" width="120" />
+          <el-table-column label="在线时长" width="120">
+            <template #default="{ row }">
+              <span v-if="row.costTime">{{ formatDuration(row.costTime) }}</span>
+              <span v-else>-</span>
+            </template>
+          </el-table-column>
+          <el-table-column prop="msg" label="提示消息" min-width="200" show-overflow-tooltip />
+        </el-table>
 
-      <!-- 数据表格 -->
-      <el-table
-        v-loading="loading"
-        :data="logList"
-        border
-        stripe
-        style="width: 100%"
-      >
-        <el-table-column prop="username" label="用户名" width="120" />
-        <el-table-column prop="status" label="登录状态" width="100">
-          <template #default="{ row }">
-            <el-tag v-if="row.status === 1" type="success">
-              成功
-            </el-tag>
-            <el-tag v-else type="danger">
-              失败
-            </el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column prop="loginTime" label="登录时间" width="180" />
-        <el-table-column prop="loginLocation" label="登录地点" width="200" />
-        <el-table-column prop="logoutTime" label="退出时间" width="180">
-          <template #default="{ row }">
-            <span>{{ row.logoutTime || '-' }}</span>
-          </template>
-        </el-table-column>
-        <el-table-column prop="ipaddr" label="IP地址" width="140" />
-        <el-table-column prop="browser" label="浏览器" width="120" />
-        <el-table-column prop="os" label="操作系统" width="120" />
-        <el-table-column label="在线时长" width="120">
-          <template #default="{ row }">
-            <span v-if="row.costTime">{{ formatDuration(row.costTime) }}</span>
-            <span v-else>-</span>
-          </template>
-        </el-table-column>
-        <el-table-column prop="msg" label="提示消息" min-width="200" show-overflow-tooltip />
-      </el-table>
-
-      <!-- 分页 -->
-      <el-pagination
-        v-model:current-page="queryParams.page"
-        v-model:page-size="queryParams.size"
-        :total="total"
-        :page-sizes="[10, 20, 50, 100]"
-        layout="total, sizes, prev, pager, next, jumper"
-        @size-change="handleQuery"
-        @current-change="handleQuery"
-      />
-    </el-card>
+        <!-- 分页 -->
+        <el-pagination
+          v-model:current-page="queryParams.page"
+          v-model:page-size="queryParams.size"
+          :total="total"
+          :page-sizes="[10, 20, 50, 100]"
+          layout="total, sizes, prev, pager, next, jumper"
+          class="page-pagination"
+          @size-change="handleQuery"
+          @current-change="handleQuery"
+        />
+      </div>
+    </div>
   </div>
 </template>
 
@@ -187,28 +188,4 @@ onMounted(() => {
 </script>
 
 <style scoped lang="scss">
-.app-container {
-  padding: 20px;
-}
-
-.card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.card-title {
-  font-size: 16px;
-  font-weight: 600;
-}
-
-.search-form {
-  margin-bottom: 20px;
-}
-
-.el-pagination {
-  margin-top: 20px;
-  display: flex;
-  justify-content: flex-end;
-}
 </style>

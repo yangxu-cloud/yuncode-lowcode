@@ -1,7 +1,7 @@
 package com.yuncode.system.controller;
 
 import com.yuncode.common.model.util.response.Result;
-import com.yuncode.system.service.MenuService;
+import com.yuncode.system.iam.service.MenuService;
 import com.yuncode.system.vo.RouteVO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;

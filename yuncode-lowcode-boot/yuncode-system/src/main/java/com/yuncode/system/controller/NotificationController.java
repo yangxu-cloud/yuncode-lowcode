@@ -19,7 +19,7 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
  */
 @Slf4j
 @RestController
-@RequestMapping("/user/notifications")
+@RequestMapping("/system/user/notifications")
 @RequiredArgsConstructor
 @Tag(name = "通知管理", description = "SSE 实时通知接口")
 @SecurityRequirement(name = "Bearer Authentication")

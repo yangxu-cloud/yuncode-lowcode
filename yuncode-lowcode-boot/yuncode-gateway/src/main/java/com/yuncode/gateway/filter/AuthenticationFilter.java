@@ -2,6 +2,7 @@ package com.yuncode.gateway.filter;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.yuncode.common.model.util.response.Result;
+import com.yuncode.common.utils.JwtKeyUtil;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
@@ -56,7 +57,7 @@ public class AuthenticationFilter implements GlobalFilter, Ordered {
 
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
-    @Value("${sa-token.jwt-secret-key:yuncode-lowcode-default-key}")
+    @Value("${sa-token.jwt-secret-key}")
     private String baseSecretKey;
 
     /** 三个登录类型的签名密钥 */
@@ -66,9 +67,11 @@ public class AuthenticationFilter implements GlobalFilter, Ordered {
 
     @PostConstruct
     public void initKeys() {
-        adminKey = Keys.hmacShaKeyFor(baseSecretKey.getBytes(StandardCharsets.UTF_8));
-        userKey = Keys.hmacShaKeyFor((baseSecretKey + "_user").getBytes(StandardCharsets.UTF_8));
-        tenantKey = Keys.hmacShaKeyFor((baseSecretKey + "_tenant").getBytes(StandardCharsets.UTF_8));
+        JwtKeyUtil.validateKey(baseSecretKey, "Gateway");
+        adminKey = JwtKeyUtil.generateHmacKey(baseSecretKey, "admin");
+        userKey = JwtKeyUtil.generateHmacKey(baseSecretKey, "user");
+        tenantKey = JwtKeyUtil.generateHmacKey(baseSecretKey, "tenant");
+        log.info("Gateway JWT 密钥初始化完成");
     }
 
     @Override
@@ -99,10 +102,15 @@ public class AuthenticationFilter implements GlobalFilter, Ordered {
         // Token 有效，提取用户信息并设置转发 header
         String loginId = claims.getSubject();
         String loginType = claims.get("loginType", String.class);
+        String tenantId = claims.get("tenantId", String.class);
+
         if (loginId != null) {
             exchange.getRequest().mutate()
                     .header("X-User-Id", loginId)
-                    .header("X-Login-Type", loginType != null ? loginType : "unknown");
+                    .header("X-Login-Type", loginType != null ? loginType : "unknown")
+                    .header("X-Tenant-Id", tenantId != null ? tenantId : "")
+                    .header("X-Gateway-Auth", "true")
+                    .header("Authorization", "Bearer " + token);
         }
 
         log.debug("[Gateway] {} - token valid, userId={}, loginType={}", path, loginId, loginType);

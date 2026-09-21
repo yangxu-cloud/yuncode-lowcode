@@ -82,7 +82,7 @@ sa-token:
   is-log: true
   is-read-cookie: false
   is-read-header: true
-  jwt-secret-key: ${JWT_SECRET_KEY:yuncode-lowcode-sa-token-jwt-secret-key-2024-hutool-bcrypt-compatible-with-spring-boot-3-x8k9m2v4n6}
+  jwt-secret-key: ${JWT_SECRET_KEY}
 
 # 系统配置
 system:

@@ -1,6 +1,6 @@
 package com.yuncode.admin.config;
 
-import com.yuncode.system.service.MenuService;
+import com.yuncode.system.iam.service.MenuService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.ApplicationArguments;

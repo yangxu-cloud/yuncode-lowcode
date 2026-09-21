@@ -56,14 +56,14 @@ export interface SystemInfo {
  * 获取基本设置
  */
 export const getBasicSettings = () => {
-  return http.request<BasicSettings>("get", "/settings/basic");
+  return http.request<BasicSettings>("get", "/system/settings/basic");
 };
 
 /**
  * 保存基本设置
  */
 export const saveBasicSettings = (data: BasicSettings) => {
-  return http.request("post", "/settings/basic", {
+  return http.request("post", "/system/settings/basic", {
     data
   });
 };
@@ -72,14 +72,14 @@ export const saveBasicSettings = (data: BasicSettings) => {
  * 获取安全设置
  */
 export const getSecuritySettings = () => {
-  return http.request<SecuritySettings>("get", "/settings/security");
+  return http.request<SecuritySettings>("get", "/system/settings/security");
 };
 
 /**
  * 保存安全设置
  */
 export const saveSecuritySettings = (data: SecuritySettings) => {
-  return http.request("post", "/settings/security", {
+  return http.request("post", "/system/settings/security", {
     data
   });
 };
@@ -88,5 +88,5 @@ export const saveSecuritySettings = (data: SecuritySettings) => {
  * 获取系统信息
  */
 export const getSystemInfo = () => {
-  return http.request<SystemInfo>("get", "/settings/system/info");
+  return http.request<SystemInfo>("get", "/system/settings/system/info");
 };

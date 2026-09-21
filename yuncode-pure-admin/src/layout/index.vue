@@ -23,10 +23,10 @@ import {
   useResizeObserver
 } from "@pureadmin/utils";
 
-import LayTag from "./components/lay-tag/index.vue";
 import LayNavbar from "./components/lay-navbar/index.vue";
 import LayContent from "./components/lay-content/index.vue";
 import LaySetting from "./components/lay-setting/index.vue";
+import LayTag from "./components/lay-tag/index.vue";
 import NavVertical from "./components/lay-sidebar/NavVertical.vue";
 import NavHorizontal from "./components/lay-sidebar/NavHorizontal.vue";
 import BackTopIcon from "@/assets/svg/back_top.svg?component";
@@ -143,13 +143,15 @@ const LayHeader = defineComponent({
       {
         default: () => [
           !pureSetting.hiddenSideBar &&
-          (layout.value.includes("vertical") || layout.value.includes("mix"))
+          (layout.value.includes("vertical") || layout.value.includes("mix") || layout.value.includes("simple"))
             ? h(LayNavbar)
             : null,
           !pureSetting.hiddenSideBar && layout.value.includes("horizontal")
             ? h(NavHorizontal)
             : null,
-          h(LayTag)
+          !set.hideTabs && layout.value.includes("vertical")
+            ? h(LayTag)
+            : null
         ]
       }
     );

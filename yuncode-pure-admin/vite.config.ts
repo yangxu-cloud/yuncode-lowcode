@@ -38,6 +38,11 @@ export default ({ mode }: ConfigEnv): UserConfigExport => {
           target: VITE_API_BASE_URL || "http://localhost:8080",
           changeOrigin: true
           // 不需要 rewrite，后端 context-path 是 /api，需要保留 /api 前缀
+        },
+        // Gateway 指标端点（Gateway 默认端口 9000）
+        "/gateway": {
+          target: "http://localhost:9000",
+          changeOrigin: true
         }
       },
       // 预热文件以提前转换和缓存结果，降低启动期间的初始页面加载时长并防止转换瀑布

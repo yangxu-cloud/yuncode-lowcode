@@ -1,6 +1,6 @@
 package com.yuncode.system.service.impl;
 
-import com.yuncode.system.service.MavenModuleService;
+import com.yuncode.system.app.service.MavenModuleService;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;

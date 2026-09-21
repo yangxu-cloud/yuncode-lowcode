@@ -1,33 +1,36 @@
 <template>
-  <div class="online-users">
-    <div class="page-header">
-      <h3>在线用户</h3>
-      <div class="stats">
+  <div class="page-container">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+      <span class="page-title" style="margin-bottom: 0">在线用户</span>
+      <div style="display: flex; gap: 10px;">
         <el-tag type="success">在线总数: {{ stats.total }}</el-tag>
         <el-tag type="primary">活跃: {{ stats.active }}</el-tag>
         <el-tag type="info">空闲: {{ stats.idle }}</el-tag>
       </div>
     </div>
 
-    <el-card class="search-card">
-      <el-form :inline="true" :model="searchForm">
-        <el-form-item label="用户名">
-          <el-input
-            v-model="searchForm.username"
-            placeholder="请输入用户名"
-            clearable
-            @keyup.enter="handleSearch"
-          />
-        </el-form-item>
-        <el-form-item>
-          <el-button type="primary" @click="handleSearch">搜索</el-button>
-          <el-button @click="handleReset">重置</el-button>
-        </el-form-item>
-      </el-form>
-    </el-card>
+    <div class="page-card">
+      <div class="page-card-body">
+        <el-form :inline="true" :model="searchForm" class="page-search-form">
+          <el-form-item label="用户名">
+            <el-input
+              v-model="searchForm.username"
+              placeholder="请输入用户名"
+              clearable
+              @keyup.enter="handleSearch"
+            />
+          </el-form-item>
+          <el-form-item>
+            <el-button type="primary" @click="handleSearch">搜索</el-button>
+            <el-button @click="handleReset">重置</el-button>
+          </el-form-item>
+        </el-form>
+      </div>
+    </div>
 
-    <el-card class="table-card">
-      <el-table
+    <div class="page-card">
+      <div class="page-card-body">
+        <el-table
         v-loading="loading"
         :data="tableData"
         border
@@ -74,18 +77,18 @@
         </el-table-column>
       </el-table>
 
-      <div class="pagination">
-        <el-pagination
-          v-model:current-page="searchForm.page"
-          v-model:page-size="searchForm.size"
-          :total="total"
-          :page-sizes="[10, 20, 50, 100]"
-          layout="total, sizes, prev, pager, next, jumper"
-          @size-change="handleSearch"
-          @current-change="handleSearch"
-        />
+      <el-pagination
+        v-model:current-page="searchForm.page"
+        v-model:page-size="searchForm.size"
+        :total="total"
+        :page-sizes="[10, 20, 50, 100]"
+        layout="total, sizes, prev, pager, next, jumper"
+        class="page-pagination"
+        @size-change="handleSearch"
+        @current-change="handleSearch"
+      />
       </div>
-    </el-card>
+    </div>
 
     <div class="batch-actions" v-if="selectedUsers.length > 0">
       <el-button type="danger" @click="handleBatchKickOut">
@@ -288,48 +291,14 @@ onUnmounted(() => {
 </script>
 
 <style lang="scss" scoped>
-.online-users {
-  padding: 20px;
+.batch-actions {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 999;
+}
 
-  .page-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-
-    h3 {
-      margin: 0;
-      font-size: 20px;
-      font-weight: 600;
-    }
-
-    .stats {
-      display: flex;
-      gap: 10px;
-    }
-  }
-
-  .search-card {
-    margin-bottom: 20px;
-  }
-
-  .table-card {
-    .pagination {
-      margin-top: 20px;
-      display: flex;
-      justify-content: flex-end;
-    }
-  }
-
-  .batch-actions {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    z-index: 999;
-  }
-
-  .ml-2 {
-    margin-left: 8px;
-  }
+.ml-2 {
+  margin-left: 8px;
 }
 </style>

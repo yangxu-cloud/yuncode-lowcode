@@ -57,9 +57,7 @@ export const createBoTable = async (
     `/system/application/${appId}/bo-tables`,
     { data }
   );
-  if (response.code !== 200) {
-    throw new Error(response.message || "创建失败");
-  }
+  
   return response.data;
 };
 
@@ -147,9 +145,7 @@ export const saveBoDesign = async (tableId: number, data: { fields: BoField[]; i
     `/system/application/bo-tables/${tableId}/design`,
     { data }
   );
-  if (response.code !== 200) {
-    throw new Error(response.message || "保存失败");
-  }
+  
   return response.data;
 };
 

@@ -44,6 +44,8 @@
             <version>1.0.0</version>
         </dependency>
 
+        <!-- Auth Module -->
+
         <!-- Spring Boot Starter Web (WebMvc/Tomcat) -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -106,20 +108,24 @@
 
 
 
-        <!-- App Module: yun20260523451140 -->
-    <dependency>
-        <groupId>com.yuncode</groupId>
-        <artifactId>yun20260523451140</artifactId>
-        <version>1.0.0</version>
-    </dependency>
-
-        <!-- App Module: yun20260523774785 -->
-    <dependency>
-        <groupId>com.yuncode</groupId>
-        <artifactId>yun20260523774785</artifactId>
-        <version>1.0.0</version>
-    </dependency>
-
+        <!--
+            App 模块（provided scope）
+            - 开发时：IDE 可以正常引用 SDK 代码
+            - 打包时：spring-boot-maven-plugin 不会将 provided scope 的依赖打进 JAR
+            - 运行时：由 HotAppDeployer 从 apps/install/<appId>/lib/*.jar 热加载
+        -->
+        <dependency>
+            <groupId>com.yuncode</groupId>
+            <artifactId>yun20260523451140</artifactId>
+            <version>1.0.0</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.yuncode</groupId>
+            <artifactId>yun20260523774785</artifactId>
+            <version>1.0.0</version>
+            <scope>provided</scope>
+        </dependency>
 
     </dependencies>
 

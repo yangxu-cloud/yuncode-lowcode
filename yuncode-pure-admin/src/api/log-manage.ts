@@ -110,7 +110,7 @@ export const getOperationLogs = (params: {
     total: number;
     current: number;
     size: number;
-  }>("get", "/log/operation/list", {
+  }>("get", "/system/log/operation/list", {
     params
   });
 };
@@ -133,7 +133,7 @@ export const getSystemLogs = (params: {
     total: number;
     current: number;
     size: number;
-  }>("get", "/log/system/list", {
+  }>("get", "/system/log/system/list", {
     params
   });
 };
@@ -155,7 +155,7 @@ export const getUserLogs = (params: {
     total: number;
     current: number;
     size: number;
-  }>("get", "/log/user/list", {
+  }>("get", "/system/log/user/list", {
     params
   });
 };
@@ -168,7 +168,7 @@ export const getLogsByTraceId = (traceId: string) => {
     systemLogs: SystemLog[];
     operationLogs: OperationLog[];
     userLogs: UserLog[];
-  }>("get", `/log/trace/${traceId}`);
+  }>("get", `/system/log/trace/${traceId}`);
 };
 
 /**
@@ -221,14 +221,14 @@ export const getOnlineUserStats = () => {
  * 删除操作日志
  */
 export const deleteOperationLog = (id: string) => {
-  return http.request("delete", `/log/operation/${id}`);
+  return http.request("delete", `/system/log/operation/${id}`);
 };
 
 /**
  * 批量删除操作日志
  */
 export const batchDeleteOperationLogs = (ids: string[]) => {
-  return http.request("post", "/log/operation/batch-delete", {
+  return http.request("post", "/system/log/operation/batch-delete", {
     data: { ids }
   });
 };
@@ -237,14 +237,14 @@ export const batchDeleteOperationLogs = (ids: string[]) => {
  * 删除系统日志
  */
 export const deleteSystemLog = (id: string) => {
-  return http.request("delete", `/log/system/${id}`);
+  return http.request("delete", `/system/log/system/${id}`);
 };
 
 /**
  * 批量删除系统日志
  */
 export const batchDeleteSystemLogs = (ids: string[]) => {
-  return http.request("post", "/log/system/batch-delete", {
+  return http.request("post", "/system/log/system/batch-delete", {
     data: { ids }
   });
 };
@@ -253,7 +253,7 @@ export const batchDeleteSystemLogs = (ids: string[]) => {
  * 清空过期日志
  */
 export const cleanExpiredLogs = (days: number) => {
-  return http.request("post", "/log/clean", {
+  return http.request("post", "/system/log/clean", {
     data: { days }
   });
 };

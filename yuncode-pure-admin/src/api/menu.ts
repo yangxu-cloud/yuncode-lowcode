@@ -90,9 +90,7 @@ export const addMenu = async (data: MenuForm) => {
     `/menu`,
     { data }
   );
-  if (response.code !== 200) {
-    throw new Error(response.message || "添加菜单失败");
-  }
+  
   return response.data;
 };
 
@@ -105,9 +103,7 @@ export const updateMenu = async (data: MenuForm) => {
     `/menu`,
     { data }
   );
-  if (response.code !== 200) {
-    throw new Error(response.message || "更新菜单失败");
-  }
+  
   return response.data;
 };
 
@@ -119,9 +115,7 @@ export const deleteMenu = async (id: number) => {
     "delete",
     `/menu/${id}`
   );
-  if (response.code !== 200) {
-    throw new Error(response.message || "删除菜单失败");
-  }
+  
   return response.data;
 };
 
@@ -133,9 +127,7 @@ export const moveUpMenu = async (menuId: number) => {
     "put",
     `/menu/move-up/${menuId}`
   );
-  if (response.code !== 200) {
-    throw new Error(response.message || "上移菜单失败");
-  }
+  
   return response.data;
 };
 
@@ -147,9 +139,7 @@ export const moveDownMenu = async (menuId: number) => {
     "put",
     `/menu/move-down/${menuId}`
   );
-  if (response.code !== 200) {
-    throw new Error(response.message || "下移菜单失败");
-  }
+  
   return response.data;
 };
 
@@ -164,9 +154,7 @@ export const setMenuVisible = async (menuId: number, visible: number) => {
       params: { menuId, visible }
     }
   );
-  if (response.code !== 200) {
-    throw new Error(response.message || "设置可见性失败");
-  }
+  
   return response.data;
 };
 
@@ -204,9 +192,7 @@ export const addMenuPermissions = async (menuId: number, targetType: number, tar
       params: { menuId, targetType, targetIds }
     }
   );
-  if (response.code !== 200) {
-    throw new Error(response.message || "添加权限失败");
-  }
+  
   return response.data;
 };
 
@@ -221,9 +207,7 @@ export const removeMenuPermission = async (menuId: number, targetType: number, t
       params: { menuId, targetType, targetId }
     }
   );
-  if (response.code !== 200) {
-    throw new Error(response.message || "移除权限失败");
-  }
+  
   return response.data;
 };
 
@@ -235,9 +219,7 @@ export const copyPermissionsToChildren = async (menuId: number) => {
     "post",
     `/menu/permissions/copy-to-children/${menuId}`
   );
-  if (response.code !== 200) {
-    throw new Error(response.message || "权限追加失败");
-  }
+  
   return response.data;
 };
 
@@ -249,8 +231,6 @@ export const initDefaultMenus = async () => {
     "post",
     `/menu/init`
   );
-  if (response.code !== 200) {
-    throw new Error(response.message || "初始化菜单失败");
-  }
+  
   return response.data;
 };

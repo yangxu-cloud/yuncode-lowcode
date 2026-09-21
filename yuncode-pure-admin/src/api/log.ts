@@ -22,7 +22,7 @@ export interface LoginLog {
  * 记录登录日志
  */
 export const recordLoginLog = (data: Omit<LoginLog, "id">) => {
-  return http.request("post", "/log/login", {
+  return http.request("post", "/system/log/login", {
     data
   });
 };
@@ -43,7 +43,7 @@ export const getLoginLogs = (params: {
     total: number;
     current: number;
     size: number;
-  }>("get", "/log/login/list", {
+  }>("get", "/system/log/login/list", {
     params
   });
 };
@@ -56,7 +56,7 @@ export const recordLogoutLog = (data: {
   username: string;
   logoutTime: string;
 }) => {
-  return http.request("post", "/log/logout", {
+  return http.request("post", "/system/log/logout", {
     data
   });
 };

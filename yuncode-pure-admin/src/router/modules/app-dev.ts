@@ -68,6 +68,16 @@ const appDevRoutes: RouteRecordRaw = {
         title: "表单设计器测试",
         showLink: true
       }
+    },
+    {
+      path: "/appDev/multi-tab-demo",
+      name: "MultiTabDemo",
+      component: () => import("@/views/demo/multi-tab-demo.vue"),
+      meta: {
+        icon: "ep/grid",
+        title: "多标签页 Demo",
+        showLink: true
+      }
     }
   ]
 } satisfies RouteConfigsTable;

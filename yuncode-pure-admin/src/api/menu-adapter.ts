@@ -7,7 +7,7 @@ import { adapterGet, adapterPost, adapterPut, adapterDelete } from '@/utils/requ
 import { mockGetMenuTree, mockGetMenuPermissions, type MenuTreeItem } from '@mock/menu';
 import type { MenuPermissionVO } from './menu';
 
-const API_BASE_PREFIX = '/menu';
+const API_BASE_PREFIX = '/system/menu';
 
 /**
  * 获取菜单树

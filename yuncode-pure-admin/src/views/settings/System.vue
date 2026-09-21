@@ -5,169 +5,166 @@
       <p class="description">{{ $t('settings.systemInfoDesc') }}</p>
     </div>
 
-    <el-card v-loading="loading" class="info-card">
-      <el-descriptions :column="2" border>
-        <el-descriptions-item>
-          <template #label>
-            <div class="label-item">
-              <el-icon><Monitor /></el-icon>
-              {{ $t('settings.systemNameLabel') }}
-            </div>
-          </template>
-          {{ systemInfo.name }}
-        </el-descriptions-item>
-
-        <el-descriptions-item>
-          <template #label>
-            <div class="label-item">
-              <el-icon><PriceTag /></el-icon>
-              {{ $t('settings.systemVersion') }}
-            </div>
-          </template>
-          <el-tag type="success">{{ systemInfo.version }}</el-tag>
-        </el-descriptions-item>
-
-        <el-descriptions-item>
-          <template #label>
-            <div class="label-item">
-              <el-icon><Platform /></el-icon>
-              {{ $t('settings.runtimeEnv') }}
-            </div>
-          </template>
-          <el-tag :type="systemInfo.env === 'prod' ? 'danger' : 'warning'">
-            {{ getEnvText(systemInfo.env) }}
-          </el-tag>
-        </el-descriptions-item>
-
-        <el-descriptions-item>
-          <template #label>
-            <div class="label-item">
-              <el-icon><Files /></el-icon>
-              {{ $t('settings.frameworkVersion') }}
-            </div>
-          </template>
-          {{ systemInfo.framework }}
-        </el-descriptions-item>
-
-        <el-descriptions-item>
-          <template #label>
-            <div class="label-item">
-              <el-icon><Coffee /></el-icon>
-              {{ $t('settings.javaVersion') }}
-            </div>
-          </template>
-          {{ systemInfo.javaVersion }}
-        </el-descriptions-item>
-
-        <el-descriptions-item>
-          <template #label>
-            <div class="label-item">
-              <el-icon><Location /></el-icon>
-              {{ $t('settings.serverIp') }}
-            </div>
-          </template>
-          {{ systemInfo.serverIp }}
-        </el-descriptions-item>
-
-        <el-descriptions-item>
-          <template #label>
-            <div class="label-item">
-              <el-icon><Operation /></el-icon>
-              {{ $t('settings.os') }}
-            </div>
-          </template>
-          {{ systemInfo.os }}
-        </el-descriptions-item>
-
-        <el-descriptions-item>
-          <template #label>
-            <div class="label-item">
-              <el-icon><Cpu /></el-icon>
-              {{ $t('settings.arch') }}
-            </div>
-          </template>
-          {{ systemInfo.arch }}
-        </el-descriptions-item>
-
-        <el-descriptions-item :span="2">
-          <template #label>
-            <div class="label-item">
-              <el-icon><Clock /></el-icon>
-              {{ $t('settings.startTime') }}
-            </div>
-          </template>
-          {{ systemInfo.startTime }}
-        </el-descriptions-item>
-
-        <el-descriptions-item :span="2">
-          <template #label>
-            <div class="label-item">
-              <el-icon><Timer /></el-icon>
-              {{ $t('settings.uptime') }}
-            </div>
-          </template>
-          <el-text type="primary" tag="b">{{ systemInfo.uptime }}</el-text>
-        </el-descriptions-item>
-      </el-descriptions>
-
-      <div class="action-bar">
-        <el-button type="primary" @click="handleRefresh" :loading="loading">
-          <el-icon><Refresh /></el-icon>
-          {{ $t('settings.refreshInfo') }}
-        </el-button>
+    <!-- 系统信息卡片 -->
+    <div v-loading="loading" class="info-grid">
+      <div class="info-item">
+        <div class="info-icon" style="background: #ecf5ff; color: #409eff;">
+          <el-icon :size="24"><Monitor /></el-icon>
+        </div>
+        <div class="info-content">
+          <div class="info-label">{{ $t('settings.systemNameLabel') }}</div>
+          <div class="info-value">{{ systemInfo.name || '-' }}</div>
+        </div>
       </div>
-    </el-card>
+
+      <div class="info-item">
+        <div class="info-icon" style="background: #f0f9eb; color: #67c23a;">
+          <el-icon :size="24"><PriceTag /></el-icon>
+        </div>
+        <div class="info-content">
+          <div class="info-label">{{ $t('settings.systemVersion') }}</div>
+          <div class="info-value">
+            <el-tag type="success" effect="dark" round>{{ systemInfo.version || '-' }}</el-tag>
+          </div>
+        </div>
+      </div>
+
+      <div class="info-item">
+        <div class="info-icon" :style="{ background: systemInfo.env === 'prod' ? '#fef0f0' : '#fdf6ec', color: systemInfo.env === 'prod' ? '#f56c6c' : '#e6a23c' }">
+          <el-icon :size="24"><Platform /></el-icon>
+        </div>
+        <div class="info-content">
+          <div class="info-label">{{ $t('settings.runtimeEnv') }}</div>
+          <div class="info-value">
+            <el-tag :type="systemInfo.env === 'prod' ? 'danger' : 'warning'" effect="dark" round>
+              {{ getEnvText(systemInfo.env) }}
+            </el-tag>
+          </div>
+        </div>
+      </div>
+
+      <div class="info-item">
+        <div class="info-icon" style="background: #f4f4f5; color: #909399;">
+          <el-icon :size="24"><Files /></el-icon>
+        </div>
+        <div class="info-content">
+          <div class="info-label">{{ $t('settings.frameworkVersion') }}</div>
+          <div class="info-value">{{ systemInfo.framework || '-' }}</div>
+        </div>
+      </div>
+
+      <div class="info-item">
+        <div class="info-icon" style="background: #ecf5ff; color: #409eff;">
+          <el-icon :size="24"><Coffee /></el-icon>
+        </div>
+        <div class="info-content">
+          <div class="info-label">{{ $t('settings.javaVersion') }}</div>
+          <div class="info-value">{{ systemInfo.javaVersion || '-' }}</div>
+        </div>
+      </div>
+
+      <div class="info-item">
+        <div class="info-icon" style="background: #f0f9eb; color: #67c23a;">
+          <el-icon :size="24"><Location /></el-icon>
+        </div>
+        <div class="info-content">
+          <div class="info-label">{{ $t('settings.serverIp') }}</div>
+          <div class="info-value">{{ systemInfo.serverIp || '-' }}</div>
+        </div>
+      </div>
+
+      <div class="info-item">
+        <div class="info-icon" style="background: #fdf6ec; color: #e6a23c;">
+          <el-icon :size="24"><Operation /></el-icon>
+        </div>
+        <div class="info-content">
+          <div class="info-label">{{ $t('settings.os') }}</div>
+          <div class="info-value">{{ systemInfo.os || '-' }}</div>
+        </div>
+      </div>
+
+      <div class="info-item">
+        <div class="info-icon" style="background: #f4f4f5; color: #909399;">
+          <el-icon :size="24"><Cpu /></el-icon>
+        </div>
+        <div class="info-content">
+          <div class="info-label">{{ $t('settings.arch') }}</div>
+          <div class="info-value">{{ systemInfo.arch || '-' }}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 运行时间 -->
+    <div class="uptime-card">
+      <div class="uptime-item">
+        <el-icon :size="20" color="#409eff"><Clock /></el-icon>
+        <div class="uptime-info">
+          <span class="uptime-label">{{ $t('settings.startTime') }}</span>
+          <span class="uptime-value">{{ systemInfo.startTime || '-' }}</span>
+        </div>
+      </div>
+      <div class="uptime-item">
+        <el-icon :size="20" color="#67c23a"><Timer /></el-icon>
+        <div class="uptime-info">
+          <span class="uptime-label">{{ $t('settings.uptime') }}</span>
+          <span class="uptime-value highlight">{{ systemInfo.uptime || '-' }}</span>
+        </div>
+      </div>
+    </div>
 
     <!-- 运行状态 -->
-    <el-card class="status-card" v-loading="loading">
-      <template #header>
-        <div class="card-header">
-          <span>{{ $t('settings.systemStatus') }}</span>
+    <div class="status-section">
+      <div class="section-title">{{ $t('settings.systemStatus') }}</div>
+      <div class="status-grid">
+        <div class="status-item">
+          <div class="status-icon success">
+            <el-icon :size="20"><SuccessFilled /></el-icon>
+          </div>
+          <div class="status-info">
+            <div class="status-label">{{ $t('settings.systemStatus') }}</div>
+            <div class="status-value">{{ $t('settings.statusRunning') }}</div>
+          </div>
         </div>
-      </template>
 
-      <el-row :gutter="20">
-        <el-col :span="6">
-          <div class="status-item">
-            <el-icon class="icon" color="#67c23a"><SuccessFilled /></el-icon>
-            <div class="info">
-              <div class="label">{{ $t('settings.systemStatus') }}</div>
-              <div class="value">{{ $t('settings.statusRunning') }}</div>
-            </div>
+        <div class="status-item">
+          <div class="status-icon primary">
+            <el-icon :size="20"><Connection /></el-icon>
           </div>
-        </el-col>
+          <div class="status-info">
+            <div class="status-label">{{ $t('settings.dbStatus') }}</div>
+            <div class="status-value">{{ $t('settings.statusNormal') }}</div>
+          </div>
+        </div>
 
-        <el-col :span="6">
-          <div class="status-item">
-            <el-icon class="icon" color="#409eff"><Connection /></el-icon>
-            <div class="info">
-              <div class="label">{{ $t('settings.dbStatus') }}</div>
-              <div class="value">{{ $t('settings.statusNormal') }}</div>
-            </div>
+        <div class="status-item">
+          <div class="status-icon primary">
+            <el-icon :size="20"><FolderOpened /></el-icon>
           </div>
-        </el-col>
+          <div class="status-info">
+            <div class="status-label">{{ $t('settings.storageStatus') }}</div>
+            <div class="status-value">{{ $t('settings.statusNormal') }}</div>
+          </div>
+        </div>
 
-        <el-col :span="6">
-          <div class="status-item">
-            <el-icon class="icon" color="#409eff"><FolderOpened /></el-icon>
-            <div class="info">
-              <div class="label">{{ $t('settings.storageStatus') }}</div>
-              <div class="value">{{ $t('settings.statusNormal') }}</div>
-            </div>
+        <div class="status-item">
+          <div class="status-icon primary">
+            <el-icon :size="20"><Message /></el-icon>
           </div>
-        </el-col>
+          <div class="status-info">
+            <div class="status-label">{{ $t('settings.mailStatus') }}</div>
+            <div class="status-value">{{ $t('settings.statusNormal') }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
 
-        <el-col :span="6">
-          <div class="status-item">
-            <el-icon class="icon" color="#409eff"><Message /></el-icon>
-            <div class="info">
-              <div class="label">{{ $t('settings.mailStatus') }}</div>
-              <div class="value">{{ $t('settings.statusNormal') }}</div>
-            </div>
-          </div>
-        </el-col>
-      </el-row>
-    </el-card>
+    <!-- 刷新按钮 -->
+    <div class="action-bar">
+      <el-button type="primary" @click="handleRefresh" :loading="loading" size="large">
+        <el-icon><Refresh /></el-icon>
+        {{ $t('settings.refreshInfo') }}
+      </el-button>
+    </div>
   </div>
 </template>
 
@@ -189,7 +186,8 @@ import {
   SuccessFilled,
   Connection,
   FolderOpened,
-  Message
+  Message,
+  Operation
 } from "@element-plus/icons-vue";
 import { getSystemInfo, type SystemInfo } from "@/api/settings";
 
@@ -209,7 +207,6 @@ const systemInfo = reactive<SystemInfo>({
   arch: ""
 });
 
-// 获取环境文本
 const getEnvText = (env: string) => {
   const envMap: Record<string, string> = {
     'prod': t('settings.envProd'),
@@ -219,12 +216,13 @@ const getEnvText = (env: string) => {
   return envMap[env] || env;
 };
 
-// 加载系统信息
 const loadSystemInfo = async () => {
   try {
     loading.value = true;
     const data = await getSystemInfo();
-    Object.assign(systemInfo, data);
+    if (data) {
+      Object.assign(systemInfo, data);
+    }
   } catch (error) {
     console.error(t('settings.loadFailed'), error);
   } finally {
@@ -232,7 +230,6 @@ const loadSystemInfo = async () => {
   }
 };
 
-// 刷新
 const handleRefresh = () => {
   loadSystemInfo();
   ElMessage.success(t('settings.refreshSuccess'));
@@ -245,14 +242,18 @@ onMounted(() => {
 
 <style scoped lang="scss">
 .system-info {
+  max-width: 900px;
+
   .page-header {
-    margin-bottom: 30px;
+    margin-bottom: 32px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #f0f0f0;
 
     h3 {
-      margin: 0 0 10px 0;
+      margin: 0 0 8px 0;
       font-size: 20px;
-      font-weight: 500;
-      color: #303133;
+      font-weight: 600;
+      color: #1d2129;
     }
 
     .description {
@@ -262,59 +263,160 @@ onMounted(() => {
     }
   }
 
-  .info-card {
-    margin-bottom: 20px;
+  .info-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+    margin-bottom: 24px;
+  }
 
-    .label-item {
-      display: flex;
-      align-items: center;
-      gap: 6px;
+  .info-item {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 20px;
+    background: #fafafa;
+    border-radius: 12px;
+    transition: all 0.3s ease;
 
-      .el-icon {
-        font-size: 16px;
-      }
-    }
-
-    .action-bar {
-      margin-top: 30px;
-      display: flex;
-      gap: 10px;
+    &:hover {
+      background: #f5f7fa;
+      transform: translateY(-1px);
     }
   }
 
-  .status-card {
-    .card-header {
-      font-weight: 500;
+  .info-icon {
+    width: 52px;
+    height: 52px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .info-content {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .info-label {
+    font-size: 13px;
+    color: #909399;
+    margin-bottom: 6px;
+  }
+
+  .info-value {
+    font-size: 15px;
+    font-weight: 500;
+    color: #1d2129;
+  }
+
+  .uptime-card {
+    display: flex;
+    gap: 24px;
+    padding: 20px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 12px;
+    margin-bottom: 24px;
+  }
+
+  .uptime-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 1;
+
+    .el-icon {
+      color: #fff;
+    }
+  }
+
+  .uptime-info {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .uptime-label {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.8);
+    margin-bottom: 4px;
+  }
+
+  .uptime-value {
+    font-size: 16px;
+    font-weight: 600;
+    color: #fff;
+
+    &.highlight {
+      font-size: 20px;
+    }
+  }
+
+  .status-section {
+    margin-bottom: 24px;
+  }
+
+  .section-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: #1d2129;
+    margin-bottom: 16px;
+  }
+
+  .status-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+  }
+
+  .status-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px;
+    background: #fafafa;
+    border-radius: 10px;
+  }
+
+  .status-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    &.success {
+      background: #f0f9eb;
+      color: #67c23a;
     }
 
-    .status-item {
-      display: flex;
-      align-items: center;
-      padding: 20px;
-      background-color: #f5f7fa;
-      border-radius: 8px;
-
-      .icon {
-        font-size: 32px;
-        margin-right: 16px;
-      }
-
-      .info {
-        flex: 1;
-
-        .label {
-          font-size: 14px;
-          color: #909399;
-          margin-bottom: 8px;
-        }
-
-        .value {
-          font-size: 18px;
-          font-weight: 500;
-          color: #303133;
-        }
-      }
+    &.primary {
+      background: #ecf5ff;
+      color: #409eff;
     }
+  }
+
+  .status-info {
+    flex: 1;
+  }
+
+  .status-label {
+    font-size: 12px;
+    color: #909399;
+    margin-bottom: 4px;
+  }
+
+  .status-value {
+    font-size: 14px;
+    font-weight: 500;
+    color: #1d2129;
+  }
+
+  .action-bar {
+    padding-top: 24px;
+    border-top: 1px solid #f0f0f0;
   }
 }
 </style>

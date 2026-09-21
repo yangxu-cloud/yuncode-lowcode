@@ -20,7 +20,8 @@ export default {
       meta: {
         title: "routes.welcome",
         i18nKey: "routes.welcome",
-        showLink: VITE_HIDE_HOME === "true" ? false : true
+        showLink: VITE_HIDE_HOME === "true" ? false : true,
+        fixedTag: true
       }
     }
   ]

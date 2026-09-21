@@ -49,26 +49,13 @@ const getMainWidth = computed(() => {
 });
 
 const getSectionStyle = computed(() => {
+  const hasTabs = layout.value && !hideTabs.value;
+  const top = hasTabs ? "82px" : "48px";
   return [
-    hideTabs.value && layout ? "padding-top: 48px;" : "",
-    !hideTabs.value && layout
-      ? showModel.value == "chrome"
-        ? "padding-top: 85px;"
-        : "padding-top: 81px;"
-      : "",
-    hideTabs.value && !layout.value ? "padding-top: 48px;" : "",
-    !hideTabs.value && !layout.value
-      ? showModel.value == "chrome"
-        ? "padding-top: 85px;"
-        : "padding-top: 81px;"
-      : "",
+    `padding-top: ${top};`,
     props.fixedHeader
       ? ""
-      : `padding-top: 0;${
-          hideTabs.value
-            ? "min-height: calc(100vh - 48px);"
-            : "min-height: calc(100vh - 86px);"
-        }`
+      : `padding-top: 0;min-height: calc(100vh - ${top});`
   ];
 });
 

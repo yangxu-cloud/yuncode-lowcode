@@ -57,6 +57,8 @@
     "@form-create/component-elm-upload": "^3.3.0",
     "@form-create/component-subform": "^3.3.0",
     "@form-create/component-wangeditor": "^3.3.0",
+    "@form-create/designer": "link:..\\form-create\\packages\\designer",
+    "@form-create/element-ui": "link:..\\form-create\\packages\\element-ui",
     "@pureadmin/descriptions": "^1.2.1",
     "@pureadmin/table": "^3.3.0",
     "@pureadmin/utils": "^2.6.2",

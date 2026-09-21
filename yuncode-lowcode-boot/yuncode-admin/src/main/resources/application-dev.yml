@@ -1,3 +1,7 @@
+# 开发环境 JWT 密钥（仅用于本地开发，生产环境必须通过环境变量设置）
+sa-token:
+  jwt-secret-key: dev-yuncode-local-development-key-do-not-use-in-production
+
 spring:
   datasource:
     # 开发环境：本地 MySQL，root/root

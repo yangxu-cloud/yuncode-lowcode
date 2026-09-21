@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { useNav } from "@/layout/hooks/useNav";
+import { useLayout } from "@/layout/hooks/useLayout";
 import LaySearch from "../lay-search/index.vue";
 import LayNotice from "../lay-notice/index.vue";
 import LayNavMix from "../lay-sidebar/NavMix.vue";
@@ -7,40 +8,34 @@ import LaySidebarFullScreen from "../lay-sidebar/components/SidebarFullScreen.vu
 import LaySidebarLanguage from "../lay-sidebar/components/SidebarLanguage.vue";
 import LaySidebarBreadCrumb from "../lay-sidebar/components/SidebarBreadCrumb.vue";
 import LaySidebarTopCollapse from "../lay-sidebar/components/SidebarTopCollapse.vue";
+import LaySidebarLogo from "../lay-sidebar/components/SidebarLogo.vue";
+import IconTabs from "../IconTabs.vue";
 
 import LogoutCircleRLine from "~icons/ri/logout-circle-r-line";
 import Setting from "~icons/ri/settings-3-line";
 
+const { layout } = useLayout();
 const {
-  layout,
-  device,
   logout,
   onPanel,
-  pureApp,
   username,
   userAvatar,
-  avatarsStyle,
-  toggleSideBar
+  avatarsStyle
 } = useNav();
 </script>
 
 <template>
-  <div class="navbar bg-[#fff] shadow-xs shadow-[rgba(0,21,41,0.08)]">
-    <LaySidebarTopCollapse
-      v-if="device === 'mobile'"
-      class="hamburger-container"
-      :is-active="pureApp.sidebar.opened"
-      @toggleClick="toggleSideBar"
-    />
-
-    <LaySidebarBreadCrumb
-      v-if="layout !== 'mix' && device !== 'mobile'"
-      class="breadcrumb-container"
-    />
-
+  <div class="navbar">
     <LayNavMix v-if="layout === 'mix'" />
 
-    <div v-if="layout === 'vertical'" class="vertical-header-right">
+    <div v-if="layout === 'simple'" class="simple-logo-wrap">
+      <LaySidebarLogo :collapse="false" />
+      <IconTabs />
+    </div>
+
+    <LaySidebarBreadCrumb v-if="layout === 'vertical'" id="breadcrumb" class="breadcrumb-container" />
+
+    <div v-if="layout === 'vertical' || layout === 'simple'" class="vertical-header-right">
       <!-- 菜单搜索 -->
       <LaySearch id="header-search" />
       <!-- 全屏 -->
@@ -49,26 +44,29 @@ const {
       <LaySidebarLanguage id="language-switch" />
       <!-- 消息通知 -->
       <LayNotice id="header-notice" />
-      <!-- 退出登录 -->
-      <el-dropdown trigger="click">
-        <span class="el-dropdown-link navbar-bg-hover select-none">
-          <img :src="userAvatar" :style="avatarsStyle" />
-          <p v-if="username" class="dark:text-white">{{ username }}</p>
-        </span>
-        <template #dropdown>
-          <el-dropdown-menu class="logout">
-            <el-dropdown-item @click="logout">
-              <IconifyIconOffline
-                :icon="LogoutCircleRLine"
-                style="margin: 5px"
-              />
-              退出系统
-            </el-dropdown-item>
-          </el-dropdown-menu>
-        </template>
-      </el-dropdown>
+      <!-- 用户信息 -->
+      <div class="user-info">
+        <el-dropdown trigger="click">
+          <span class="el-dropdown-link select-none">
+            <img :src="userAvatar" :style="avatarsStyle" />
+            <p v-if="username">{{ username }}</p>
+          </span>
+          <template #dropdown>
+            <el-dropdown-menu class="logout">
+              <el-dropdown-item @click="logout">
+                <IconifyIconOffline
+                  :icon="LogoutCircleRLine"
+                  style="margin: 5px"
+                />
+                退出系统
+              </el-dropdown-item>
+            </el-dropdown-menu>
+          </template>
+        </el-dropdown>
+      </div>
+      <!-- 设置 -->
       <span
-        class="set-icon navbar-bg-hover"
+        class="tool-btn"
         title="打开系统配置"
         @click="onPanel"
       >
@@ -80,49 +78,95 @@ const {
 
 <style lang="scss" scoped>
 .navbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   width: 100%;
   height: 48px;
-  overflow: hidden;
-
-  .hamburger-container {
-    float: left;
-    height: 100%;
-    line-height: 48px;
-    cursor: pointer;
-  }
+  padding: 0 8px;
+  background: #fff;
+  border-bottom: 1px solid #f0f0f0;
+  box-sizing: border-box;
 
   .vertical-header-right {
     display: flex;
     align-items: center;
     justify-content: flex-end;
-    min-width: 280px;
+    margin-left: auto;
     height: 48px;
-    color: #000000d9;
-
-    .el-dropdown-link {
-      display: flex;
-      align-items: center;
-      justify-content: space-around;
-      height: 48px;
-      padding: 10px;
-      color: #000000d9;
-      cursor: pointer;
-
-      p {
-        font-size: 14px;
-      }
-
-      img {
-        width: 22px;
-        height: 22px;
-        border-radius: 50%;
-      }
-    }
+    gap: 2px;
   }
 
   .breadcrumb-container {
     float: left;
     margin-left: 16px;
+  }
+
+  .simple-logo-wrap {
+    width: auto;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding-left: 4px;
+
+    :deep(.sidebar-logo-container) {
+      width: auto;
+    }
+
+    :deep(.hamburger-btn) {
+      border-right: 1px solid #e5e6eb;
+      border-radius: 0;
+      padding-right: 12px;
+      height: 32px;
+    }
+  }
+}
+
+.user-info {
+  .el-dropdown-link {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    height: 36px;
+    padding: 0 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.2s ease;
+
+    &:hover {
+      background: #f7f8fa;
+    }
+
+    p {
+      font-size: 13px;
+      color: #1d2129;
+      font-weight: 500;
+    }
+
+    img {
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+  }
+}
+
+.tool-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  cursor: pointer;
+  color: #4e5969;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: #f7f8fa;
+    color: #1d2129;
   }
 }
 

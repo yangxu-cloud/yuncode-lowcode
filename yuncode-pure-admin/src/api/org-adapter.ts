@@ -9,7 +9,7 @@ import { mockGetOrgTree } from '@mock/org';
 // 从原始 org.ts 导入类型
 export type { OrgTreeNode, OrgVO, OrgQueryDTO, TenantConfig, OrgForm, UserOrgVO } from './org';
 
-const API_BASE_PREFIX = '/org';
+const API_BASE_PREFIX = '/system/org';
 
 /**
  * 获取组织树

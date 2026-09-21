@@ -3,6 +3,7 @@ package com.yuncode.gateway.controller;
 import com.yuncode.common.event.EventTypes;
 import com.yuncode.common.event.GatewayEvent;
 import com.yuncode.common.event.SimpleEventBus;
+import com.yuncode.gateway.filter.MetricsFilter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -24,6 +25,7 @@ public class GatewayController {
 
     private final RouteLocator routeLocator;
     private final SimpleEventBus eventBus;
+    private final MetricsFilter metricsFilter;
 
     @Value("${nacos.discovery.enabled:false}")
     private boolean nacosEnabled;
@@ -69,6 +71,57 @@ public class GatewayController {
                     .toList());
                 return result;
             });
+    }
+
+    /**
+     * 获取请求指标（JSON 格式）
+     */
+    @GetMapping("/metrics")
+    public Mono<Map<String, Object>> getMetrics() {
+        Map<String, Object> result = new HashMap<>();
+        result.put("success", true);
+        result.put("data", metricsFilter.getMetricsSnapshot());
+        result.put("timestamp", System.currentTimeMillis());
+        return Mono.just(result);
+    }
+
+    /**
+     * 获取 Prometheus 格式指标
+     */
+    @GetMapping(value = "/actuator/prometheus", produces = "text/plain; charset=utf-8")
+    public Mono<String> getPrometheusMetrics() {
+        Map<String, Object> data = metricsFilter.getMetricsSnapshot();
+        StringBuilder sb = new StringBuilder();
+
+        sb.append("# HELP yuncode_gateway_requests_total 请求总数\n");
+        sb.append("# TYPE yuncode_gateway_requests_total counter\n");
+        sb.append("# HELP yuncode_gateway_request_duration_ms 请求耗时\n");
+        sb.append("# TYPE yuncode_gateway_request_duration_ms gauge\n");
+
+        data.forEach((key, value) -> {
+            if (key.equals("_total")) {
+                @SuppressWarnings("unchecked")
+                Map<String, Object> total = (Map<String, Object>) value;
+                sb.append("yuncode_gateway_requests_total{path=\"_total\"} ").append(total.get("requests")).append("\n");
+                sb.append("yuncode_gateway_success_total{path=\"_total\"} ").append(total.get("success")).append("\n");
+                sb.append("yuncode_gateway_fail_total{path=\"_total\"} ").append(total.get("fail")).append("\n");
+            } else {
+                @SuppressWarnings("unchecked")
+                Map<String, Object> pathData = (Map<String, Object>) value;
+                String pathLabel = sanitizePrometheusLabel(key);
+                sb.append("yuncode_gateway_requests_total{path=\"").append(pathLabel).append("\"} ").append(pathData.get("requests")).append("\n");
+                sb.append("yuncode_gateway_success_total{path=\"").append(pathLabel).append("\"} ").append(pathData.get("success")).append("\n");
+                sb.append("yuncode_gateway_fail_total{path=\"").append(pathLabel).append("\"} ").append(pathData.get("fail")).append("\n");
+                sb.append("yuncode_gateway_request_duration_ms{path=\"").append(pathLabel).append("\"} ").append(pathData.get("avgDuration")).append("\n");
+            }
+        });
+
+        sb.append("yuncode_gateway_up 1\n");
+        return Mono.just(sb.toString());
+    }
+
+    private String sanitizePrometheusLabel(String s) {
+        return s.replace("/", "_").replace("-", "_").toLowerCase();
     }
 
     /**

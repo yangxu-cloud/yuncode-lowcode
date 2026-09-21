@@ -1,125 +1,126 @@
 <template>
-  <div class="app-container">
-    <el-card shadow="never">
-      <template #header>
-        <div class="card-header">
-          <span class="card-title">系统日志</span>
-        </div>
-      </template>
-
-      <!-- 搜索表单 -->
-      <el-form :inline="true" :model="queryParams" class="search-form">
-        <el-form-item label="日志级别">
-          <el-select
-            v-model="queryParams.level"
-            placeholder="请选择日志级别"
-            clearable
-          >
-            <el-option label="DEBUG" value="DEBUG" />
-            <el-option label="INFO" value="INFO" />
-            <el-option label="WARN" value="WARN" />
-            <el-option label="ERROR" value="ERROR" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="模块">
-          <el-input
-            v-model="queryParams.module"
-            placeholder="请输入模块名称"
-            clearable
-            @keyup.enter="handleQuery"
-          />
-        </el-form-item>
-        <el-form-item label="链路追踪ID">
-          <el-input
-            v-model="queryParams.traceId"
-            placeholder="请输入链路追踪ID"
-            clearable
-            @keyup.enter="handleQuery"
-          />
-        </el-form-item>
-        <el-form-item label="时间范围">
-          <el-date-picker
-            v-model="dateRange"
-            type="datetimerange"
-            range-separator="至"
-            start-placeholder="开始时间"
-            end-placeholder="结束时间"
-            value-format="YYYY-MM-DD HH:mm:ss"
-          />
-        </el-form-item>
-        <el-form-item>
-          <el-button type="primary" @click="handleQuery">
-            <el-icon><Search /></el-icon>
-            搜索
-          </el-button>
-          <el-button @click="handleReset">
-            <el-icon><Refresh /></el-icon>
-            重置
-          </el-button>
-        </el-form-item>
-      </el-form>
-
-      <!-- 数据表格 -->
-      <el-table
-        v-loading="loading"
-        :data="logList"
-        border
-        stripe
-        style="width: 100%"
-      >
-        <el-table-column prop="level" label="日志级别" width="100">
-          <template #default="{ row }">
-            <el-tag v-if="row.level === 'ERROR'" type="danger">
-              ERROR
-            </el-tag>
-            <el-tag v-else-if="row.level === 'WARN'" type="warning">
-              WARN
-            </el-tag>
-            <el-tag v-else-if="row.level === 'INFO'" type="success">
-              INFO
-            </el-tag>
-            <el-tag v-else type="info">
-              DEBUG
-            </el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column prop="module" label="模块" width="150" />
-        <el-table-column prop="traceId" label="链路追踪ID" width="280">
-          <template #default="{ row }">
-            <el-button
-              v-if="row.traceId"
-              type="primary"
-              link
-              @click="handleViewTrace(row.traceId)"
+  <div class="page-container">
+    <div class="page-card">
+      <div class="page-card-header">
+        <span class="page-title" style="margin-bottom: 0">系统日志</span>
+      </div>
+      <div class="page-card-body">
+        <!-- 搜索表单 -->
+        <el-form :inline="true" :model="queryParams" class="page-search-form">
+          <el-form-item label="日志级别">
+            <el-select
+              v-model="queryParams.level"
+              placeholder="请选择日志级别"
+              clearable
             >
-              {{ row.traceId }}
+              <el-option label="DEBUG" value="DEBUG" />
+              <el-option label="INFO" value="INFO" />
+              <el-option label="WARN" value="WARN" />
+              <el-option label="ERROR" value="ERROR" />
+            </el-select>
+          </el-form-item>
+          <el-form-item label="模块">
+            <el-input
+              v-model="queryParams.module"
+              placeholder="请输入模块名称"
+              clearable
+              @keyup.enter="handleQuery"
+            />
+          </el-form-item>
+          <el-form-item label="链路追踪ID">
+            <el-input
+              v-model="queryParams.traceId"
+              placeholder="请输入链路追踪ID"
+              clearable
+              @keyup.enter="handleQuery"
+            />
+          </el-form-item>
+          <el-form-item label="时间范围">
+            <el-date-picker
+              v-model="dateRange"
+              type="datetimerange"
+              range-separator="至"
+              start-placeholder="开始时间"
+              end-placeholder="结束时间"
+              value-format="YYYY-MM-DD HH:mm:ss"
+            />
+          </el-form-item>
+          <el-form-item>
+            <el-button type="primary" @click="handleQuery">
+              <el-icon><Search /></el-icon>
+              搜索
             </el-button>
-            <span v-else>-</span>
-          </template>
-        </el-table-column>
-        <el-table-column prop="message" label="日志信息" min-width="300" show-overflow-tooltip />
-        <el-table-column prop="thread" label="线程" width="150" show-overflow-tooltip />
-        <el-table-column prop="createdAt" label="时间" width="180" />
-        <el-table-column label="操作" width="100" fixed="right">
-          <template #default="{ row }">
-            <el-button type="primary" link @click="handleViewDetail(row)">
-              详情
+            <el-button @click="handleReset">
+              <el-icon><Refresh /></el-icon>
+              重置
             </el-button>
-          </template>
-        </el-table-column>
-      </el-table>
+          </el-form-item>
+        </el-form>
 
-      <!-- 分页 -->
-      <el-pagination
-        v-model:current-page="queryParams.page"
-        v-model:page-size="queryParams.size"
-        :total="total"
-        :page-sizes="[10, 20, 50, 100]"
-        layout="total, sizes, prev, pager, next, jumper"
-        @size-change="handleQuery"
-        @current-change="handleQuery"
-      />
-    </el-card>
+        <!-- 数据表格 -->
+        <el-table
+          v-loading="loading"
+          :data="logList"
+          border
+          stripe
+          style="width: 100%"
+          :header-cell-style="{ background: '#fafafa', color: '#606266', fontWeight: 500 }"
+        >
+          <el-table-column prop="level" label="日志级别" width="100">
+            <template #default="{ row }">
+              <el-tag v-if="row.level === 'ERROR'" type="danger">
+                ERROR
+              </el-tag>
+              <el-tag v-else-if="row.level === 'WARN'" type="warning">
+                WARN
+              </el-tag>
+              <el-tag v-else-if="row.level === 'INFO'" type="success">
+                INFO
+              </el-tag>
+              <el-tag v-else type="info">
+                DEBUG
+              </el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column prop="module" label="模块" width="150" />
+          <el-table-column prop="traceId" label="链路追踪ID" width="280">
+            <template #default="{ row }">
+              <el-button
+                v-if="row.traceId"
+                type="primary"
+                link
+                @click="handleViewTrace(row.traceId)"
+              >
+                {{ row.traceId }}
+              </el-button>
+              <span v-else>-</span>
+            </template>
+          </el-table-column>
+          <el-table-column prop="message" label="日志信息" min-width="300" show-overflow-tooltip />
+          <el-table-column prop="thread" label="线程" width="150" show-overflow-tooltip />
+          <el-table-column prop="createdAt" label="时间" width="180" />
+          <el-table-column label="操作" width="100" fixed="right">
+            <template #default="{ row }">
+              <el-button type="primary" link @click="handleViewDetail(row)">
+                详情
+              </el-button>
+            </template>
+          </el-table-column>
+        </el-table>
+
+        <!-- 分页 -->
+        <el-pagination
+          v-model:current-page="queryParams.page"
+          v-model:page-size="queryParams.size"
+          :total="total"
+          :page-sizes="[10, 20, 50, 100]"
+          layout="total, sizes, prev, pager, next, jumper"
+          class="page-pagination"
+          @size-change="handleQuery"
+          @current-change="handleQuery"
+        />
+      </div>
+    </div>
 
     <!-- 详情对话框 -->
     <el-dialog
@@ -334,31 +335,6 @@ onMounted(() => {
 </script>
 
 <style scoped lang="scss">
-.app-container {
-  padding: 20px;
-}
-
-.card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.card-title {
-  font-size: 16px;
-  font-weight: 600;
-}
-
-.search-form {
-  margin-bottom: 20px;
-}
-
-.el-pagination {
-  margin-top: 20px;
-  display: flex;
-  justify-content: flex-end;
-}
-
 pre {
   white-space: pre-wrap;
   word-wrap: break-word;

@@ -67,6 +67,16 @@ const operationsRoutes: RouteRecordRaw = {
         i18nKey: "routes.settings",
         showLink: true
       }
+    },
+    {
+      path: "/operations/system-monitor",
+      name: "SystemMonitor",
+      component: () => import("@/views/operations/system-monitor/index.vue"),
+      meta: {
+        icon: "ep/monitor",
+        title: "系统监控",
+        showLink: true
+      }
     }
   ]
 } satisfies RouteConfigsTable;

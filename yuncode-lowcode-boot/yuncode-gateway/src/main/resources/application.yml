@@ -13,6 +13,8 @@ spring:
       - org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
       - org.springframework.boot.autoconfigure.jdbc.DataSourceTransactionManagerAutoConfiguration
       - org.springframework.boot.actuate.autoconfigure.jdbc.DataSourceHealthContributorAutoConfiguration
+      - org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
+      - org.springframework.boot.autoconfigure.data.redis.RedisReactiveAutoConfiguration
 
   cloud:
     gateway:
@@ -31,9 +33,8 @@ spring:
             allowCredentials: true
             maxAge: 3600
 
-      # 路由配置（使用服务发现或固定地址）
+      # 路由配置
       routes:
-        # 管理后台路由
         - id: yuncode-admin
           uri: ${gateway.backend.admin-url:http://localhost:8080}
           predicates:
@@ -50,7 +51,6 @@ spring:
 # Nacos 配置开关
 nacos:
   discovery:
-    # 是否启用 Nacos 服务发现 (true/false)
     enabled: false
     server-addr: localhost:8848
     namespace: public
@@ -59,8 +59,22 @@ nacos:
 # 网关自定义配置
 gateway:
   backend:
-    # 后端服务地址（Nacos 关闭时使用）
     admin-url: http://localhost:8080
+
+  # IP 黑白名单（逗号分隔，支持 CIDR 格式，如 192.168.1.0/24）
+  # ip-whitelist: 192.168.1.0/24,10.0.0.1
+  # ip-blacklist: 1.2.3.4
+  ip-whitelist: ""
+  ip-blacklist: ""
+
+  # 流量控制
+  rate-limit:
+    enabled: false
+    default-permit: 100
+    burst-capacity: 200
+
+  # 慢请求阈值（毫秒）
+  slow-request-threshold: 5000
 
 # Actuator 配置
 management:
@@ -79,6 +93,6 @@ logging:
     org.springframework.cloud.gateway: debug
     org.springframework.web.reactive: debug
 
-# JWT 密钥（与后端 admin 保持一致，用于验证 token 签名）
+# JWT 密钥（必须通过环境变量设置）
 sa-token:
-  jwt-secret-key: ${JWT_SECRET_KEY:yuncode-lowcode-sa-token-jwt-secret-key-2024-hutool-bcrypt-compatible-with-spring-boot-3-x8k9m2v4n6}
+  jwt-secret-key: ${JWT_SECRET_KEY}

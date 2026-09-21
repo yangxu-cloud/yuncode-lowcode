@@ -21,9 +21,8 @@ const itemStyle = computed(() => {
   return item => {
     return {
       background:
-        item?.path === active.value ? useEpThemeStoreHook().epThemeColor : "",
-      color: item.path === active.value ? "#fff" : "",
-      fontSize: item.path === active.value ? "16px" : "14px"
+        item?.path === active.value ? "rgba(22, 93, 255, 0.08)" : "",
+      color: item.path === active.value ? "#165dff" : ""
     };
   };
 });
@@ -79,34 +78,56 @@ defineExpose({ handleScroll });
       @click="handleTo"
       @mouseenter="handleMouse(item)"
     >
-      <component :is="useRenderIcon(item.meta?.icon)" />
+      <component :is="useRenderIcon(item.meta?.icon)" class="result-item-icon" />
       <span class="result-item-title">
         {{ item.meta?.title }}
       </span>
-      <EnterOutlined />
+      <EnterOutlined class="result-item-enter" />
     </div>
   </div>
 </template>
 
 <style lang="scss" scoped>
 .result {
-  padding-bottom: 12px;
+  padding: 4px 0;
 
   &-item {
     display: flex;
     align-items: center;
-    height: 56px;
-    padding: 14px;
-    margin-top: 8px;
+    height: 42px;
+    padding: 0 10px;
+    margin: 2px 0;
     cursor: pointer;
-    border: 0.1px solid #ccc;
-    border-radius: 4px;
-    transition: font-size 0.16s;
+    border-radius: 8px;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+
+    &:hover {
+      background: #f7f8fa;
+    }
+
+    &-icon {
+      flex-shrink: 0;
+    }
 
     &-title {
       display: flex;
       flex: 1;
-      margin-left: 5px;
+      margin-left: 10px;
+      font-size: 14px;
+      color: #1d2129;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    &-enter {
+      flex-shrink: 0;
+      opacity: 0;
+      transition: opacity 0.15s ease;
+    }
+
+    &:hover &-enter {
+      opacity: 0.5;
     }
   }
 }

@@ -1,4 +1,6 @@
 package com.yuncode.system.controller;
+import com.yuncode.common.exception.BusinessException;
+import com.yuncode.common.exception.ErrorCode;
 
 import cn.dev33.satoken.stp.StpUtil;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -82,7 +84,7 @@ public class OnlineUserController {
     public Result<OnlineUser> getCurrentUser() {
         String sessionId = StpUtil.getSession().get("sessionId", "");
         if (sessionId == null || sessionId.isEmpty()) {
-            return Result.error("未找到会话信息");
+            throw new BusinessException(ErrorCode.OPERATION_FAILED,"");
         }
         OnlineUser user = onlineUserService.getOnlineUser(sessionId);
         return Result.success(user);

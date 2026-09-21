@@ -632,6 +632,31 @@ body[layout="vertical"] {
   }
 }
 
+body[layout="simple"] {
+  $sideBarWidth: 0;
+
+  @include merge-style($sideBarWidth);
+
+  .fixed-header,
+  .main-container {
+    transition: none !important;
+  }
+
+  .fixed-header {
+    width: 100%;
+  }
+
+  .search-container,
+  .fullscreen-icon,
+  .dropdown-badge,
+  .el-dropdown-link,
+  .set-icon {
+    &:hover {
+      background: #f6f6f6;
+    }
+  }
+}
+
 body[layout="horizontal"] {
   $sideBarWidth: 0;
 

@@ -12,9 +12,10 @@ import org.springframework.stereotype.Service;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * 系统设置服务
+ * 系统设置服务（带本地缓存）
  */
 @Slf4j
 @Service
@@ -23,10 +24,20 @@ public class SysSettingsService {
 
     private final SysSettingsMapper settingsMapper;
 
+    /** 本地缓存：key=group, value=SettingsVO, value2=时间戳 */
+    private final ConcurrentHashMap<String, SettingsVO> settingsCache = new ConcurrentHashMap<>();
+    private static final long CACHE_TTL_MS = 60_000; // 60秒
+
     /**
-     * 获取基础设置
+     * 获取基础设置（带缓存）
      */
     public SettingsVO getBasicSettings() {
+        // 检查缓存
+        SettingsVO cached = settingsCache.get("basic");
+        if (cached != null) {
+            return cached;
+        }
+
         SettingsVO settingsVO = new SettingsVO();
 
         // 查询所有基础设置
@@ -73,6 +84,8 @@ public class SysSettingsService {
 
         log.info("获取基础设置: systemName={}", settingsVO.getSystemName());
 
+        // 缓存结果
+        settingsCache.put("basic", settingsVO);
         return settingsVO;
     }
 
@@ -80,6 +93,7 @@ public class SysSettingsService {
      * 更新基础设置
      */
     public void updateBasicSettings(SettingsVO settingsVO) {
+        settingsCache.remove("basic");
         log.info("更新基础设置: systemName={}", settingsVO.getSystemName());
 
         // 定义基本设置的键值映射
@@ -171,6 +185,8 @@ public class SysSettingsService {
      * 获取安全设置
      */
     public SettingsVO getSecuritySettings() {
+        SettingsVO cached = settingsCache.get("security");
+        if (cached != null) return cached;
         SettingsVO settingsVO = new SettingsVO();
 
         // 查询所有安全设置
@@ -236,6 +252,8 @@ public class SysSettingsService {
 
         log.info("获取安全设置");
 
+        // 缓存结果
+        settingsCache.put("security", settingsVO);
         return settingsVO;
     }
 
@@ -243,6 +261,7 @@ public class SysSettingsService {
      * 更新安全设置
      */
     public void updateSecuritySettings(SettingsVO settingsVO) {
+        settingsCache.remove("security");
         log.info("更新安全设置");
 
         // 定义安全设置的键值映射

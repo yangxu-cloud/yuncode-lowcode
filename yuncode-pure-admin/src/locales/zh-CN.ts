@@ -198,7 +198,7 @@ export default {
     requireUppercaseTip: "密码中必须包含至少一个大写字母 (A-Z)",
     requireLowercaseTip: "密码中必须包含至少一个小写字母 (a-z)",
     requireNumberTip: "密码中必须包含至少一个数字 (0-9)",
-    requireSpecialTip: "密码中必须包含至少一个特殊字符 (!@#$%^&*)",
+    requireSpecialTip: "密码中必须包含至少一个特殊字符 (!{'@'}#$%^&*)",
     // Storage
     storageConfig: "存储设置",
     storageDesc: "配置文件存储方式（本地存储或云存储）",

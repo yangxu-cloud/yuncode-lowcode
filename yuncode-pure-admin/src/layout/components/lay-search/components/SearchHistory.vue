@@ -27,9 +27,8 @@ const itemStyle = computed(() => {
   return item => {
     return {
       background:
-        item?.path === active.value ? useEpThemeStoreHook().epThemeColor : "",
-      color: item.path === active.value ? "#fff" : "",
-      fontSize: item.path === active.value ? "16px" : "14px"
+        item?.path === active.value ? "rgba(22, 93, 255, 0.08)" : "",
+      color: item.path === active.value ? "#165dff" : ""
     };
   };
 });
@@ -141,7 +140,7 @@ defineExpose({ handleScroll });
 <template>
   <div ref="historyRef" class="history">
     <template v-if="historyList.length">
-      <div :style="titleStyle">搜索历史</div>
+      <div class="history-section-title">搜索历史</div>
       <div
         v-for="(item, index) in historyList"
         :key="item.path"
@@ -159,8 +158,8 @@ defineExpose({ handleScroll });
       </div>
     </template>
     <template v-if="collectList.length">
-      <div :style="titleStyle">
-        {{ `收藏${collectList.length > 1 ? "（可拖拽排序）" : ""}` }}
+      <div class="history-section-title">
+        收藏<span v-if="collectList.length > 1" class="drag-hint">可拖拽排序</span>
       </div>
       <div class="collect-container">
         <div
@@ -181,18 +180,38 @@ defineExpose({ handleScroll });
 
 <style lang="scss" scoped>
 .history {
-  padding-bottom: 12px;
+  padding: 4px 0;
+
+  &-section-title {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px 4px;
+    font-size: 12px;
+    font-weight: 500;
+    color: #86909c;
+    letter-spacing: 0.5px;
+
+    .drag-hint {
+      font-size: 11px;
+      font-weight: 400;
+      color: #c9cdd4;
+    }
+  }
 
   &-item {
     display: flex;
     align-items: center;
-    height: 56px;
-    padding: 14px;
-    margin: 8px auto 10px;
+    height: 42px;
+    padding: 0 10px;
+    margin: 2px 0;
     cursor: pointer;
-    border: 0.1px solid #ccc;
-    border-radius: 4px;
-    transition: font-size 0.16s;
+    border-radius: 8px;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+
+    &:hover {
+      background: #f7f8fa;
+    }
   }
 }
 </style>
